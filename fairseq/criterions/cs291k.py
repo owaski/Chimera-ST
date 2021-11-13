@@ -8,8 +8,16 @@ from fairseq.criterions.label_smoothed_cross_entropy import LabelSmoothedCrossEn
 
 @register_criterion("cs291k")
 class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
-    def __init__(self, *args, **kwargs):
-        pass
+    def __init__(self, 
+        task, 
+        sentence_avg, 
+        label_smoothing, 
+        loss_ratio, 
+        ignore_prefix_size,
+        report_accuracy=False,
+    ):
+        super().__init__(task, sentence_avg, label_smoothing, ignore_prefix_size, report_accuracy)
+        self.loss_ratio = loss_ratio
 
     @staticmethod
     def get_num_updates():
@@ -134,3 +142,18 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
         if reduce:
             kd_loss = kd_loss.sum()
         return kd_loss
+
+    @classmethod
+    def reduce_metrics(cls, logging_outputs) -> None:
+        # TODO: reduce logging outputs from multiple devices
+        pass
+
+    @staticmethod
+    def logging_outputs_can_be_summed() -> bool:
+        # TODO: reduceable logging outputs
+        """
+        Whether the logging outputs returned by `forward` can be summed
+        across workers prior to calling `reduce_metrics`. Setting this
+        to True will improves distributed training speed.
+        """
+        return False
