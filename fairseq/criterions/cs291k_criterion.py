@@ -6,7 +6,7 @@ from fairseq import metrics, utils
 from fairseq.criterions import register_criterion
 from fairseq.criterions.label_smoothed_cross_entropy import LabelSmoothedCrossEntropyCriterion
 
-@register_criterion("cs291k")
+@register_criterion("cs291k_criterion")
 class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
     def __init__(self, 
         task, 
@@ -125,15 +125,14 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
         return align_loss
 
     def compute_kd(self, st_net_output, mt_net_output, target, reduce):
-        # TODO: check dim of target and net output
         '''
-            st_net_output: seqlen * batch * vocab
-            mt_net_output: seqlen * batch * vocab
-            target: seqlen * batch
+            st_net_output: batch * seqlen * vocab
+            mt_net_output: batch * seqlen * vocab
+            target: batch * seqlen
         '''
-        st_logit = st_net_output.transpose(0, 1)
-        mt_logit = mt_net_output.detach().transpose(0, 1)
-        target = target.transpose(0, 1)[:, self.ignore_prefix_size:].contiguous()
+        st_logit = st_net_output[:, self.ignore_prefix_size:, :]
+        mt_logit = mt_net_output[:, self.ignore_prefix_size:, :].detach()
+        target = target[:, self.ignore_prefix_size:].contiguous()
         pad_mask = target.eq(self.padding_idx)
         mt_logp = th.log_softmax(mt_logit, dim=-1)
         st_logp = th.log_softmax(st_logit, dim=-1)
