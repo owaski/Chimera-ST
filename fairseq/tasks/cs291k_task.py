@@ -25,7 +25,7 @@ class CS291KTask(LegacyFairseqTask):
             action='store_true',
             help='If set, normalizes input to have 0 mean and unit variance'
         )
-        parser.add_argumetn(
+        parser.add_argument(
             '--config-yaml',
             type=str,
             default='config.yaml',

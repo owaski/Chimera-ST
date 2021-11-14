@@ -1,0 +1,24 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "prep_mustc_data",
+            "type": "python",
+            "request": "launch",
+            "program": "cs291k/prepare_data/prep_mustc_data.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--data-root", "/home/ubuntu/work/datasets/must-c/",
+                "--task", "wave",
+                "--ignore_fbank80",
+                "--joint_spm", "wmt14-en-de-spm",
+                "--languages", "de",
+                "--vocab-type", "unigram",
+                "--vocab-size", "10000"
+            ]
+        }
+    ]
+}
