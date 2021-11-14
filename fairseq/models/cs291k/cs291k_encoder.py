@@ -1,8 +1,6 @@
-from os import sep
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.modules import module, padding
 from fairseq.data.data_utils import lengths_to_mask, lengths_to_padding_mask
 
 from fairseq.models.fairseq_encoder import EncoderOut, FairseqEncoder
@@ -128,6 +126,7 @@ class CS291KEncoder(FairseqEncoder):
         if is_text:
             embedding = self.text_embedding(src_tokens).transpose(0, 1)
             input_lengths = src_lengths
+            sum_alpha = None
         else:
             w2v_feature, padding_mask, w2v_lengths = self._get_w2v_feature(src_tokens, src_lengths)
             embedding, input_lengths, sum_alpha = self._cif(w2v_feature, padding_mask, \
@@ -148,5 +147,41 @@ class CS291KEncoder(FairseqEncoder):
         return EncoderOut(
             encoder_out=x,
             encoder_padding_mask=encoder_padding_mask,
-            internal_states=internal_states
-        )           
+            internal_states=internal_states,
+            encoder_embedding=None,
+            encoder_states=None,
+            src_tokens=None,
+            src_lengths=None,
+        )          
+
+    @th.jit.export
+    def reorder_encoder_out(self, encoder_out, new_order):
+        new_encoder_out = (
+            encoder_out.encoder_out
+            if encoder_out.encoder_out is None
+            else encoder_out.encoder_out.index_select(1, new_order)
+        )
+        new_encoder_padding_mask = (
+            encoder_out.encoder_padding_mask
+            if encoder_out.encoder_padding_mask is None
+            else encoder_out.encoder_padding_mask.index_select(0, new_order)
+        )
+        new_internal_feature = (
+            encoder_out.internal_states['feature']
+            if encoder_out.internal_states['feature'] is None
+            else encoder_out.internal_states['feature'].index_select(1, new_order)
+        )
+        new_internal_states = {
+            'sum_alpha': encoder_out.internal_states['sum_alpha'], 
+            'feature': new_internal_feature
+        }
+        return EncoderOut(
+            encoder_out=new_encoder_out,
+            encoder_padding_mask=new_encoder_padding_mask,
+            internal_states=new_internal_states,
+            encoder_embedding=None,
+            encoder_states=None,
+            src_tokens=None,
+            src_lengths=None,
+        )
+
