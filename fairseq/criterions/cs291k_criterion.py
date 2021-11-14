@@ -118,13 +118,13 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
         else:
             raise NotImplementedError
 
-    def compute_qua(self, audio_internal, src_lengths, reduce):
+    def compute_qua(self, audio_internal, src_text_lengths, reduce):
         '''
             audio_internal["sum_alpha"]: batch
             src_lengths: batch
         '''
         sum_alpha = audio_internal["sum_alpha"]
-        qua_loss = F.mse_loss(sum_alpha, src_lengths, reduction='sum' if reduce else 'none')
+        qua_loss = F.mse_loss(sum_alpha, src_text_lengths, reduction='sum' if reduce else 'none')
         return qua_loss
     
     def compute_align(self, audio_internal, text_internal, reduce):
@@ -143,14 +143,14 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
             mt_net_output: batch * seqlen * vocab
             target: batch * seqlen
         '''
-        st_logit = st_net_output[:, self.ignore_prefix_size:, :]
-        mt_logit = mt_net_output[:, self.ignore_prefix_size:, :].detach()
+        st_logit = st_net_output[0][:, self.ignore_prefix_size:, :]
+        mt_logit = mt_net_output[0][:, self.ignore_prefix_size:, :].detach()
         target = target[:, self.ignore_prefix_size:].contiguous()
-        pad_mask = target.eq(self.padding_idx)
+        padding_mask = target.eq(self.padding_idx)
         mt_logp = th.log_softmax(mt_logit, dim=-1)
         st_logp = th.log_softmax(st_logit, dim=-1)
-        kd_loss = F.kl_div(st_logp, mt_logp, reduce='none', log_target=True)
-        kd_loss[pad_mask] = 0.
+        kd_loss = F.kl_div(st_logp, mt_logp, reduction='none', log_target=True)
+        kd_loss[padding_mask] = 0.
         if reduce:
             kd_loss = kd_loss.sum()
         return kd_loss

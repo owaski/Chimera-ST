@@ -121,15 +121,12 @@ class MUSTC(Dataset):
 
 def process(args):
     MANIFEST_COLUMNS = ["id", "audio", "n_frames", "tgt_text", "speaker"]
-    if args.triplet:
+    if args.include_src:
         MANIFEST_COLUMNS.append("src_text")
     logger.info(f"MANIFEST_COLUMNS: {MANIFEST_COLUMNS}")
 
     for lang in args.languages:
-        if args.triplet or args.joint_spm is not None:
-            folder = f"en-{lang}-triplet"
-        else:
-            folder = f"en-{lang}"
+        folder = f"en-{lang}"
         cur_root = op.join(args.data_root, f"en-{lang}")
         if not op.isdir(cur_root):
             logger.info(f"{cur_root} does not exist. Skipped.")
@@ -164,7 +161,7 @@ def process(args):
         # Generate TSV manifest
         logger.info("Generating manifest...")
         train_text = []
-        if args.triplet:
+        if args.include_src:
             train_src_text = []
         for split in MUSTC.SPLITS:
             is_train_split = split.startswith("train")
@@ -176,13 +173,11 @@ def process(args):
             else:
                 logger.info("generating tsv records")
             
-            global global_dataset
-            global_dataset = MUSTC(args.data_root, lang, split)
-            
-            def _read(i):
-                manifest = {c: [] for c in MANIFEST_COLUMNS}
-                wav, sr, src_utt, tgt_utt, speaker_id, utt_id,\
-                    wav_file, offset = global_dataset[i]
+            manifest = {c: [] for c in MANIFEST_COLUMNS}
+            dataset = MUSTC(args.data_root, lang, split)
+
+            for wav, sr, src_utt, tgt_utt, speaker_id, utt_id,\
+                    wav_file, offset in tqdm(dataset):
                 manifest["id"].append(utt_id)
                 if args.task in ['asr', 'st']:
                     manifest["audio"].append(zip_manifest[utt_id])
@@ -194,38 +189,15 @@ def process(args):
                     manifest["n_frames"].append(length)
                 else:
                     raise Exception("task not supported:" + args.task)
-                if args.triplet:
+                if args.include_src:
                     manifest["src_text"].append(src_utt)
                 manifest["tgt_text"].append(src_utt if args.task == "asr"
                                             else tgt_utt)
                 manifest["speaker"].append(speaker_id)
-                return manifest
-
-            manifest_list = process_map(_read, range(len(global_dataset)), max_workers=4)
-            manifest = {c: sum((m[c] for m in manifest_list), []) for c in MANIFEST_COLUMNS}
-
-            # for wav, sr, src_utt, tgt_utt, speaker_id, utt_id,\
-            #         wav_file, offset in tqdm(dataset):
-            #     manifest["id"].append(utt_id)
-            #     if args.task in ['asr', 'st']:
-            #         manifest["audio"].append(zip_manifest[utt_id])
-            #         duration_ms = int(wav.size(1) / sr * 1000)
-            #         manifest["n_frames"].append(int(1 + (duration_ms - 25)/10))
-            #     elif args.task in ['wave']:
-            #         length = int(wav.size(1))
-            #         manifest["audio"].append(f"{wav_file}:{offset}:{length}")
-            #         manifest["n_frames"].append(length)
-            #     else:
-            #         raise Exception("task not supported:" + args.task)
-            #     if args.triplet:
-            #         manifest["src_text"].append(src_utt)
-            #     manifest["tgt_text"].append(src_utt if args.task == "asr"
-            #                                 else tgt_utt)
-            #     manifest["speaker"].append(speaker_id)
 
             if is_train_split:
                 train_text.extend(manifest["tgt_text"])
-                if args.triplet:
+                if args.include_src:
                     train_src_text.extend(manifest["src_text"])
             df = pd.DataFrame.from_dict(manifest)
             if args.task in ['asr', 'st']:
@@ -263,12 +235,9 @@ def process(args):
                     args.vocab_type,
                     args.vocab_size,
                 )
-            if args.triplet or args.joint_spm is not None:
+            if args.include_src and args.joint_spm is None:
                 logger.info("generating vocab files for source language")
-                if args.triplet:
-                    src_spm_filename_prefix = spm_filename_prefix+'_src'
-                else:
-                    src_spm_filename_prefix = spm_filename_prefix
+                src_spm_filename_prefix = spm_filename_prefix+'_src'
                 with NamedTemporaryFile(mode="w") as f:
                     for t in train_src_text:
                         f.write(t + "\n")
@@ -316,7 +285,7 @@ def main():
     parser.add_argument("--joint", action="store_true", help="")
     parser.add_argument("--languages", type=str, nargs='+')
     parser.add_argument("--ignore_fbank80", action='store_true')
-    parser.add_argument("--triplet", action='store_true')
+    parser.add_argument("--include-src", action='store_true')
     parser.add_argument("--joint_spm", type=str, default=None)
     args = parser.parse_args()
 

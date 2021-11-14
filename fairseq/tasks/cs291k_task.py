@@ -92,7 +92,7 @@ class CS291KTask(LegacyFairseqTask):
         src_bpe_tokenizer = self.build_bpe('source')
         bpe_tokenizer = self.build_bpe('target')
         self.datasets[split] = CS291KDatasetCreator.from_tsv(
-            self.data,
+            self.args.data,
             self.data_cfg,
             split,
             self.src_dict,

@@ -198,7 +198,7 @@ bash chimera/prepare_data/prepare-wmt-en2any.sh \
     --data-dir $WMT_ROOT --wmt14 --original-dev \
     --external mustc --target $target --subword spm
 python3 chimera/prepare_data/prep_mustc_data.py \
-    --data-root $MUSTC_ROOT --task wave \
+    --data-root $MUSTC_ROOT --task wave --include-src \
     --ignore_fbank80 --joint_spm wmt14-en-$target-spm \
     --languages $target --vocab-type unigram --vocab-size 10000
 ```

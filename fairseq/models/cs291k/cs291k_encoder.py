@@ -49,7 +49,7 @@ class CS291KEncoder(FairseqEncoder):
             src_tokens: b * n_frame
             src_lengths: b
         '''
-        padding_mask = lengths_to_mask(src_lengths)
+        padding_mask = lengths_to_padding_mask(src_lengths)
         w2v_feature, padding_mask = self.w2v_model.extract_features(src_tokens, padding_mask)
         output_lengths = (1 - padding_mask.long()).sum(dim=1)
         return w2v_feature, padding_mask, output_lengths
@@ -62,61 +62,66 @@ class CS291KEncoder(FairseqEncoder):
             src_feature: b * l * dim
             src_lengths: b
         '''
+        device = src_feature.device
         bs, l = src_feature.size()[:2]
         alpha = F.sigmoid(src_feature[:, :, 0]).squeeze(-1)
         alpha[padding_mask] = 0.
         sum_alpha = alpha.sum(dim=1)
         if src_text_lengths is not None:
-            scale_factor = src_lengths / sum_alpha
-            alpha = alpha * scale_factor
+            scale_factor = src_text_lengths / sum_alpha
+            alpha = alpha * scale_factor.unsqueeze(-1)
         alpha_cumsum = alpha.cumsum(dim=1)
 
         alpha_cumsum_trunc = alpha_cumsum.long()
         diff_mask = alpha_cumsum_trunc[:, :-1] != alpha_cumsum_trunc[:, 1:]
         batch_features = []
         for i in range(bs):
-            indices = th.arange(l - 1)
-            separation = th.cat([[0], indices[diff_mask[i]] + 1])
+            indices = th.arange(l - 1).to(device)
+            separation = th.cat([th.tensor([0]).to(device), indices[diff_mask[i]] + 1])
             if separation[-1] != src_lengths[i] - 1:
-                separation = th.cat([separation, [src_lengths[i] - 1]], dim=0)
+                separation = th.cat([separation, th.tensor([src_lengths[i] - 1]).to(device)], dim=0)
             features = []
-            for j in range(1, separation.size()):
+            for j in range(1, separation.size(0)):
                 lb, rb = separation[j - 1 : j + 1]
-                vlb, vrb = alpha_cumsum_trunc[lb], alpha_cumsum_trunc[rb - 1] + 1
+                vlb = alpha_cumsum_trunc[i, lb]
+                vrb = min(alpha_cumsum_trunc[i, rb - 1] + 1, alpha_cumsum[i, rb])
 
                 # deal with >1 alpha after scaling
-                n_rep = alpha_cumsum_trunc[lb] - (alpha_cumsum_trunc[lb - 1] + 1 if lb > 0 else 0)
+                n_rep = alpha_cumsum_trunc[i, lb] - (alpha_cumsum_trunc[i, lb - 1] + 1 if lb > 0 else 0)
                 if n_rep >= 1:
                     features.extend([src_feature[i, lb].unsqueeze(0) for _ in range(n_rep)])
 
                 cur_feature = th.zeros_like(src_feature[0, 0])
                 cur_sum_alpha = 0.
                 if lb + 1 < rb:
-                    cur_feature += (alpha[i, lb + 1 : rb] * src_feature[i, lb + 1 : rb]).sum(dim=0)
+                    cur_feature += (
+                        alpha[i, lb + 1 : rb].unsqueeze(-1) * src_feature[i, lb + 1 : rb]
+                    ).sum(dim=0)
                     cur_sum_alpha += alpha[i, lb + 1 : rb].sum()
                 cur_feature += (alpha_cumsum[i, lb] - vlb) * src_feature[i, lb]
                 cur_feature += (vrb - alpha_cumsum[i, rb - 1]) * src_feature[i, rb]
                 cur_sum_alpha += (alpha_cumsum[i, lb] - vlb) + (vrb - alpha_cumsum[i, rb - 1])
-                
+
                 if cur_sum_alpha > 0.5:
                     features.append(cur_feature.unsqueeze(0))
 
             # deal with >1 alpha after scaling
             last_idx = separation[-1]
-            if alpha[last_idx] >= 1:
-                n_rep = alpha[last_idx].long()
+            if alpha[i, last_idx] >= 1:
+                n_rep = alpha[i, last_idx].long()
                 features.extend([src_feature[i, last_idx].unsqueeze(0) for _ in range(n_rep)])
 
             batch_features.append(th.cat(features, dim=0))
         
-        output_lengths = th.tensor([features.size(0) for features in batch_features]).to(alpha)
+        output_lengths = th.tensor([features.size(0) for features in batch_features]).to(device)
+        assert ~(output_lengths != src_text_lengths).any()
         max_length = output_lengths.max()
         output_features = []
         for feature in batch_features:
             if feature.size(0) < max_length:
-                padding = th.zeros(max_length - feature.size(0), feature.size(1)).to(alpha)
+                padding = th.zeros(max_length - feature.size(0), feature.size(1)).to(feature)
                 feature = th.cat([feature, padding], dim=0)
-                output_features.append(feature.unsqueeze(0))
+            output_features.append(feature.unsqueeze(0))
         output_features = th.cat(output_features, dim=0)
         output_features = self.cif_proj(output_features[:, :, 1:])
 

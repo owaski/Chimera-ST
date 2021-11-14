@@ -138,7 +138,7 @@ class CS291KDataset(SpeechToTextDataset):
         src_text = None
         if self.src_texts is not None:
             src_tokenized = self.tokenize_text(self.src_texts[index], 'source')
-            source = self.src_dict.encode_line(
+            src_text = self.src_dict.encode_line(
                 src_tokenized, add_if_not_exist=False, append_eos=True
             ).long()
         
