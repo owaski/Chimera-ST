@@ -26,17 +26,32 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
     @staticmethod
     def add_args(parser):
         """Add criterion-specific arguments to the parser."""
-        parser.add_argument('--label-smoothing', default=0.,
-                            type=float, metavar='EPS',
-                            help='Epsilon for lable smoothing, 0 means none')
-        parser.add_argument('--report-accuracy', action='store_true',
-                            help='Report accuracy metric')
-        parser.add_argument('--ignore-prefix-size', default=0,
-                            type=int, metavar='N',
-                            help='Ignore first N tokens')
-        parser.add_argument('--loss-ratio', default=[1, 1, 1, 1, 1],
-                            type=float, nargs='+',
-                            help='Ratio of each loss function')
+        parser.add_argument(
+            '--label-smoothing', 
+            default=0., 
+            type=float, 
+            metavar='EPS',
+            help='Epsilon for lable smoothing, 0 means none'
+        )
+        parser.add_argument(
+            '--report-accuracy', 
+            action='store_true',
+            help='Report accuracy metric'
+        )
+        parser.add_argument(
+            '--ignore-prefix-size', 
+            default=0, 
+            type=int, 
+            metavar='N',
+            help='Ignore first N tokens'
+        )
+        parser.add_argument(
+            '--loss-ratio', 
+            default=[1, 1, 1, 1, 1], 
+            type=float, 
+            nargs='+',
+            help='Ratio of each loss function'
+        )
 
     def forward(self, model, sample, reduce=True):
         # st loss
@@ -105,12 +120,10 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
 
     def compute_qua(self, audio_internal, src_lengths, reduce):
         '''
-            audio_internal["alpha"]: seqlen * batch * 1
+            audio_internal["sum_alpha"]: batch
             src_lengths: batch
         '''
-        alpha = audio_internal["alpha"].transpose(0, 1) # batch * seqlen * 1
-        sum_alpha = alpha.sum(dim=1)
-        src_lengths = src_lengths.view(-1, 1)
+        sum_alpha = audio_internal["sum_alpha"]
         qua_loss = F.mse_loss(sum_alpha, src_lengths, reduction='sum' if reduce else 'none')
         return qua_loss
     
