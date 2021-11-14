@@ -182,7 +182,23 @@ class TransformerDecoderScriptable(TransformerDecoder):
         )
         return x, None
 
+
 @register_model_architecture('cs291k_model', 'cs291k_model_base')
 def cs291k_model_base(args):
-    # TODO: base configuration
-    pass
+    args.activation_fn = getattr(args, 'activation_fn', 'relu')
+    args.dropout = getattr(args, 'dropout', 0.1)
+    # encoder
+    args.encoder_embed_dim = getattr(args, 'encoder_embed_dim', 512)
+    args.encoder_ffn_embed_dim = getattr(args, 'encoder_ffn_embed_dim', 2048)
+    args.encoder_layers = getattr(args, 'encoder_layers', 6)
+    args.encoder_attention_heads = getattr(args, 'encoder_attention_heads', 8)
+    args.encoder_normalize_before = getattr(args, 'encoder_normalize_before', True)
+    # decoder
+    args.decoder_embed_dim = getattr(args, 'decoder_embed_dim', 512)
+    args.decoder_ffn_embed_dim = getattr(args, 'decoder_ffn_embed_dim', 2048)
+    args.decoder_layers = getattr(args, 'decoder_layers', 6)
+    args.decoder_attention_heads = getattr(args, 'decoder_attention_heads', 8)
+    args.decoder_normalize_before = getattr(args, 'decoder_normalize_before', True)
+    args.share_decoder_input_output_embed = getattr(args, 'share_decoder_input_output_embed', True)
+    # other
+    args.max_source_positions = getattr(args, 'max_source_positions', 1000000)
