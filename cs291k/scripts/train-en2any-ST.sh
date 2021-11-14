@@ -4,9 +4,9 @@
 export ST_SAVE_DIR="$SAVE_ROOT/st"
 export MT_SAVE_DIR="$SAVE_ROOT/mt"
 export SAVE_DIR=$ST_SAVE_DIR
-export WAVE2VEC_DIR="$SAVE_ROOT/wave2vec"
+export WAVE2VEC_DIR="$SAVE_ROOT/pretrained"
 pretrained_ckpt=wav2vec_small.pt
-mkdir -p $ST_SAVE_DIR $MT_SAVE_DIR $ASR_SAVE_DIR $WAVE2VEC_DIR $WMT_ROOT $MUSTC_ROOT $LS_ROOT
+mkdir -p $ST_SAVE_DIR $MT_SAVE_DIR $WAVE2VEC_DIR $WMT_ROOT $MUSTC_ROOT
 reset_optimizer="--reset-optimizer"
 
 # downloading wav2vec2 ckpt
@@ -18,15 +18,6 @@ if [[ $resume == "True" ]]; then
 else
     cp $MT_SAVE_DIR/checkpoint_best.pt $ST_SAVE_DIR/checkpoint_last.pt
 fi
-
-# Auto-evaluating
-CUDA_VISIBLE_DEVICES= python3 chimera/generate/auto-generate.py \
-    --dirname ${SAVE_DIR} \
-    --generate_script \
-        chimera/generate/generate-mustc.sh \
-    --silent &
-generate_pid=$!
-SUICIDE_CODE='chimera/tools/auto-generate-suicide.code'
 
 # Train on MuST-C data
 fairseq-train ${MUSTC_ROOT}/en-$target \
@@ -54,7 +45,3 @@ fairseq-train ${MUSTC_ROOT}/en-$target \
     --ddp-backend no_c10d \
     --best-checkpoint-metric st_loss \
     --seed $seed
-
-# wait for evaluation process to finish
-touch $SUICIDE_CODE
-tail --pid=$generate_pid -f /dev/null

@@ -29,7 +29,7 @@ class CS291KEncoder(FairseqEncoder):
         self.dropout = FairseqDropout(p=args.dropout, module_name=self.__class__.__name__)
         self.padding_idx = 1
         
-        self.cif_proj = Linear(self.w2v_args.encoder_embed_dim, self.encoder_embed_dim)
+        self.cif_proj = Linear(self.w2v_args.encoder_embed_dim - 1, args.encoder_embed_dim)
 
         self.text_embedding = encoder_embedding
         self.embed_positions = PositionalEmbedding(
@@ -41,7 +41,7 @@ class CS291KEncoder(FairseqEncoder):
         )
 
         self.layer_norm = None
-        if self.args.encoder_normalize_before:
+        if args.encoder_normalize_before:
             self.layer_norm = LayerNorm(args.encoder_embed_dim)
 
     def _get_w2v_feature(self, src_tokens, src_lengths):
@@ -118,6 +118,7 @@ class CS291KEncoder(FairseqEncoder):
                 feature = th.cat([feature, padding], dim=0)
                 output_features.append(feature.unsqueeze(0))
         output_features = th.cat(output_features, dim=0)
+        output_features = self.cif_proj(output_features[:, :, 1:])
 
         return output_features.transpose(0, 1), output_lengths, sum_alpha
 

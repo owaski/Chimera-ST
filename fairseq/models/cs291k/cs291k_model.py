@@ -187,12 +187,17 @@ class TransformerDecoderScriptable(TransformerDecoder):
 def cs291k_model_base(args):
     args.activation_fn = getattr(args, 'activation_fn', 'relu')
     args.dropout = getattr(args, 'dropout', 0.1)
+    args.attention_dropout = args.dropout
+    args.activation_dropout = args.dropout
+    args.relu_dropout = args.dropout
+
     # encoder
     args.encoder_embed_dim = getattr(args, 'encoder_embed_dim', 512)
     args.encoder_ffn_embed_dim = getattr(args, 'encoder_ffn_embed_dim', 2048)
     args.encoder_layers = getattr(args, 'encoder_layers', 6)
     args.encoder_attention_heads = getattr(args, 'encoder_attention_heads', 8)
     args.encoder_normalize_before = getattr(args, 'encoder_normalize_before', True)
+    
     # decoder
     args.decoder_embed_dim = getattr(args, 'decoder_embed_dim', 512)
     args.decoder_ffn_embed_dim = getattr(args, 'decoder_ffn_embed_dim', 2048)
@@ -200,5 +205,17 @@ def cs291k_model_base(args):
     args.decoder_attention_heads = getattr(args, 'decoder_attention_heads', 8)
     args.decoder_normalize_before = getattr(args, 'decoder_normalize_before', True)
     args.share_decoder_input_output_embed = getattr(args, 'share_decoder_input_output_embed', True)
+
+    args.decoder_input_dim = args.decoder_embed_dim
+    args.decoder_output_dim = args.decoder_embed_dim
+    args.decoder_learned_pos = False
+    args.no_scale_embedding = False
+    args.adaptive_input = False
+    args.adaptive_softmax_cutoff = None
+    args.adaptive_softmax_dropout = 0.
+    args.no_token_positional_embeddings = False
+    args.quant_noise_pq = 0
+    args.decoder_layerdrop = 0.
+
     # other
     args.max_source_positions = getattr(args, 'max_source_positions', 1000000)

@@ -37,10 +37,8 @@ fairseq-train $WMT_ROOT/bin \
     --eval-bleu-print-samples \
     --best-checkpoint-metric bleu --maximize-best-checkpoint-metric \
     \
-    --arch s2t_transformer_w2v2_interlingua_base --share-decoder-input-output-embed \
+    --arch cs291k_model_base --share-decoder-input-output-embed \
     --w2v2-model-path $WAVE2VEC_DIR/$pretrained_ckpt \
-    --encoder-layers 6 --encoder-embed-dim 512 \
-    --interlingua-length 64 \
     --dropout 0.1 \
     \
     --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 0.0 \
@@ -51,6 +49,3 @@ fairseq-train $WMT_ROOT/bin \
     --update-freq $(expr 8 / $num_gpus) --num-workers 1 \
     --ddp-backend no_c10d \
     --seed $seed
-
-touch $SUICIDE_CODE
-tail --pid=$generate_pid -f /dev/null
