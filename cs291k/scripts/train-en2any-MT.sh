@@ -15,13 +15,13 @@ bash cs291k/tools/download_wav2vec2.sh $pretrained_ckpt $WAVE2VEC_DIR
 TEXT=$WMT_ROOT/${dataset}_en_$target
 spm_model=$TEXT/spm/spm_unigram10000_wave_joint.model
 spm_dict=$TEXT/spm/spm_unigram10000_wave_joint.txt
-fairseq-preprocess \
-    --source-lang en --target-lang $target \
-    --trainpref $TEXT/train --validpref $TEXT/valid \
-    --testpref $TEXT/test,$TEXT/mustc-tst-COMMON \
-    --destdir $WMT_ROOT/bin --thresholdtgt 0 --thresholdsrc 0 \
-    --srcdict $spm_dict --tgtdict $spm_dict \
-    --workers 100
+# fairseq-preprocess \
+#     --source-lang en --target-lang $target \
+#     --trainpref $TEXT/train --validpref $TEXT/valid \
+#     --testpref $TEXT/test,$TEXT/mustc-tst-COMMON \
+#     --destdir $WMT_ROOT/bin --thresholdtgt 0 --thresholdsrc 0 \
+#     --srcdict $spm_dict --tgtdict $spm_dict \
+#     --workers 100
 
 # Train on WMT data
 fairseq-train $WMT_ROOT/bin \

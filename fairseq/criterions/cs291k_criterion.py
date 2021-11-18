@@ -2,7 +2,7 @@ import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fairseq import metrics, utils
+from fairseq import logging, metrics, utils
 from fairseq.criterions import register_criterion
 from fairseq.criterions.label_smoothed_cross_entropy import LabelSmoothedCrossEntropyCriterion
 
@@ -104,6 +104,7 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
                 "kd_loss": kd_loss.data if self.loss_ratio[4] > 0 else 0,
                 "ntokens": sample["ntokens"],
                 "nsentences": sample["target"].size(0),
+                "sample_size": sample_size,
             }
 
             if self.report_accuracy:
@@ -124,8 +125,8 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
             src_lengths: batch
         '''
         sum_alpha = audio_internal["sum_alpha"]
-        qua_loss = F.mse_loss(sum_alpha, src_text_lengths, reduction='sum' if reduce else 'none')
-        return qua_loss
+        qua_loss = F.l1_loss(sum_alpha, src_text_lengths, reduction='sum' if reduce else 'none')
+        return qua_loss.float()
     
     def compute_align(self, audio_internal, text_internal, reduce):
         '''
@@ -134,8 +135,10 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
         '''
         audio_feature = audio_internal["feature"].transpose(0, 1)
         text_feature = text_internal["feature"].detach().transpose(0, 1) # batch * seqlen * dim
-        align_loss = F.mse_loss(audio_feature, text_feature, reduction='sum' if reduce else 'none')
-        return align_loss
+        align_loss = th.linalg.norm(audio_feature - text_feature, dim=-1)
+        if reduce:
+            align_loss = align_loss.sum()
+        return align_loss.float()
 
     def compute_kd(self, st_net_output, mt_net_output, target, reduce):
         '''
@@ -153,19 +156,33 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
         kd_loss[padding_mask] = 0.
         if reduce:
             kd_loss = kd_loss.sum()
-        return kd_loss
+        return kd_loss.float()
 
     @classmethod
     def reduce_metrics(cls, logging_outputs) -> None:
-        # TODO: reduce logging outputs from multiple devices
-        pass
+        sample_size = sum(log.get('sample_size', 0) for log in logging_outputs)
+        for name in ('loss', 'nll_loss', 'st_loss', 'st_nll_loss', 'mt_loss', 'mt_nll_loss',
+                     'qua_loss', 'align_loss', 'kd_loss'):
+            _sum = sum(log.get(name, 0) for log in logging_outputs)
+            metrics.log_scalar(name, _sum / sample_size, sample_size, round=3)
+        metrics.log_scalar('ntokens', sum(log.get('ntokens', 0) for log in logging_outputs))
+        
+        for name in ('', 'st_', 'mt_'):
+            _sum = sum(log.get(name + 'nll_loss', 0) for log in logging_outputs)
+            metrics.log_scalar(name + 'ppl', utils.get_perplexity(_sum / sample_size, base=th.e))
+
+        total = utils.item(sum(log.get('total', 0) for log in logging_outputs))
+        if total > 0:
+            metrics.log_scalar('total', total)
+            n_correct = utils.item(sum(log.get('n_correct', 0) for log in logging_outputs))
+            metrics.log_scalar('n_correct', n_correct)
+            metrics.log_scalar('accuracy', n_correct / total if total > 0 else float('nan'))
 
     @staticmethod
     def logging_outputs_can_be_summed() -> bool:
-        # TODO: reduceable logging outputs
         """
         Whether the logging outputs returned by `forward` can be summed
         across workers prior to calling `reduce_metrics`. Setting this
         to True will improves distributed training speed.
         """
-        return False
+        return True

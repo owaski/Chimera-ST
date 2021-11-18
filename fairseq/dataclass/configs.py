@@ -92,10 +92,10 @@ class CommonConfig(FairseqDataclass):
             "help": "log progress every N batches (when progress bar is disabled)"
         },
     )
-    log_format: Optional[LOG_FORMAT_CHOICES] = field(
+    log_format: LOG_FORMAT_CHOICES = field(
         default=None, metadata={"help": "log format to use"}
     )
-    tensorboard_logdir: Optional[str] = field(
+    tensorboard_logdir: str = field(
         default=None,
         metadata={
             "help": "path to save logs for tensorboard, should match --logdir "

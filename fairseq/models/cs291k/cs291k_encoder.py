@@ -63,9 +63,10 @@ class CS291KEncoder(FairseqEncoder):
             src_lengths: b
         '''
         device = src_feature.device
-        bs, l = src_feature.size()[:2]
-        alpha = F.sigmoid(src_feature[:, :, 0]).squeeze(-1)
-        alpha[padding_mask] = 0.
+        bs = src_feature.size()[0]
+        alpha = th.sigmoid(src_feature[:, :, 0].float())
+        src_feature = src_feature[:, :, 1:]
+        alpha = alpha.masked_fill(padding_mask, 0.)
         sum_alpha = alpha.sum(dim=1)
         if src_text_lengths is not None:
             scale_factor = src_text_lengths / sum_alpha
@@ -76,10 +77,11 @@ class CS291KEncoder(FairseqEncoder):
         diff_mask = alpha_cumsum_trunc[:, :-1] != alpha_cumsum_trunc[:, 1:]
         batch_features = []
         for i in range(bs):
-            indices = th.arange(l - 1).to(device)
-            separation = th.cat([th.tensor([0]).to(device), indices[diff_mask[i]] + 1])
-            if separation[-1] != src_lengths[i] - 1:
-                separation = th.cat([separation, th.tensor([src_lengths[i] - 1]).to(device)], dim=0)
+            cur_len = src_lengths[i]
+            indices = th.arange(cur_len - 1).to(device)
+            separation = th.cat([th.tensor([0]).to(device), indices[diff_mask[i, :cur_len - 1]] + 1])
+            if separation[-1] != cur_len - 1:
+                separation = th.cat([separation, th.tensor([cur_len - 1]).to(device)], dim=0)
             features = []
             for j in range(1, separation.size(0)):
                 lb, rb = separation[j - 1 : j + 1]
@@ -114,7 +116,7 @@ class CS291KEncoder(FairseqEncoder):
             batch_features.append(th.cat(features, dim=0))
         
         output_lengths = th.tensor([features.size(0) for features in batch_features]).to(device)
-        assert ~(output_lengths != src_text_lengths).any()
+        assert ~(output_lengths != src_text_lengths).any(), (output_lengths, src_text_lengths)
         max_length = output_lengths.max()
         output_features = []
         for feature in batch_features:
@@ -123,9 +125,9 @@ class CS291KEncoder(FairseqEncoder):
                 feature = th.cat([feature, padding], dim=0)
             output_features.append(feature.unsqueeze(0))
         output_features = th.cat(output_features, dim=0)
-        output_features = self.cif_proj(output_features[:, :, 1:])
+        output_features = self.cif_proj(output_features)
 
-        return output_features.transpose(0, 1), output_lengths, sum_alpha
+        return output_features.transpose(0, 1).half(), output_lengths, sum_alpha.half()
 
     def forward(self, src_tokens, src_lengths, src_text_lengths=None, **extra_args):
         is_text = not src_tokens.dtype.is_floating_point
