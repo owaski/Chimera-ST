@@ -7,7 +7,9 @@ export SAVE_DIR=$ST_SAVE_DIR
 export WAVE2VEC_DIR="$SAVE_ROOT/pretrained"
 pretrained_ckpt=wav2vec_small.pt
 mkdir -p $ST_SAVE_DIR $MT_SAVE_DIR $WAVE2VEC_DIR $WMT_ROOT $MUSTC_ROOT
+resume="True"
 reset_optimizer="--reset-optimizer"
+max_updates=150000
 num_gpus=16
 
 # downloading wav2vec2 ckpt

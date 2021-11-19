@@ -808,7 +808,7 @@ class GenerationConfig(FairseqDataclass):
 
 @dataclass
 class CommonEvalConfig(FairseqDataclass):
-    path: Optional[str] = field(
+    path: str = field(
         default=None,
         metadata={"help": "path(s) to model file(s), colon separated"},
     )

@@ -63,6 +63,7 @@ class CS291KEncoder(FairseqEncoder):
             src_lengths: b
         '''
         device = src_feature.device
+        is_fp16 = src_feature.dtype == th.float16
         bs = src_feature.size()[0]
         alpha = th.sigmoid(src_feature[:, :, 0].float())
         src_feature = src_feature[:, :, 1:]
@@ -104,7 +105,7 @@ class CS291KEncoder(FairseqEncoder):
                 cur_feature += (vrb - alpha_cumsum[i, rb - 1]) * src_feature[i, rb]
                 cur_sum_alpha += (alpha_cumsum[i, lb] - vlb) + (vrb - alpha_cumsum[i, rb - 1])
 
-                if cur_sum_alpha > 0.5:
+                if cur_sum_alpha > 0.5 or len(features) == 0:
                     features.append(cur_feature.unsqueeze(0))
 
             # deal with >1 alpha after scaling
@@ -116,7 +117,8 @@ class CS291KEncoder(FairseqEncoder):
             batch_features.append(th.cat(features, dim=0))
         
         output_lengths = th.tensor([features.size(0) for features in batch_features]).to(device)
-        assert ~(output_lengths != src_text_lengths).any(), (output_lengths, src_text_lengths)
+        if src_text_lengths is not None:
+            assert ~(output_lengths != src_text_lengths).any(), (output_lengths, src_text_lengths)
         max_length = output_lengths.max()
         output_features = []
         for feature in batch_features:
@@ -125,10 +127,14 @@ class CS291KEncoder(FairseqEncoder):
                 feature = th.cat([feature, padding], dim=0)
             output_features.append(feature.unsqueeze(0))
         output_features = th.cat(output_features, dim=0)
-        output_features = self.cif_proj(output_features)
+        output_features = self.cif_proj(output_features).transpose(0, 1)
 
-        return output_features.transpose(0, 1).half(), output_lengths, sum_alpha.half()
+        if is_fp16:
+            output_features = output_features.half()
+            sum_alpha = sum_alpha.half()
 
+        return output_features, output_lengths, sum_alpha
+        
     def forward(self, src_tokens, src_lengths, src_text_lengths=None, **extra_args):
         is_text = not src_tokens.dtype.is_floating_point
         if is_text:

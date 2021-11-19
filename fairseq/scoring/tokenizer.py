@@ -33,13 +33,13 @@ class EvaluationTokenizer(object):
         punctuation_removal: bool = False,
         character_tokenization: bool = False,
     ):
-        from sacrebleu.tokenizers import TOKENIZERS
+        from sacrebleu.tokenizers.tokenizer_13a import Tokenizer13a
 
-        assert tokenizer_type in TOKENIZERS, f"{tokenizer_type}, {TOKENIZERS}"
+        assert tokenizer_type == '13a'
         self.lowercase = lowercase
         self.punctuation_removal = punctuation_removal
         self.character_tokenization = character_tokenization
-        self.tokenizer = TOKENIZERS[tokenizer_type]
+        self.tokenizer = Tokenizer13a
 
     @classmethod
     def remove_punctuation(cls, sent: str):

@@ -8,6 +8,12 @@ export WAVE2VEC_DIR="$SAVE_ROOT/pretrained"
 pretrained_ckpt=wav2vec_small.pt
 mkdir -p $ST_SAVE_DIR $MT_SAVE_DIR $WAVE2VEC_DIR $MUSTC_ROOT $WMT_ROOT
 
+num_gpus=1
+seed=1
+dataset=wmt14
+max_updates=500000
+target=de
+
 # downloading wav2vec2 ckpt
 bash cs291k/tools/download_wav2vec2.sh $pretrained_ckpt $WAVE2VEC_DIR
 

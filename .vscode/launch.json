@@ -5,6 +5,25 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "gen",
+            "type": "python",
+            "request": "launch",
+            "program": "fairseq_cli/generate.py",
+            "console": "integratedTerminal",
+            "args": [
+                "/home/ubuntu/work/datasets/must-c/en-de",
+                "--gen-subset", "dev_wave",
+                "--task", "speech_to_text", 
+                "--path", "home/ubuntu/work/experiments/checkpoints/st/checkpoint_best.pt",
+                "--max-tokens", "1000000",
+                "--max-source-positions", "1000000",
+                "--beam", "10",
+                "--scoring", "sacrebleu",
+                "--config-yaml", "config_wave.yaml",
+                "--lenpen", "1.5"
+            ]
+        },
+        {
             "name": "st",
             "type": "python",
             "request": "launch",
@@ -12,7 +31,8 @@
             "console": "integratedTerminal",
             "args": [
                 "/home/ubuntu/work/datasets/must-c/en-de",
-                "--log-interval", "16",
+                "--log-interval",
+                "16",
                 "--report-accuracy",
                 "--task",
                 "cs291k_task",
@@ -63,7 +83,11 @@
                 "--seed",
                 "1",
                 "--loss-ratio",
-                "1", "1", "1", "1", "1",
+                "1",
+                "1",
+                "1",
+                "1",
+                "1",
                 "--fp16"
             ]
         },
