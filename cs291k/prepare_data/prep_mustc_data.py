@@ -56,7 +56,7 @@ class MUSTC(Dataset):
     utterance_id
     """
 
-    SPLITS = ["train", "dev", "tst-COMMON", "tst-HE"]
+    SPLITS = ["train-tiny", "dev", "tst-COMMON", "tst-HE"]
     LANGUAGES = ["de", "es", "fr", "it", "nl", "pt", "ro", "ru"]
 
     def __init__(self, root: str, lang: str, split: str) -> None:
@@ -287,6 +287,7 @@ def main():
     parser.add_argument("--ignore_fbank80", action='store_true')
     parser.add_argument("--include-src", action='store_true')
     parser.add_argument("--joint_spm", type=str, default=None)
+    parser.add_argument("--triplet", action='store_true')
     args = parser.parse_args()
 
     assert not args.triplet or args.joint_spm is None

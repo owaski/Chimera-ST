@@ -47,7 +47,7 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
         )
         parser.add_argument(
             '--loss-ratio', 
-            default=[1, 1, 1, 1, 1], 
+            default=[1, 1, 1, 1, 0], 
             type=float, 
             nargs='+',
             help='Ratio of each loss function'
@@ -83,6 +83,8 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
 
             if self.loss_ratio[4] > 0:
                 kd_loss = self.compute_kd(st_net_output, mt_net_output, sample["target"], reduce)
+            else:
+                kd_loss = 0.
 
             assert reduce
 
