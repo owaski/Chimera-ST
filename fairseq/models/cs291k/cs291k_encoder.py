@@ -44,6 +44,8 @@ class CS291KEncoder(FairseqEncoder):
         if args.encoder_normalize_before:
             self.layer_norm = LayerNorm(args.encoder_embed_dim)
 
+        self.align_after_encoder = args.align_after_encoder
+
     def _get_w2v_feature(self, src_tokens, src_lengths):
         '''
             src_tokens: b * n_frame
@@ -153,7 +155,8 @@ class CS291KEncoder(FairseqEncoder):
             embedding, input_lengths, sum_alpha = self._cif(w2v_feature, padding_mask, \
                 w2v_lengths, src_text_lengths)
         
-        internal_states = {'sum_alpha': sum_alpha, 'feature': embedding}
+        if is_text or not self.align_after_encoder:
+            internal_states = {'sum_alpha': sum_alpha, 'feature': embedding}
 
         x = embedding
         encoder_padding_mask = lengths_to_padding_mask(input_lengths)
@@ -164,6 +167,9 @@ class CS291KEncoder(FairseqEncoder):
 
         for layer in self.transformer_layers:
             x = layer(x, encoder_padding_mask)
+
+        if not is_text and self.align_after_encoder:
+            internal_states = {'sum_alpha': sum_alpha, 'feature': x}
 
         return EncoderOut(
             encoder_out=x,

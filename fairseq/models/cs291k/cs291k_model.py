@@ -78,6 +78,12 @@ class CS291KModel(FairseqEncoderDecoderModel):
             help='whether to apply layernorm before each encoder block'
         )
 
+        parser.add_argument(
+            '--align-after-encoder',
+            action='store_true',
+            help='apply align loss after encoder'
+        )
+
         # decoder
         parser.add_argument(
             '--decoder-embed-dim', 
