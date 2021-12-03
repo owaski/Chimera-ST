@@ -45,7 +45,7 @@
                 "--max-source-positions",
                 "1000000",
                 "--save-dir",
-                "/home/ubuntu/work/experiments/checkpoints/st",
+                "/home/ubuntu/work/experiments/checkpoints/st-tiny",
                 "--config-yaml",
                 "config_wave.yaml",
                 "--criterion",
@@ -87,8 +87,9 @@
                 "1",
                 "1",
                 "1",
-                "1",
-                "--fp16"
+                "0",
+                "--fp16",
+                "--cos-align"
             ]
         },
         {

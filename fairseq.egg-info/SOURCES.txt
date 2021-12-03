@@ -66,6 +66,7 @@ fairseq/criterions/adaptive_loss.py
 fairseq/criterions/aligning_loss_bimodal.py
 fairseq/criterions/composite_loss.py
 fairseq/criterions/cross_entropy.py
+fairseq/criterions/cs291k_criterion.py
 fairseq/criterions/ctc.py
 fairseq/criterions/ctc_chi.py
 fairseq/criterions/fairseq_criterion.py
@@ -133,6 +134,7 @@ fairseq/data/transform_eos_dataset.py
 fairseq/data/transform_eos_lang_pair_dataset.py
 fairseq/data/audio/__init__.py
 fairseq/data/audio/audio_utils.py
+fairseq/data/audio/cs291k_dataset.py
 fairseq/data/audio/raw_audio_dataset.py
 fairseq/data/audio/speech_to_text_dataset.py
 fairseq/data/audio/triplet_dataset.py
@@ -423,6 +425,9 @@ fairseq/models/chimera/chi_utils.py
 fairseq/models/chimera/hdfs_utils.py
 fairseq/models/chimera/w2v2_transformer.py
 fairseq/models/chimera/w2v2_transformer_interlingua.py
+fairseq/models/cs291k/__init__.py
+fairseq/models/cs291k/cs291k_encoder.py
+fairseq/models/cs291k/cs291k_model.py
 fairseq/models/huggingface/__init__.py
 fairseq/models/huggingface/hf_gpt2.py
 fairseq/models/nat/__init__.py
@@ -544,6 +549,7 @@ fairseq/tasks/__init__.py
 fairseq/tasks/audio_pretraining.py
 fairseq/tasks/bimodal_pretraining.py
 fairseq/tasks/cross_lingual_lm.py
+fairseq/tasks/cs291k_task.py
 fairseq/tasks/denoising.py
 fairseq/tasks/fairseq_task.py
 fairseq/tasks/joint_mtst.py

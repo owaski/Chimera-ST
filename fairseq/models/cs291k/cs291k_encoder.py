@@ -81,6 +81,9 @@ class CS291KEncoder(FairseqEncoder):
             cur_len = src_lengths[i]
             indices = th.arange(cur_len - 1).to(device)
             separation = th.cat([th.tensor([0]).to(device), indices[diff_mask[i, :cur_len - 1]] + 1])
+
+            # print(cur_len, separation / 49)
+
             if separation[-1] != cur_len - 1:
                 separation = th.cat([separation, th.tensor([cur_len - 1]).to(device)], dim=0)
             features = []
@@ -133,9 +136,13 @@ class CS291KEncoder(FairseqEncoder):
             output_features = output_features.half()
             sum_alpha = sum_alpha.half()
 
+        # th.save(output_features, '/home/ubuntu/work/experiments/tmp/st_feature.pt')
+
         return output_features, output_lengths, sum_alpha
         
     def forward(self, src_tokens, src_lengths, src_text_lengths=None, **extra_args):
+        # print(src_tokens.size())
+        
         is_text = not src_tokens.dtype.is_floating_point
         if is_text:
             embedding = self.text_embedding(src_tokens).transpose(0, 1)

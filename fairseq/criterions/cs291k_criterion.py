@@ -18,6 +18,7 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
     ):
         super().__init__(task, sentence_avg, label_smoothing, ignore_prefix_size, report_accuracy)
         self.loss_ratio = loss_ratio
+        self.cos_align = task.args.cos_align
 
     @staticmethod
     def get_num_updates():
@@ -51,6 +52,11 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
             type=float, 
             nargs='+',
             help='Ratio of each loss function'
+        )
+        parser.add_argument(
+            '--cos-align',
+            action='store_true',
+            help='Use cosine similarity instead of L2'
         )
 
     def forward(self, model, sample, reduce=True):
@@ -137,9 +143,12 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
         '''
         audio_feature = audio_internal["feature"].transpose(0, 1)
         text_feature = text_internal["feature"].detach().transpose(0, 1) # batch * seqlen * dim
-        align_loss = th.linalg.norm(audio_feature - text_feature, dim=-1)
+        if self.cos_align:
+            align_loss = (audio_feature * text_feature).sum(dim=-1) / audio_feature.norm(dim=-1) / text_feature.norm(dim=-1)
+        else:
+            align_loss = th.linalg.norm(audio_feature - text_feature, dim=-1)
         if reduce:
-            align_loss = align_loss.sum()
+            align_loss = align_loss.nansum()
         return align_loss.float()
 
     def compute_kd(self, st_net_output, mt_net_output, target, reduce):
