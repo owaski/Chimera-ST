@@ -1,4 +1,5 @@
 import logging
+from os import getrandom
 from typing import Optional, Dict
 
 import torch as th
@@ -82,6 +83,23 @@ class CS291KModel(FairseqEncoderDecoderModel):
             '--align-after-encoder',
             action='store_true',
             help='apply align loss after encoder'
+        )
+        parser.add_argument(
+            '--cnn-subsampler',
+            action='store_true',
+            help='use cnn subsampler instead of CIF'
+        )
+        parser.add_argument(
+            "--conv-kernel-sizes",
+            type=str,
+            metavar="N",
+            help="kernel sizes of Conv1d subsampling layers",
+        )
+        parser.add_argument(
+            "--conv-channels",
+            type=int,
+            metavar="N",
+            help="# of channels in Conv1d subsampling layers",
         )
 
         # decoder
@@ -225,3 +243,8 @@ def cs291k_model_base(args):
 
     # other
     args.max_source_positions = getattr(args, 'max_source_positions', 1000000)
+    args.align_after_encoder = getattr(args, 'align_after_encoder', False)
+    # Convolutional subsampler
+    args.cnn_subsampler = getattr(args, 'cnn_subsampler', False)
+    args.conv_kernel_sizes = getattr(args, "conv_kernel_sizes", "5,5")
+    args.conv_channels = getattr(args, "conv_channels", 1024)

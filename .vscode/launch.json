@@ -45,7 +45,7 @@
                 "--max-source-positions",
                 "1000000",
                 "--save-dir",
-                "/home/ubuntu/work/experiments/checkpoints/st-tiny",
+                "/home/ubuntu/work/experiments/checkpoints/test",
                 "--config-yaml",
                 "config_wave.yaml",
                 "--criterion",
@@ -89,7 +89,7 @@
                 "1",
                 "0",
                 "--fp16",
-                "--align-after-encoder"
+                "--cnn-subsampler"
             ]
         },
         {

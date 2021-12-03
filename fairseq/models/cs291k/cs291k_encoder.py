@@ -6,6 +6,7 @@ from fairseq.data.data_utils import lengths_to_mask, lengths_to_padding_mask
 from fairseq.models.fairseq_encoder import EncoderOut, FairseqEncoder
 from fairseq.models.transformer import Linear
 from fairseq.models.wav2vec import Wav2Vec2Model
+from fairseq.models.speech_to_text.s2t_transformer import Conv1dSubsampler
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.layer_norm import LayerNorm
 from fairseq.modules.positional_embedding import PositionalEmbedding
@@ -45,6 +46,14 @@ class CS291KEncoder(FairseqEncoder):
             self.layer_norm = LayerNorm(args.encoder_embed_dim)
 
         self.align_after_encoder = args.align_after_encoder
+        self.cnn_subsampler = None
+        if args.cnn_subsampler:
+            self.cnn_subsampler = Conv1dSubsampler(
+                self.w2v_args.encoder_embed_dim,
+                args.conv_channels,
+                args.encoder_embed_dim,
+                [int(k) for k in args.conv_kernel_sizes.split(",")],
+            )
 
     def _get_w2v_feature(self, src_tokens, src_lengths):
         '''
@@ -152,8 +161,12 @@ class CS291KEncoder(FairseqEncoder):
             sum_alpha = None
         else:
             w2v_feature, padding_mask, w2v_lengths = self._get_w2v_feature(src_tokens, src_lengths)
-            embedding, input_lengths, sum_alpha = self._cif(w2v_feature, padding_mask, \
-                w2v_lengths, src_text_lengths)
+            if self.cnn_subsampler is None:
+                embedding, input_lengths, sum_alpha = self._cif(w2v_feature, padding_mask, \
+                    w2v_lengths, src_text_lengths)
+            else:
+                embedding, input_lengths = self.cnn_subsampler(w2v_feature, w2v_lengths)
+                sum_alpha = 0.
         
         if is_text or not self.align_after_encoder:
             internal_states = {'sum_alpha': sum_alpha, 'feature': embedding}
