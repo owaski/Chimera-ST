@@ -61,10 +61,12 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
 
     def forward(self, model, sample, reduce=True):
         # st loss
+        # model.eval()
         if sample["mode"] == "st":
             st_net_output, audio_internal = model.forward_with_internal(**sample["net_input"])
             st_loss, st_nll_loss = self.compute_loss(model, st_net_output, sample, reduce=reduce)
 
+            # th.save(sample["src_text"], '/home/ubuntu/work/experiments/tmp/mt_input.pt')
             # mt loss
             if self.loss_ratio[1] > 0:
                 mt_input = {
@@ -143,6 +145,7 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
         '''
         audio_feature = audio_internal["feature"].transpose(0, 1)
         text_feature = text_internal["feature"].detach().transpose(0, 1) # batch * seqlen * dim
+        # th.save(text_feature, '/home/ubuntu/work/experiments/tmp/mt_feature.pt')
         if self.cos_align:
             align_loss = (audio_feature * text_feature).sum(dim=-1) / audio_feature.norm(dim=-1) / text_feature.norm(dim=-1)
         else:

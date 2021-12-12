@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: fairseq
-Version: 1.0.0a0+9596d6e
+Version: 1.0.0a0+25cc941
 Summary: Facebook AI Research Sequence-to-Sequence Toolkit
 Home-page: https://github.com/pytorch/fairseq
 License: UNKNOWN

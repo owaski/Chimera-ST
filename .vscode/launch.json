@@ -37,7 +37,7 @@
                 "--task",
                 "cs291k_task",
                 "--train-subset",
-                "dev_wave",
+                "train-tiny_wave",
                 "--valid-subset",
                 "dev_wave",
                 "--max-tokens",
@@ -45,7 +45,7 @@
                 "--max-source-positions",
                 "1000000",
                 "--save-dir",
-                "/home/ubuntu/work/experiments/checkpoints/test",
+                "/home/ubuntu/work/experiments/checkpoints/st-pretrained/",
                 "--config-yaml",
                 "config_wave.yaml",
                 "--criterion",
@@ -89,7 +89,6 @@
                 "1",
                 "0",
                 "--fp16",
-                "--cnn-subsampler"
             ]
         },
         {

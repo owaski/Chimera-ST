@@ -80,6 +80,18 @@ class CS291KModel(FairseqEncoderDecoderModel):
         )
 
         parser.add_argument(
+            '--cif-avg-pool',
+            action='store_true',
+            default=False,
+            help='do not use cif weight, use uniform avg'
+        )
+        parser.add_argument(
+            '--fix-cif',
+            default=-1,
+            type=float,
+            help='fixed cif weight, i.e. shrinking, if > 0'
+        )
+        parser.add_argument(
             '--align-after-encoder',
             action='store_true',
             help='apply align loss after encoder'

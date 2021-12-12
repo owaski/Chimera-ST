@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # prerequisits and environment variables
-export ST_SAVE_DIR="$SAVE_ROOT/st-tiny"
+export name="st_mt_cif_pretrained_shrink0.1"
+export ST_SAVE_DIR="$SAVE_ROOT/$name"
 export MT_SAVE_DIR="$SAVE_ROOT/mt"
 export SAVE_DIR=$ST_SAVE_DIR
 export WAVE2VEC_DIR="$SAVE_ROOT/pretrained"
@@ -11,6 +12,8 @@ resume="True"
 reset_optimizer="--reset-optimizer"
 max_updates=150000
 num_gpus=1
+target=de
+seed=1
 
 # downloading wav2vec2 ckpt
 bash chimera/tools/download_wav2vec2.sh $pretrained_ckpt $WAVE2VEC_DIR
@@ -26,13 +29,13 @@ fi
 fairseq-train ${MUSTC_ROOT}/en-$target \
     --task cs291k_task \
     --train-subset train-tiny_wave --valid-subset dev_wave \
-    --max-tokens 1000000 --max-source-positions 1000000 \
+    --max-tokens 2000000 --max-source-positions 2000000 \
     --save-dir $SAVE_DIR --save-interval 10 \
-    --tensorboard-logdir /home/ubuntu/work/experiments/tensorboard_logs/st-tiny \
+    --tensorboard-logdir $TB_DIR/$name \
     --config-yaml config_wave.yaml \
     \
     --criterion cs291k_criterion --label-smoothing 0.1 \
-    --report-accuracy \
+    --report-accuracy --loss-ratio 1 1 1 0 0 \
     \
     --arch cs291k_model_base --share-decoder-input-output-embed \
     --w2v2-model-path $WAVE2VEC_DIR/$pretrained_ckpt \
@@ -42,7 +45,7 @@ fairseq-train ${MUSTC_ROOT}/en-$target \
     --max-update $max_updates --warmup-updates 4000 \
     $reset_optimizer \
     \
-    --update-freq $(expr 16 / $num_gpus) --num-workers 1 \
+    --update-freq $(expr 8 / $num_gpus) --num-workers 1 \
     --ddp-backend no_c10d \
     --best-checkpoint-metric st_loss \
-    --fp16 --seed $seed
+    --fp16 --seed $seed --cif-avg-pool --fix-cif 0.1

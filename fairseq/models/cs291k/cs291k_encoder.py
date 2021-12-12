@@ -45,6 +45,8 @@ class CS291KEncoder(FairseqEncoder):
         if args.encoder_normalize_before:
             self.layer_norm = LayerNorm(args.encoder_embed_dim)
 
+        self.cif_avg_pool = args.cif_avg_pool
+        self.fix_cif = args.fix_cif
         self.align_after_encoder = args.align_after_encoder
         self.cnn_subsampler = None
         if args.cnn_subsampler:
@@ -54,6 +56,9 @@ class CS291KEncoder(FairseqEncoder):
                 args.encoder_embed_dim,
                 [int(k) for k in args.conv_kernel_sizes.split(",")],
             )
+
+        # self.sum_src_length = 0.
+        # self.sum_src_text_length = 0.
 
     def _get_w2v_feature(self, src_tokens, src_lengths):
         '''
@@ -73,16 +78,31 @@ class CS291KEncoder(FairseqEncoder):
             src_feature: b * l * dim
             src_lengths: b
         '''
+        
+        # th.save(self.cif_proj(src_feature[:, :, 1:]), '/home/ubuntu/work/experiments/tmp/st_full_feature.pt')
+
         device = src_feature.device
         is_fp16 = src_feature.dtype == th.float16
         bs = src_feature.size()[0]
         alpha = th.sigmoid(src_feature[:, :, 0].float())
+
         src_feature = src_feature[:, :, 1:]
         alpha = alpha.masked_fill(padding_mask, 0.)
+
+        # th.save(alpha, '/home/ubuntu/work/experiments/tmp/alpha.pt')
+
         sum_alpha = alpha.sum(dim=1)
         if src_text_lengths is not None:
             scale_factor = src_text_lengths / sum_alpha
             alpha = alpha * scale_factor.unsqueeze(-1)
+
+        # self.sum_src_length += src_lengths.sum()
+        # self.sum_src_text_length += src_text_lengths.sum()
+        # print(self.sum_src_length / self.sum_src_text_length)
+
+        if self.fix_cif > 0:
+            alpha[...] = self.fix_cif
+
         alpha_cumsum = alpha.cumsum(dim=1)
 
         alpha_cumsum_trunc = alpha_cumsum.long()
@@ -93,7 +113,7 @@ class CS291KEncoder(FairseqEncoder):
             indices = th.arange(cur_len - 1).to(device)
             separation = th.cat([th.tensor([0]).to(device), indices[diff_mask[i, :cur_len - 1]] + 1])
 
-            # print(cur_len, separation / 49)
+            # print(sum_alpha, cur_len, separation / 49)
 
             if separation[-1] != cur_len - 1:
                 separation = th.cat([separation, th.tensor([cur_len - 1]).to(device)], dim=0)
@@ -110,14 +130,23 @@ class CS291KEncoder(FairseqEncoder):
 
                 cur_feature = th.zeros_like(src_feature[0, 0])
                 cur_sum_alpha = 0.
-                if lb + 1 < rb:
-                    cur_feature += (
-                        alpha[i, lb + 1 : rb].unsqueeze(-1) * src_feature[i, lb + 1 : rb]
-                    ).sum(dim=0)
-                    cur_sum_alpha += alpha[i, lb + 1 : rb].sum()
-                cur_feature += (alpha_cumsum[i, lb] - vlb) * src_feature[i, lb]
-                cur_feature += (vrb - alpha_cumsum[i, rb - 1]) * src_feature[i, rb]
-                cur_sum_alpha += (alpha_cumsum[i, lb] - vlb) + (vrb - alpha_cumsum[i, rb - 1])
+
+                if not self.cif_avg_pool:
+                    if lb + 1 < rb:
+                        cur_feature += (
+                            alpha[i, lb + 1 : rb].unsqueeze(-1) * src_feature[i, lb + 1 : rb]
+                        ).sum(dim=0)
+                        cur_sum_alpha += alpha[i, lb + 1 : rb].sum()
+                    
+                    cur_feature += (alpha_cumsum[i, lb] - vlb) * src_feature[i, lb]
+                    cur_feature += (vrb - alpha_cumsum[i, rb - 1]) * src_feature[i, rb]
+                    
+                    cur_sum_alpha += (alpha_cumsum[i, lb] - vlb) + (vrb - alpha_cumsum[i, rb - 1])
+                else:
+                    cur_feature += src_feature[i, lb:rb + 1].mean(dim=0)
+                    if lb + 1 < rb:
+                        cur_sum_alpha += alpha[i, lb + 1 : rb].sum()
+                    cur_sum_alpha += (alpha_cumsum[i, lb] - vlb) + (vrb - alpha_cumsum[i, rb - 1])
 
                 if cur_sum_alpha > 0.5 or len(features) == 0:
                     features.append(cur_feature.unsqueeze(0))
@@ -131,7 +160,7 @@ class CS291KEncoder(FairseqEncoder):
             batch_features.append(th.cat(features, dim=0))
         
         output_lengths = th.tensor([features.size(0) for features in batch_features]).to(device)
-        if src_text_lengths is not None:
+        if src_text_lengths is not None and not self.fix_cif:
             assert ~(output_lengths != src_text_lengths).any(), (output_lengths, src_text_lengths)
         max_length = output_lengths.max()
         output_features = []
@@ -147,7 +176,7 @@ class CS291KEncoder(FairseqEncoder):
             output_features = output_features.half()
             sum_alpha = sum_alpha.half()
 
-        # th.save(output_features, '/home/ubuntu/work/experiments/tmp/st_feature.pt')
+        
 
         return output_features, output_lengths, sum_alpha
         
