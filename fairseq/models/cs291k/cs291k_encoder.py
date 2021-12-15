@@ -1,6 +1,8 @@
+import numpy as np
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+
 from fairseq.data.data_utils import lengths_to_mask, lengths_to_padding_mask
 
 from fairseq.models.fairseq_encoder import EncoderOut, FairseqEncoder
@@ -33,6 +35,8 @@ class CS291KEncoder(FairseqEncoder):
         self.cif_proj = Linear(self.w2v_args.encoder_embed_dim - 1, args.encoder_embed_dim)
 
         self.text_embedding = encoder_embedding
+        self.embed_scale = 1.0 if args.no_scale_embedding else \
+            np.sqrt(self.text_embedding.embedding_dim)
         self.embed_positions = PositionalEmbedding(
             args.max_source_positions, args.encoder_embed_dim, self.padding_idx
         )
@@ -209,10 +213,10 @@ class CS291KEncoder(FairseqEncoder):
             internal_states = {'sum_alpha': sum_alpha, 'feature': embedding}
 
         x = embedding
+        x = self.embed_scale * x
         encoder_padding_mask = lengths_to_padding_mask(input_lengths)
-        if is_text:
-            positions = self.embed_positions(encoder_padding_mask).transpose(0, 1)
-            x += positions
+        positions = self.embed_positions(encoder_padding_mask).transpose(0, 1)
+        x += positions
         x = self.dropout(x)
 
         for layer in self.transformer_layers:

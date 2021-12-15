@@ -233,6 +233,9 @@ def cs291k_model_base(args):
     args.activation_dropout = args.dropout
     args.relu_dropout = args.dropout
 
+    # embedding
+    args.no_scale_embedding = getattr(args, "no_scale_embedding", False)
+
     # encoder
     args.encoder_embed_dim = getattr(args, 'encoder_embed_dim', 256)
     args.encoder_ffn_embed_dim = getattr(args, 'encoder_ffn_embed_dim', 1024)
