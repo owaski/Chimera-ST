@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # prerequisits and environment variables
-export name="st_mt_cif_pretrained_shrink0.1"
+export name="st_mt_cif_pretrained_noshrink"
 export ST_SAVE_DIR="$SAVE_ROOT/$name"
 export MT_SAVE_DIR="$SAVE_ROOT/mt"
 export SAVE_DIR=$ST_SAVE_DIR
 export WAVE2VEC_DIR="$SAVE_ROOT/pretrained"
 pretrained_ckpt=wav2vec_small.pt
 mkdir -p $ST_SAVE_DIR $MT_SAVE_DIR $WAVE2VEC_DIR $WMT_ROOT $MUSTC_ROOT
-resume="True"
+# resume="True"
 reset_optimizer="--reset-optimizer"
 max_updates=150000
 num_gpus=1
@@ -35,7 +35,7 @@ fairseq-train ${MUSTC_ROOT}/en-$target \
     --config-yaml config_wave.yaml \
     \
     --criterion cs291k_criterion --label-smoothing 0.1 \
-    --report-accuracy --loss-ratio 1 1 1 0 0 \
+    --report-accuracy --loss-ratio 1 1 0 0 0 \
     \
     --arch cs291k_model_base --share-decoder-input-output-embed \
     --w2v2-model-path $WAVE2VEC_DIR/$pretrained_ckpt \
@@ -48,4 +48,4 @@ fairseq-train ${MUSTC_ROOT}/en-$target \
     --update-freq $(expr 8 / $num_gpus) --num-workers 1 \
     --ddp-backend no_c10d \
     --best-checkpoint-metric st_loss \
-    --fp16 --seed $seed --cif-avg-pool --fix-cif 0.1
+    --fp16 --seed $seed --no-shrink

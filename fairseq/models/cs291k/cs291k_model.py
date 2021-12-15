@@ -113,6 +113,12 @@ class CS291KModel(FairseqEncoderDecoderModel):
             metavar="N",
             help="# of channels in Conv1d subsampling layers",
         )
+        parser.add_argument(
+            '--no-shrink',
+            action='store_true',
+            default=False,
+            help='whether to disable shrinking'
+        )
 
         # decoder
         parser.add_argument(
@@ -260,3 +266,5 @@ def cs291k_model_base(args):
     args.cnn_subsampler = getattr(args, 'cnn_subsampler', False)
     args.conv_kernel_sizes = getattr(args, "conv_kernel_sizes", "5,5")
     args.conv_channels = getattr(args, "conv_channels", 1024)
+    # shrink
+    args.no_shrink = getattr(args, 'no_shrink', False)

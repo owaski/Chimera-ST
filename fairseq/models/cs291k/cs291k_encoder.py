@@ -57,6 +57,11 @@ class CS291KEncoder(FairseqEncoder):
                 [int(k) for k in args.conv_kernel_sizes.split(",")],
             )
 
+        
+        self.no_shrink = args.no_shrink
+        if self.no_shrink:
+            self.proj = nn.Linear(self.w2v_args.encoder_embed_dim, args.encoder_embed_dim)
+
         # self.sum_src_length = 0.
         # self.sum_src_text_length = 0.
 
@@ -190,12 +195,15 @@ class CS291KEncoder(FairseqEncoder):
             sum_alpha = None
         else:
             w2v_feature, padding_mask, w2v_lengths = self._get_w2v_feature(src_tokens, src_lengths)
-            if self.cnn_subsampler is None:
+            sum_alpha = 0.
+            if self.no_shrink:
+                embedding = self.proj(w2v_feature).transpose(0, 1)
+                input_lengths = w2v_lengths
+            elif self.cnn_subsampler is None:
                 embedding, input_lengths, sum_alpha = self._cif(w2v_feature, padding_mask, \
                     w2v_lengths, src_text_lengths)
             else:
                 embedding, input_lengths = self.cnn_subsampler(w2v_feature, w2v_lengths)
-                sum_alpha = 0.
         
         if is_text or not self.align_after_encoder:
             internal_states = {'sum_alpha': sum_alpha, 'feature': embedding}
