@@ -35,8 +35,7 @@ class CS291KEncoder(FairseqEncoder):
         self.cif_proj = Linear(self.w2v_args.encoder_embed_dim - 1, args.encoder_embed_dim)
 
         self.text_embedding = encoder_embedding
-        self.embed_scale = 1.0 if args.no_scale_embedding else \
-            np.sqrt(self.text_embedding.embedding_dim)
+        self.embed_scale = 1.0 if args.no_scale_embedding else np.sqrt(args.encoder_embed_dim)
         self.embed_positions = PositionalEmbedding(
             args.max_source_positions, args.encoder_embed_dim, self.padding_idx
         )

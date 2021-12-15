@@ -2,7 +2,7 @@ hydra-core
 pandas
 tensorflow
 sacremoses
-sacrebleu
+sacrebleu==1.5.0
 soundfile
 sentencepiece
 torchaudio

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # prerequisits and environment variables
-export name="st_mt_cif_pretrained_noshrink"
+export name="test"
 export ST_SAVE_DIR="$SAVE_ROOT/$name"
 export MT_SAVE_DIR="$SAVE_ROOT/mt"
 export SAVE_DIR=$ST_SAVE_DIR
@@ -47,5 +47,11 @@ fairseq-train ${MUSTC_ROOT}/en-$target \
     \
     --update-freq $(expr 8 / $num_gpus) --num-workers 1 \
     --ddp-backend no_c10d \
-    --best-checkpoint-metric st_loss \
-    --fp16 --seed $seed --no-shrink
+    \
+    --eval-bleu --eval-bleu-args '{"beam": 4, "lenpen": 0.6, "prefix_size": 1}' \
+    --eval-bleu-detok moses --eval-bleu-remove-bpe --eval-bleu-print-samples \
+    --eval-bleu-bpe sentencepiece --eval-bleu-bpe-path ${spm_model} \
+    --best-checkpoint-metric bleu --maximize-best-checkpoint-metric \
+    \
+    --fp16 --seed $seed \
+    --no-shrink
