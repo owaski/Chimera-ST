@@ -212,6 +212,25 @@ This is okay in most cases,
 with the only risk being a potential mismatch to already trained checkpoints we provided.
 
 
+Phoneme tokenization
+```bash
+python extract_src.py \
+  --tsv ${MUSTC_ROOT}/en-${target}/train_wave.tsv
+
+python cs291k/prepare_data/g2p_encode.py \
+  --lower-case --do-filter --use-word-start --no-punc \
+  --reserve-word cs291k/prepare_data/mustc_noise.list \
+  --data-path ${MUSTC_ROOT}/en-${target}/train_src.txt \
+  --out-path ${MUSTC_ROOT}/en-${target}/train_src_phon.txt
+
+python cs291k/prepare_data/replace_with_phon.py \
+  --phon-src ${MUSTC_ROOT}/en-${target}/train_src_phon.txt \
+  --tsv ${MUSTC_ROOT}/en-${target}/train_wave.tsv
+
+python cs291k/prepare_data/build_phon_vocab.py \
+  --phon-src ${MUSTC_ROOT}/en-${target}/train_src_phon.txt
+```
+
 ## Training
 
 To reproduce the results in the last row in Figure 1 in paper,

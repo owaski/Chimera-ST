@@ -35,6 +35,12 @@ class CS291KModel(FairseqEncoderDecoderModel):
             help='path to wav2vec2 model'
         )
         parser.add_argument(
+            '--w2v2-grad-mult',
+            type=float,
+            default=1.0,
+            help='gradient multiplier of w2v2'
+        )
+        parser.add_argument(
             '--activation-fn', 
             type=str, 
             default='relu', 

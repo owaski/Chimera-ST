@@ -4,7 +4,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from fairseq.data.data_utils import lengths_to_mask, lengths_to_padding_mask
-
 from fairseq.models.fairseq_encoder import EncoderOut, FairseqEncoder
 from fairseq.models.transformer import Linear
 from fairseq.models.wav2vec import Wav2Vec2Model
@@ -13,6 +12,7 @@ from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.layer_norm import LayerNorm
 from fairseq.modules.positional_embedding import PositionalEmbedding
 from fairseq.modules.transformer_layer import TransformerEncoderLayer
+from fairseq.modules.grad_multiply import GradMultiply
 
 class CS291KEncoder(FairseqEncoder):
     '''Speech-to-text Transformer encoder that consists of
@@ -28,6 +28,7 @@ class CS291KEncoder(FairseqEncoder):
         self.w2v_args = w2v_ckpt['args']
         self.w2v_model = Wav2Vec2Model.build_model(self.w2v_args, task=None)
         self.w2v_model.load_state_dict(w2v_ckpt['model'])
+        self.w2v2_grad_mult = args.w2v2_grad_mult
 
         self.dropout = FairseqDropout(p=args.dropout, module_name=self.__class__.__name__)
         self.padding_idx = 1
@@ -76,6 +77,8 @@ class CS291KEncoder(FairseqEncoder):
         padding_mask = lengths_to_padding_mask(src_lengths)
         w2v_feature, padding_mask = self.w2v_model.extract_features(src_tokens, padding_mask)
         output_lengths = (1 - padding_mask.long()).sum(dim=1)
+        if self.w2v2_grad_mult != 1.0:
+            GradMultiply.apply(w2v_feature, self.w2v2_grad_mult)
         return w2v_feature, padding_mask, output_lengths
 
     def max_positions(self):

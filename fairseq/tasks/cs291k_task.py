@@ -147,7 +147,9 @@ class CS291KTask(LegacyFairseqTask):
             self.bpe = encoders.build_bpe(Namespace(**self.data_cfg.bpe_tokenizer))
             return self.bpe
         else:
-            self.src_bpe = encoders.build_bpe(Namespace(**self.data_cfg.src_bpe_tokenizer))
+            self.src_bpe = None
+            if getattr(self.data_cfg, 'src_bpe_tokenizer', None): # None if use phoneme src
+                self.src_bpe = encoders.build_bpe(Namespace(**self.data_cfg.src_bpe_tokenizer))
             return self.src_bpe
 
     @property

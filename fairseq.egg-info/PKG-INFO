@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: fairseq
-Version: 1.0.0a0+afee77f
+Version: 1.0.0a0+d16a1a7
 Summary: Facebook AI Research Sequence-to-Sequence Toolkit
 Home-page: https://github.com/pytorch/fairseq
 License: UNKNOWN
@@ -225,6 +225,16 @@ If not, the program will still produce one dictionary on the run and reports
 `No existing spm detected. Learning unigram spm on wmt14_en_de/tmp/train.de-en ...`
 This is okay in most cases,
 with the only risk being a potential mismatch to already trained checkpoints we provided.
+
+
+Phoneme tokenization
+```bash
+python cs291k/prepare_data/g2p_encode.py \
+  --lower-case --do-filter --use-word-start --no-punc \
+  --reserve-word cs291k/prepare_data/mustc_noise.list \
+  --data-path ${MUSTC_ROOT}/en-${target}/data/train/txt/train.en \
+  --out-path ${MUSTC_ROOT}/en-${target}/data/train/txt/train.en.phon
+```
 
 
 ## Training

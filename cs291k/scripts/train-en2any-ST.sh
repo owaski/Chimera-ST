@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # prerequisits and environment variables
-export name="w2v_transformer"
+export name="w2v_transformer_v2"
 export ST_SAVE_DIR="$SAVE_ROOT/$name"
 export MT_SAVE_DIR="$SAVE_ROOT/mt"
 export SAVE_DIR=$ST_SAVE_DIR
@@ -30,7 +30,8 @@ fairseq-train ${MUSTC_ROOT}/en-$target \
     --task cs291k_task \
     --train-subset train_wave --valid-subset dev_wave \
     --max-tokens 2000000 --max-source-positions 2000000 \
-    --save-dir $SAVE_DIR --save-interval 10 \
+    --save-dir $SAVE_DIR --save-interval-updates 1000 --save-interval 1 \
+    --keep-last-epochs 1 --keep-interval-updates 1 --keep-best-checkpoints 10 \
     --tensorboard-logdir $TB_DIR/$name \
     --config-yaml config_wave.yaml \
     \
