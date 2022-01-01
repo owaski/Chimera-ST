@@ -229,6 +229,52 @@ python cs291k/prepare_data/replace_with_phon.py \
 
 python cs291k/prepare_data/build_phon_vocab.py \
   --phon-src ${MUSTC_ROOT}/en-${target}/train_src_phon.txt
+
+
+python3 cs291k/prepare_data/learn_spm.py \
+  --input $prep/tmp/train.$target-en \
+  --vocab-size 10000 \
+  --model-prefix $BPE_CODE
+
+python cs291k/prepare_data/apply_spm.py \
+  --input-file ../../datasets/wmt14/en-de/phon/tmp/train.de \
+  --output-file ../../datasets/wmt14/en-de/phon/tmp/spm.train.de \
+  --model ../../datasets/wmt14/en-de/phon/tmp/spm_unigram10000_wave.model
+python cs291k/prepare_data/apply_spm.py \
+  --input-file ../../datasets/wmt14/en-de/phon/tmp/valid.de \
+  --output-file ../../datasets/wmt14/en-de/phon/tmp/spm.valid.de \
+  --model ../../datasets/wmt14/en-de/phon/tmp/spm_unigram10000_wave.model
+python cs291k/prepare_data/apply_spm.py \
+  --input-file ../../datasets/wmt14/en-de/phon/tmp/test.de \
+  --output-file ../../datasets/wmt14/en-de/phon/tmp/spm.test.de \
+  --model ../../datasets/wmt14/en-de/phon/tmp/spm_unigram10000_wave.model
+
+python cs291k/prepare_data/g2p_encode.py \
+  --lower-case --do-filter --use-word-start --no-punc \
+  --data-path ../../datasets/wmt14/en-de/phon/tmp/train.en \
+  --out-path ../../datasets/wmt14/en-de/phon/tmp/spm.train.en
+python cs291k/prepare_data/g2p_encode.py \
+  --lower-case --do-filter --use-word-start --no-punc \
+  --data-path ../../datasets/wmt14/en-de/phon/tmp/valid.en \
+  --out-path ../../datasets/wmt14/en-de/phon/tmp/spm.valid.en
+python cs291k/prepare_data/g2p_encode.py \
+  --lower-case --do-filter --use-word-start --no-punc \
+  --data-path ../../datasets/wmt14/en-de/phon/tmp/test.en \
+  --out-path ../../datasets/wmt14/en-de/phon/tmp/spm.test.en
+
+perl ../../datasets/wmt14/en-de/mosesdecoder/scripts/training/clean-corpus-n.perl -ratio 2.0 ../../datasets/wmt14/en-de/phon/tmp/spm.train en de ../../datasets/wmt14/en-de/phon/train 1 500
+perl ../../datasets/wmt14/en-de/mosesdecoder/scripts/training/clean-corpus-n.perl -ratio 2.0 ../../datasets/wmt14/en-de/phon/tmp/spm.valid en de ../../datasets/wmt14/en-de/phon/valid 1 500
+cp ../../datasets/wmt14/en-de/phon/tmp/spm.test.en ../../datasets/wmt14/en-de/phon/test.en
+cp ../../datasets/wmt14/en-de/phon/tmp/spm.test.de ../../datasets/wmt14/en-de/phon/test.de
+
+export TEXT=../../datasets/wmt14/en-de/phon
+fairseq-preprocess \
+    --source-lang en --target-lang $target \
+    --trainpref $TEXT/train --validpref $TEXT/valid \
+    --testpref $TEXT/test \
+    --destdir $WMT_ROOT/phon/bin --thresholdtgt 0 --thresholdsrc 0 \
+    --srcdict $TEXT/src_phon.txt --tgtdict $TEXT/spm_unigram10000_wave.txt \
+    --workers 100
 ```
 
 ## Training

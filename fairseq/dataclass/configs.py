@@ -812,7 +812,7 @@ class CommonEvalConfig(FairseqDataclass):
         default=None,
         metadata={"help": "path(s) to model file(s), colon separated"},
     )
-    post_process: Optional[str] = field(
+    post_process: str = field(
         default=None,
         metadata={
             "help": "post-process text by removing pre-processing such as BPE, letter segmentation, etc "
