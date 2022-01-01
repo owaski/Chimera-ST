@@ -1,0 +1,33 @@
+apt-get update
+
+# tmux
+apt-get install -y tmux
+cd
+git clone https://github.com/gpakosz/.tmux.git
+ln -s -f .tmux/.tmux.conf
+cp .tmux/.tmux.conf.local .
+tmux new -s st
+
+# environment
+cd /notebooks/Chimera-ST/
+conda create -n st -y python=3.9
+conda init
+source ~/.bashrc
+conda activate st
+xargs apt-get install -y < requirements-apt.txt
+conda install -y pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch
+pip install -r requirements.txt
+pip install sentencepiece soundfile tensorboardX tornado
+pip install -e ./
+
+# cpu/gpu monitor
+apt-get install -y htop
+pip install gpustat
+
+# env var
+export MUSTC_ROOT=../../datasets/must-c
+export WMT_ROOT=../../datasets/wmt14/en-de/
+export SAVE_ROOT=/mnt/raid0/siqi/checkpoints/
+export TB_DIR=tensorboard_logs
+export target=de
+export spm_model=../../datasets/must-c/en-de/spm_unigram10000_wave_joint.model

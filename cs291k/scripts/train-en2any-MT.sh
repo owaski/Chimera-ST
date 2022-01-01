@@ -1,14 +1,13 @@
 #!/bin/bash
 
 # prerequisits and environment variables
-export ST_SAVE_DIR="$SAVE_ROOT/st"
 export MT_SAVE_DIR="$SAVE_ROOT/mt"
 export SAVE_DIR=$MT_SAVE_DIR
 export WAVE2VEC_DIR="$SAVE_ROOT/pretrained"
 pretrained_ckpt=wav2vec_small.pt
-mkdir -p $ST_SAVE_DIR $MT_SAVE_DIR $WAVE2VEC_DIR $MUSTC_ROOT $WMT_ROOT
+mkdir -p $MT_SAVE_DIR $WAVE2VEC_DIR $MUSTC_ROOT $WMT_ROOT
 
-num_gpus=1
+num_gpus=2
 seed=1
 dataset=wmt14
 max_updates=500000
@@ -34,6 +33,9 @@ fairseq-train $WMT_ROOT/bin \
     --task translation \
     --train-subset train --valid-subset valid \
     --save-dir $SAVE_DIR \
+    --save-interval 1 \
+    --keep-last-epochs 1 \
+    --tensorboard-logdir $TB_DIR/mt \
     --max-tokens 4096 \
     \
     --criterion label_smoothed_cross_entropy --label-smoothing 0.1 \

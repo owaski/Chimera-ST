@@ -90,7 +90,7 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
                 align_loss = 0.
 
             if self.loss_ratio[4] > 0:
-                kd_loss = self.compute_kd(st_net_output, mt_net_output, sample["target"], reduce)
+                kd_loss = self.compute_kd_layer(st_net_output, mt_net_output, sample["target"], reduce)
             else:
                 kd_loss = 0.
 
@@ -154,7 +154,34 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
             align_loss = align_loss.nansum()
         return align_loss.float()
 
-    def compute_kd(self, st_net_output, mt_net_output, target, reduce):
+    def compute_kd_layer(self, st_net_output, mt_net_output, target, reduce):
+        '''
+            st_net_output: batch * seqlen * vocab
+            mt_net_output: batch * seqlen * vocab
+            target: batch * seqlen
+        '''
+
+        target = target[:, self.ignore_prefix_size:].contiguous()
+        padding_mask = target.eq(self.padding_idx)
+
+        st_states = st_net_output[1]['inner_states']
+        mt_states = mt_net_output[1]['inner_states']
+
+        weights = [0., 1., 0., 0., 0., 0., 0.]
+        kd_loss = th.zeros_like(target)
+
+        for st_state, mt_state, weight in zip(st_states, mt_states, weights):
+            st_state = st_state.transpose(0, 1)[:, self.ignore_prefix_size:, :].float()
+            mt_state = mt_state.transpose(0, 1)[:, self.ignore_prefix_size:, :].detach().float()
+            cur_layer_loss = -F.cosine_similarity(st_state, mt_state, dim=-1)
+            kd_loss = kd_loss + weight * cur_layer_loss
+        
+        kd_loss[padding_mask] = 0.
+        if reduce:
+            kd_loss = kd_loss.sum()
+        return kd_loss.float()
+
+    def compute_kd_logit(self, st_net_output, mt_net_output, target, reduce):
         '''
             st_net_output: batch * seqlen * vocab
             mt_net_output: batch * seqlen * vocab

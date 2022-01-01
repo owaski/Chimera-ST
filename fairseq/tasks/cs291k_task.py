@@ -3,6 +3,7 @@ import logging
 from argparse import Namespace
 
 import numpy as np
+import torch as th
 
 from fairseq import utils, metrics, criterions
 from fairseq.data import encoders
@@ -231,7 +232,7 @@ class CS291KTask(LegacyFairseqTask):
             s = self.tgt_dict.string(
                 toks.int().cpu(),
                 self.args.eval_bleu_remove_bpe,
-                unk_string=("UNKNOWNTOKENINREF" if escape_unk else "UNKNOWNTOKENINHYP"),
+                escape_unk=escape_unk,
             )
             if self.bpe is not None:
                 s = self.bpe.decode(s)
@@ -271,6 +272,12 @@ class CS291KTask(LegacyFairseqTask):
             for i in range(EVAL_BLEU_ORDER):
                 counts.append(sum_logs("_bleu_counts_" + str(i)))
                 totals.append(sum_logs("_bleu_totals_" + str(i)))
+
+            for i in range(EVAL_BLEU_ORDER):
+                if type(counts[i]) is th.Tensor:
+                    counts[i] = counts[i].cpu()
+                if type(totals[i]) is th.Tensor:
+                    totals[i] = totals[i].cpu()
 
             if max(totals) > 0:
                 # log counts as numpy arrays -- log_scalar will sum them correctly

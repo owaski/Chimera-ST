@@ -28,7 +28,7 @@ class CS291KEncoder(FairseqEncoder):
         self.w2v_args = w2v_ckpt['args']
         self.w2v_model = Wav2Vec2Model.build_model(self.w2v_args, task=None)
         self.w2v_model.load_state_dict(w2v_ckpt['model'])
-        self.w2v2_grad_mult = args.w2v2_grad_mult
+        self.w2v2_grad_mult = getattr(args, "w2v2_grad_mult", 1.0)
 
         self.dropout = FairseqDropout(p=args.dropout, module_name=self.__class__.__name__)
         self.padding_idx = 1
@@ -49,9 +49,9 @@ class CS291KEncoder(FairseqEncoder):
         if args.encoder_normalize_before:
             self.layer_norm = LayerNorm(args.encoder_embed_dim)
 
-        self.cif_avg_pool = args.cif_avg_pool
-        self.fix_cif = args.fix_cif
-        self.align_after_encoder = args.align_after_encoder
+        self.cif_avg_pool = getattr(args, 'cif_avg_pool', False)
+        self.fix_cif = getattr(args, 'fix_cif', False)
+        self.align_after_encoder = getattr(args, 'align_after_encoder', False)
         self.cnn_subsampler = None
         if args.cnn_subsampler:
             self.cnn_subsampler = Conv1dSubsampler(
@@ -62,7 +62,7 @@ class CS291KEncoder(FairseqEncoder):
             )
 
         
-        self.no_shrink = args.no_shrink
+        self.no_shrink = getattr(args, 'no_shrink', False)
         if self.no_shrink:
             self.proj = nn.Linear(self.w2v_args.encoder_embed_dim, args.encoder_embed_dim)
 

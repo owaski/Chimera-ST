@@ -157,7 +157,7 @@ def _main(cfg: DictConfig, output_file):
         num_workers=cfg.dataset.num_workers,
         data_buffer_size=cfg.dataset.data_buffer_size,
         keep_num_indices=cfg.dataset.keep_num_indices,
-    ).next_epoch_itr(shuffle=True)
+    ).next_epoch_itr(shuffle=False)
     progress = progress_bar.progress_bar(
         itr,
         log_format=cfg.common.log_format,
@@ -192,8 +192,14 @@ def _main(cfg: DictConfig, output_file):
     num_sentences = 0
     has_target = True
     wps_meter = TimeMeter()
+    def apply_half(t):
+        if t.dtype is torch.float32:
+            return t.half()
+        return t
     for sample in progress:
         sample = utils.move_to_cuda(sample) if use_cuda else sample
+        if cfg.common.fp16:
+            sample = utils.apply_to_sample(apply_half, sample)
         if "net_input" not in sample:
             continue
 

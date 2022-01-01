@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # prerequisits and environment variables
-export name="w2v_transformer_v2"
+export name="debug"
 export ST_SAVE_DIR="$SAVE_ROOT/$name"
 export MT_SAVE_DIR="$SAVE_ROOT/mt"
 export SAVE_DIR=$ST_SAVE_DIR
@@ -11,7 +11,7 @@ mkdir -p $ST_SAVE_DIR $MT_SAVE_DIR $WAVE2VEC_DIR $WMT_ROOT $MUSTC_ROOT
 resume="True"
 reset_optimizer="--reset-optimizer"
 max_updates=150000
-num_gpus=1
+num_gpus=2
 target=de
 seed=1
 
@@ -30,8 +30,8 @@ fairseq-train ${MUSTC_ROOT}/en-$target \
     --task cs291k_task \
     --train-subset train_wave --valid-subset dev_wave \
     --max-tokens 2000000 --max-source-positions 2000000 \
-    --save-dir $SAVE_DIR --save-interval-updates 1000 --save-interval 1 \
-    --keep-last-epochs 1 --keep-interval-updates 1 --keep-best-checkpoints 10 \
+    --save-dir $SAVE_DIR --save-interval-updates 1 --save-interval 1 \
+    --keep-last-epochs 1 --keep-interval-updates 20 \
     --tensorboard-logdir $TB_DIR/$name \
     --config-yaml config_wave.yaml \
     \
@@ -49,7 +49,7 @@ fairseq-train ${MUSTC_ROOT}/en-$target \
     --update-freq $(expr 8 / $num_gpus) --num-workers 1 \
     --ddp-backend no_c10d \
     \
-    --eval-bleu --eval-bleu-args '{"beam": 4, "lenpen": 0.6, "prefix_size": 1}' \
+    --eval-bleu --eval-bleu-args '{"beam": 4, "lenpen": 1.0}' \
     --eval-bleu-detok moses --eval-bleu-remove-bpe --eval-bleu-print-samples \
     --eval-bleu-bpe sentencepiece --eval-bleu-bpe-path ${spm_model} \
     --best-checkpoint-metric bleu --maximize-best-checkpoint-metric \

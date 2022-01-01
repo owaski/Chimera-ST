@@ -220,7 +220,7 @@ class TransformerDecoderScriptable(TransformerDecoder):
         alignment_heads: Optional[int] = None,
     ):
         # call scriptable method from parent class
-        x, _ = self.extract_features_scriptable(
+        x, extra = self.extract_features_scriptable(
             prev_output_tokens,
             encoder_out,
             incremental_state,
@@ -228,7 +228,7 @@ class TransformerDecoderScriptable(TransformerDecoder):
             alignment_layer,
             alignment_heads,
         )
-        return x, None
+        return x, extra
 
 
 @register_model_architecture('cs291k_model', 'cs291k_model_base')

@@ -10,6 +10,7 @@ import os
 from argparse import Namespace
 
 import numpy as np
+import torch as th
 from fairseq import metrics, options, utils
 from fairseq.data import (
     AppendTokenDataset,
@@ -386,6 +387,12 @@ class TranslationTask(LegacyFairseqTask):
             for i in range(EVAL_BLEU_ORDER):
                 counts.append(sum_logs("_bleu_counts_" + str(i)))
                 totals.append(sum_logs("_bleu_totals_" + str(i)))
+
+            for i in range(EVAL_BLEU_ORDER):
+                if type(counts[i]) is th.Tensor:
+                    counts[i] = counts[i].cpu()
+                if type(totals[i]) is th.Tensor:
+                    totals[i] = totals[i].cpu()
 
             if max(totals) > 0:
                 # log counts as numpy arrays -- log_scalar will sum them correctly
