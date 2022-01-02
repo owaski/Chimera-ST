@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from fairseq import logging, metrics, utils
 from fairseq.criterions import register_criterion
 from fairseq.criterions.label_smoothed_cross_entropy import LabelSmoothedCrossEntropyCriterion
+from fairseq.data.data_utils import groupby_mean
 
 @register_criterion("cs291k_criterion")
 class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
@@ -80,12 +81,12 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
                 mt_loss = mt_nll_loss = 0.
 
             if self.loss_ratio[2] > 0:
-                qua_loss = self.compute_qua(audio_internal, sample["src_text_lengths"], reduce)
+                qua_loss = self.compute_qua(audio_internal, sample["src_group_lengths"], reduce)
             else:
                 qua_loss = 0.
 
             if self.loss_ratio[3] > 0:
-                align_loss = self.compute_align(audio_internal, text_internal, reduce)
+                align_loss = self.compute_align(audio_internal, text_internal, sample["src_word_groups"], reduce)
             else:
                 align_loss = 0.
 
@@ -129,30 +130,32 @@ class CS291KCriterion(LabelSmoothedCrossEntropyCriterion):
         else:
             raise NotImplementedError
 
-    def compute_qua(self, audio_internal, src_text_lengths, reduce):
+    def compute_qua(self, audio_internal, src_group_lengths, reduce):
         '''
             audio_internal["sum_alpha"]: batch
             src_lengths: batch
         '''
         sum_alpha = audio_internal["sum_alpha"]
-        qua_loss = F.l1_loss(sum_alpha, src_text_lengths, reduction='sum' if reduce else 'none')
+        qua_loss = F.l1_loss(sum_alpha, src_group_lengths, reduction='sum' if reduce else 'none')
         return qua_loss.float()
     
-    def compute_align(self, audio_internal, text_internal, reduce):
+    def compute_align(self, audio_internal, text_internal, src_word_groups, reduce):
         '''
            audio_internal["feature"]: seqlen * batch * dim
            text_internal["feature"]: seqlen * batch * dim
         '''
-        audio_feature = audio_internal["feature"].transpose(0, 1)
-        text_feature = text_internal["feature"].detach().transpose(0, 1) # batch * seqlen * dim
-        # th.save(text_feature, '/home/ubuntu/work/experiments/tmp/mt_feature.pt')
-        if self.cos_align:
-            align_loss = (audio_feature * text_feature).sum(dim=-1) / audio_feature.norm(dim=-1) / text_feature.norm(dim=-1)
-        else:
-            align_loss = th.linalg.norm(audio_feature - text_feature, dim=-1)
-        if reduce:
-            align_loss = align_loss.nansum()
-        return align_loss.float()
+        audio_feature = audio_internal["feature"].transpose(0, 1).float()
+        text_feature = text_internal["feature"].detach().transpose(0, 1).float() # batch * seqlen * dim
+
+        align_loss = 0
+        for i in range(text_feature.size(0)):
+            group_text_feature_i = groupby_mean(text_feature[i][:src_word_groups[i].size(0)], \
+                src_word_groups[i].to(text_feature.device))[0]
+            audio_feature_i = audio_feature[i][:src_word_groups[i][-1] + 1]
+            align_loss += -F.cosine_similarity(group_text_feature_i, audio_feature_i, dim=-1).sum()
+        assert reduce
+
+        return align_loss
 
     def compute_kd_layer(self, st_net_output, mt_net_output, target, reduce):
         '''

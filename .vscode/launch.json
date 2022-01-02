@@ -31,7 +31,7 @@
             "program": "train.py",
             "console": "integratedTerminal",
             "cwd": "/mnt/nvme/siqi/work/projects/Chimera-ST",
-            "env": {"CUDA_VISIBLE_DEVICES": "0"},
+            "env": {"CUDA_VISIBLE_DEVICES": "2"},
             "args": [
                 "/mnt/nvme/siqi/work/datasets/must-c/en-de/",
                 "--log-interval",
@@ -88,9 +88,9 @@
                 "--loss-ratio",
                 "1",
                 "1",
-                "0",
-                "0",
                 "1",
+                "1",
+                "0",
                 "--fp16",
             ]
         },

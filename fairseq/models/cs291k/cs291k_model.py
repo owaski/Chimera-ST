@@ -99,8 +99,9 @@ class CS291KModel(FairseqEncoderDecoderModel):
         )
         parser.add_argument(
             '--align-after-encoder',
-            action='store_true',
-            help='apply align loss after encoder'
+            default=-1,
+            type=int,
+            help='apply align loss after encoder layer x'
         )
         parser.add_argument(
             '--cnn-subsampler',
@@ -193,17 +194,17 @@ class CS291KModel(FairseqEncoderDecoderModel):
         return decoder
 
     def forward_with_internal(self, src_tokens, src_lengths, prev_output_tokens, \
-        src_text_lengths=None, **extra_args):
+        src_group_lengths=None, **extra_args):
         encoder_out = self.encoder(src_tokens=src_tokens, src_lengths=src_lengths, \
-            src_text_lengths=src_text_lengths)
+            src_group_lengths=src_group_lengths)
         decoder_out = self.decoder(prev_output_tokens=prev_output_tokens, \
             encoder_out=encoder_out)
         return decoder_out, encoder_out.internal_states
 
-    def forward(self, src_tokens, src_lengths, prev_output_tokens, src_text_lengths=None, \
+    def forward(self, src_tokens, src_lengths, prev_output_tokens, src_group_lengths=None, \
         **extra_args):
         encoder_out = self.encoder(src_tokens=src_tokens, src_lengths=src_lengths, \
-            src_text_lengths=src_text_lengths)
+            src_group_lengths=src_group_lengths)
         decoder_out = self.decoder(prev_output_tokens=prev_output_tokens, \
             encoder_out=encoder_out)
         return decoder_out
@@ -270,7 +271,7 @@ def cs291k_model_base(args):
 
     # other
     args.max_source_positions = getattr(args, 'max_source_positions', 1000000)
-    args.align_after_encoder = getattr(args, 'align_after_encoder', False)
+    args.align_after_encoder = getattr(args, 'align_after_encoder', -1)
     # Convolutional subsampler
     args.cnn_subsampler = getattr(args, 'cnn_subsampler', False)
     args.conv_kernel_sizes = getattr(args, "conv_kernel_sizes", "5,5")

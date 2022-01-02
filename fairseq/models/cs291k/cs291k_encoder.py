@@ -51,7 +51,7 @@ class CS291KEncoder(FairseqEncoder):
 
         self.cif_avg_pool = getattr(args, 'cif_avg_pool', False)
         self.fix_cif = getattr(args, 'fix_cif', False)
-        self.align_after_encoder = getattr(args, 'align_after_encoder', False)
+        self.align_after_encoder = getattr(args, 'align_after_encoder', -1)
         self.cnn_subsampler = None
         if args.cnn_subsampler:
             self.cnn_subsampler = Conv1dSubsampler(
@@ -84,7 +84,7 @@ class CS291KEncoder(FairseqEncoder):
     def max_positions(self):
         return None
 
-    def _cif(self, src_feature, padding_mask, src_lengths, src_text_lengths=None):
+    def _cif(self, src_feature, padding_mask, src_lengths, src_group_lengths=None):
         '''
             src_feature: b * l * dim
             src_lengths: b
@@ -103,8 +103,8 @@ class CS291KEncoder(FairseqEncoder):
         # th.save(alpha, '/home/ubuntu/work/experiments/tmp/alpha.pt')
 
         sum_alpha = alpha.sum(dim=1)
-        if src_text_lengths is not None:
-            scale_factor = src_text_lengths / sum_alpha
+        if src_group_lengths is not None:
+            scale_factor = src_group_lengths / sum_alpha
             alpha = alpha * scale_factor.unsqueeze(-1)
 
         # self.sum_src_length += src_lengths.sum()
@@ -171,8 +171,8 @@ class CS291KEncoder(FairseqEncoder):
             batch_features.append(th.cat(features, dim=0))
         
         output_lengths = th.tensor([features.size(0) for features in batch_features]).to(device)
-        if src_text_lengths is not None and not self.fix_cif:
-            assert ~(output_lengths != src_text_lengths).any(), (output_lengths, src_text_lengths)
+        if src_group_lengths is not None and not self.fix_cif:
+            assert ~(output_lengths != src_group_lengths).any(), (output_lengths, src_group_lengths)
         max_length = output_lengths.max()
         output_features = []
         for feature in batch_features:
@@ -187,11 +187,9 @@ class CS291KEncoder(FairseqEncoder):
             output_features = output_features.half()
             sum_alpha = sum_alpha.half()
 
-        
-
         return output_features, output_lengths, sum_alpha
         
-    def forward(self, src_tokens, src_lengths, src_text_lengths=None, **extra_args):
+    def forward(self, src_tokens, src_lengths, src_group_lengths=None, **extra_args):
         # print(src_tokens.size())
         
         is_text = not src_tokens.dtype.is_floating_point
@@ -207,11 +205,11 @@ class CS291KEncoder(FairseqEncoder):
                 input_lengths = w2v_lengths
             elif self.cnn_subsampler is None:
                 embedding, input_lengths, sum_alpha = self._cif(w2v_feature, padding_mask, \
-                    w2v_lengths, src_text_lengths)
+                    w2v_lengths, src_group_lengths)
             else:
                 embedding, input_lengths = self.cnn_subsampler(w2v_feature, w2v_lengths)
         
-        if is_text or not self.align_after_encoder:
+        if self.align_after_encoder == -1:
             internal_states = {'sum_alpha': sum_alpha, 'feature': embedding}
 
         x = embedding
@@ -221,11 +219,10 @@ class CS291KEncoder(FairseqEncoder):
         x += positions
         x = self.dropout(x)
 
-        for layer in self.transformer_layers:
+        for i, layer in enumerate(self.transformer_layers):
             x = layer(x, encoder_padding_mask)
-
-        if not is_text and self.align_after_encoder:
-            internal_states = {'sum_alpha': sum_alpha, 'feature': x}
+            if i == self.align_after_encoder:
+                internal_states = {'sum_alpha': sum_alpha, 'feature': x}
 
         return EncoderOut(
             encoder_out=x,

@@ -1,4 +1,5 @@
 import os
+import re
 import csv
 import logging
 from typing import Dict, List, Optional
@@ -136,22 +137,40 @@ class CS291KDataset(SpeechToTextDataset):
                 target = th.cat([th.tensor([lang_tag_idx]).long(), target], dim=0)
         
         src_text = None
+        word_group = None
         if self.src_texts is not None:
             src_tokenized = self.tokenize_text(self.src_texts[index], 'source')
+            
+            word_start_pos = [match.start() for match in re.finditer('▁', src_tokenized)] + \
+                [len(src_tokenized)]
+            if word_start_pos[0] != 0:
+                word_start_pos = [0] + word_start_pos
+            word_group = []
+            for i in range(len(word_start_pos) - 1):
+                start, end = word_start_pos[i], word_start_pos[i + 1]
+                tokens = src_tokenized[start:end].split(' ')
+                while tokens[-1] == '':
+                    tokens.pop(-1)
+                word_group += [i] * len(tokens)
+            word_group.append(len(word_start_pos) - 1) # for eos
+            word_group = th.tensor(word_group).long()
+
             src_text = self.src_dict.encode_line(
                 src_tokenized, add_if_not_exist=False, append_eos=True
             ).long()
+
+            assert src_text.size(0) == word_group.size(0)
         
-        return index, source, target, src_text
+        return index, source, target, src_text, word_group
 
     def collater(self, samples) -> Dict:
         if len(samples) == 0:
             return {}
-        indices = th.tensor([i for i, _, _, _ in samples]).long()
-        frames = _collate_frames([s for _, s, _, _ in samples], self.data_cfg.use_audio_input)
+        indices = th.tensor([i for i, _, _, _, _ in samples]).long()
+        frames = _collate_frames([s for _, s, _, _, _ in samples], self.data_cfg.use_audio_input)
 
         # sort samples by descending number of frames
-        n_frames = th.tensor([s.size(0) for _, s, _, _ in samples]).long()
+        n_frames = th.tensor([s.size(0) for _, s, _, _, _ in samples]).long()
         n_frames, order = n_frames.sort(descending=True)
         indices = indices.index_select(0, order)
         frames = frames.index_select(0, order)
@@ -161,7 +180,7 @@ class CS291KDataset(SpeechToTextDataset):
         ntokens = None
         if self.tgt_texts is not None:
             target = fairseq_data_utils.collate_tokens(
-                [t for _, _, t, _ in samples],
+                [t for _, _, t, _, _ in samples],
                 self.tgt_dict.pad(),
                 self.tgt_dict.eos(),
                 left_pad=False,
@@ -169,10 +188,10 @@ class CS291KDataset(SpeechToTextDataset):
             )
             target = target.index_select(0, order)
             target_lengths = th.tensor(
-                [t.size(0) for _, _, t, _ in samples]
+                [t.size(0) for _, _, t, _, _ in samples]
             ).long().index_select(0, order)
             prev_output_tokens = fairseq_data_utils.collate_tokens(
-                [t for _, _, t, _ in samples],
+                [t for _, _, t, _, _ in samples],
                 self.tgt_dict.pad(),
                 self.tgt_dict.eos(),
                 left_pad=False,
@@ -183,15 +202,19 @@ class CS291KDataset(SpeechToTextDataset):
         src_text, src_text_lengths = None, None
         if self.src_texts is not None:
             src_text = fairseq_data_utils.collate_tokens(
-                [s for _, _, _, s in samples],
+                [s for _, _, _, s, _ in samples],
                 self.src_dict.pad(),
                 self.src_dict.eos(),
                 left_pad=False,
                 move_eos_to_beginning=False
             ).index_select(0, order)
             src_text_lengths = th.tensor(
-                [s.size(0) for _, _, _, s in samples]
+                [s.size(0) for _, _, _, s, _ in samples]
             ).long().index_select(0, order)
+            src_group_lengths = th.tensor(
+                [g[-1] + 1 for _, _, _, _, g in samples]
+            ).long().index_select(0, order)
+            src_word_groups = [samples[i][-1] for i in order]
 
         out = {
             "id": indices,
@@ -200,12 +223,14 @@ class CS291KDataset(SpeechToTextDataset):
                 "src_tokens": frames,
                 "src_lengths": n_frames,
                 "prev_output_tokens": prev_output_tokens,
-                "src_text_lengths": src_text_lengths,
+                "src_group_lengths": src_group_lengths
             },
             "target": target,
             "target_lengths": target_lengths,
             "src_text": src_text,
             "src_text_lengths": src_text_lengths,
+            "src_group_lengths": src_group_lengths,
+            "src_word_groups": src_word_groups,
             "ntokens": ntokens,
             "nsentences": len(samples)
         }
