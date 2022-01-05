@@ -147,3 +147,5 @@ cython_debug/
 
 *.kbc
 *.pt
+
+cs291k/analysis/*

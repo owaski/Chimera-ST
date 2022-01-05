@@ -212,8 +212,10 @@ class CS291KTask(LegacyFairseqTask):
         return lines, n_frames
 
     def valid_step(self, sample, model, criterion):
+        sample["net_input"]["src_group_lengths"] = None
         loss, sample_size, logging_output = super().valid_step(sample, model, criterion)
         if self.args.eval_bleu:
+            sample["net_input"]["src_group_lengths"] = None
             bleu = self._inference_with_bleu(self.sequence_generator, sample, model)
             logging_output["_bleu_sys_len"] = bleu.sys_len
             logging_output["_bleu_ref_len"] = bleu.ref_len
