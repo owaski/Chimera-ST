@@ -828,7 +828,7 @@ class CommonEvalConfig(FairseqDataclass):
             "help": "a dictionary used to override model args at generation that were used during model training"
         },
     )
-    results_path: Optional[str] = field(
+    results_path: str = field(
         default=None, metadata={"help": "path to save eval results (optional)"}
     )
 

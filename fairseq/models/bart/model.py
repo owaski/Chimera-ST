@@ -54,7 +54,7 @@ class BARTModel(TransformerModel):
         parser.add_argument(
             "--pooler-activation-fn",
             choices=utils.get_available_activation_fns(),
-            help="activation function to use for pooler layer",
+            help="activation function to use zfor pooler layer",
         )
         parser.add_argument(
             "--spectral-norm-classification-head",
@@ -357,6 +357,9 @@ def mbart_large_architecture(args):
     args.no_scale_embedding = getattr(args, "no_scale_embedding", False)
     bart_large_architecture(args)
 
+@register_model_architecture("bart", "denoising_large")
+def denoising_large_architecture(args):
+    mbart_large_architecture(args)
 
 @register_model_architecture("bart", "mbart_base")
 def mbart_base_architecture(args):

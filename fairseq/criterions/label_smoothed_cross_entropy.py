@@ -84,9 +84,9 @@ class LabelSmoothedCrossEntropyCriterion(FairseqCriterion):
             logging_output["total"] = utils.item(total.data)
         return loss, sample_size, logging_output
 
-    def get_lprobs_and_target(self, model, net_output, sample):
+    def get_lprobs_and_target(self, model, net_output, target):
         lprobs = model.get_normalized_probs(net_output, log_probs=True)
-        target = model.get_targets(sample, net_output)
+        # target = model.get_targets(sample, net_output)
         if self.ignore_prefix_size > 0:
             if getattr(lprobs, "batch_first", False):
                 lprobs = lprobs[:, self.ignore_prefix_size :, :].contiguous()
@@ -96,8 +96,8 @@ class LabelSmoothedCrossEntropyCriterion(FairseqCriterion):
                 target = target[self.ignore_prefix_size :, :].contiguous()
         return lprobs.view(-1, lprobs.size(-1)), target.view(-1)
 
-    def compute_loss(self, model, net_output, sample, reduce=True):
-        lprobs, target = self.get_lprobs_and_target(model, net_output, sample)
+    def compute_loss(self, model, net_output, target, reduce=True):
+        lprobs, target = self.get_lprobs_and_target(model, net_output, target)
         loss, nll_loss = label_smoothed_nll_loss(
             lprobs,
             target,
@@ -107,8 +107,8 @@ class LabelSmoothedCrossEntropyCriterion(FairseqCriterion):
         )
         return loss, nll_loss
 
-    def compute_accuracy(self, model, net_output, sample):
-        lprobs, target = self.get_lprobs_and_target(model, net_output, sample)
+    def compute_accuracy(self, model, net_output, target):
+        lprobs, target = self.get_lprobs_and_target(model, net_output, target)
         mask = target.ne(self.padding_idx)
         n_correct = torch.sum(
             lprobs.argmax(1).masked_select(mask).eq(target.masked_select(mask))
