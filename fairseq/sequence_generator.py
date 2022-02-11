@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import os
 import math
 from typing import Dict, List, Optional
 
@@ -104,6 +105,8 @@ class SequenceGenerator(nn.Module):
         self.lm_weight = lm_weight
         if self.lm_model is not None:
             self.lm_model.eval()
+
+        # self.count = 0
 
     def cuda(self):
         self.model.cuda()
@@ -235,6 +238,11 @@ class SequenceGenerator(nn.Module):
         ), "min_len cannot be larger than max_len, please adjust these!"
         # compute the encoder output for each beam
         encoder_outs = self.model.forward_encoder(net_input)
+
+        # lang = os.environ['SRC_LANG']
+        # os.makedirs('/mnt/raid0/siqi/analysis/resources/{}'.format(lang), exist_ok=True)
+        # torch.save(encoder_outs, '/mnt/raid0/siqi/analysis/resources/{}/batch_{}.pt'.format(lang, self.count))
+        # self.count += 1
 
         # placeholder of indices for bsz * beam_size to hold tokens and accumulative scores
         new_order = torch.arange(bsz).view(-1, 1).repeat(1, beam_size).view(-1)

@@ -149,3 +149,5 @@ cython_debug/
 *.pt
 
 cs291k/analysis/*
+
+*.wav

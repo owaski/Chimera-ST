@@ -83,9 +83,9 @@
                 "--valid-subset",
                 "zh-CN_en_dev",
                 "--max-tokens",
-                "2000000",
+                "800000",
                 "--max-source-positions",
-                "2000000",
+                "800000",
                 "--save-dir",
                 "/mnt/raid0/siqi/checkpoints/debug",
                 "--save-interval-updates",
@@ -106,6 +106,7 @@
                 "0.1",
                 "--report-accuracy",
                 "--loss-ratio",
+                "1.0",
                 "1.0",
                 "1.0",
                 "1.0",
@@ -153,7 +154,8 @@
                 // "--fp16",
                 "--seed",
                 "1",
-                "--reset-optimizer"
+                "--reset-optimizer",
+                "--fp16"
             ]
         },
         {

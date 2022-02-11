@@ -29,7 +29,7 @@ python mST/prepare_data/gen_data_config.py --audio-root $COVOST2_ROOT \
 
 Training:
 ```bash
-export EXP_ID="test_20"
+export EXP_ID="xlsr_mbart_n1_adv"
 export SAVE_DIR=/mnt/raid0/siqi/checkpoints/$EXP_ID
 export TB_DIR=tensorboard_logs
 export W2V2_PATH=/mnt/raid0/siqi/checkpoints/pretrained/xlsr2_300m.pt
@@ -43,7 +43,7 @@ export train_subset=fr_en_train,de_en_train,es_en_train,it_en_train,ru_en_train,
 
 export valid_subset=fr_en_dev,de_en_dev,es_en_dev,it_en_dev,ru_en_dev,zh-CN_en_dev,pt_en_dev,fa_en_dev,et_en_dev,mn_en_dev,nl_en_dev,tr_en_dev,ar_en_dev,sv-SE_en_dev,lv_en_dev,sl_en_dev,ta_en_dev,ja_en_dev,id_en_dev
 
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
+TORCH_DISTRIBUTED_DEBUG=DETAIL TORCH_SHOW_CPP_STACKTRACES=1 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 fairseq-train $COVOST2_ROOT \
   --task multilingual_triplet_task \
   --train-subset $train_subset --valid-subset $valid_subset \
@@ -54,7 +54,7 @@ fairseq-train $COVOST2_ROOT \
   --config-yaml config_mST.yaml \
   \
   --criterion multilingual_triplet_criterion --label-smoothing 0.1 \
-  --report-accuracy --loss-ratio 1.0 0.2 1.0 --ignore-prefix-size 1 \
+  --report-accuracy --loss-ratio 1.0 0.2 1.0 0.5 --ignore-prefix-size 1 \
   \
   --arch xlsr_mbart50_base \
   --w2v2-model-path $W2V2_PATH \
@@ -79,8 +79,8 @@ fairseq-train $COVOST2_ROOT \
 
 Test
 ```bash
-CUDA_VISIBLE_DEVICES=5 fairseq-generate ${COVOST2_ROOT} --gen-subset zh-CN_en_test \
-  --task multilingual_speech_to_text --path /mnt/raid0/siqi/checkpoints/test_20/checkpoint_best.pt \
-  --prefix-size 1 --max-tokens 1000000 --max-source-positions 1000000 --beam 4 --scoring sacrebleu \
+CUDA_VISIBLE_DEVICES=7 fairseq-generate ${COVOST2_ROOT} --gen-subset fr_en_test \
+  --task multilingual_speech_to_text --path /mnt/raid0/siqi/checkpoints/xlsr_mbart_n1_adv/checkpoint_best.pt \
+  --prefix-size 1 --max-tokens 800000 --max-source-positions 800000 --beam 4 --scoring sacrebleu \
   --config-yaml config_mST.yaml --lenpen 1.0
 ```

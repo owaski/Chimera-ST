@@ -17,6 +17,7 @@ from fairseq.models.bart import BARTModel
 from fairseq.modules.layer_norm import LayerNorm
 
 from .w2v2_transformer_encoder import W2V2TransformerEncoder
+from .discriminator import Classifier
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +25,9 @@ logger = logging.getLogger(__name__)
 class W2V2Transformer(FairseqEncoderDecoderModel):
     '''Transformer model for ST tasks'''
 
-    def __init__(self, encoder, decoder):
+    def __init__(self, encoder, decoder, discriminator):
         super().__init__(encoder, decoder)
+        self.discriminator = discriminator
 
     @staticmethod
     def add_args(parser):
@@ -148,6 +150,32 @@ class W2V2Transformer(FairseqEncoderDecoderModel):
             help="share decoder input and output embeddings",
         )
 
+        # hyper-parameters for discriminators
+        parser.add_argument(
+            '--disc-nlayer',
+            type=int,
+        )
+        parser.add_argument(
+            '--disc-ndim',
+            type=int,
+        )
+        parser.add_argument(
+            '--disc-nhid',
+            type=int
+        )
+        parser.add_argument(
+            '--disc-nhead',
+            type=int
+        )
+        parser.add_argument(
+            '--disc-nclass',
+            type=int
+        )
+        parser.add_argument(
+            '--disc-drop',
+            type=float
+        )
+
     @classmethod
     def build_model(cls, args, task):
         # initialize base model arguments
@@ -172,7 +200,10 @@ class W2V2Transformer(FairseqEncoderDecoderModel):
         encoder.transformer_encoder.load_state_dict(mbart50_encoder_params)
         decoder.load_state_dict(mbart50_decoder_params, strict=False)
 
-        return cls(encoder, decoder)
+        # discriminator
+        discriminator = cls.build_discriminator(args)
+
+        return cls(encoder, decoder, discriminator)
 
     @classmethod
     def build_encoder(cls, args, src_dict, encoder_embedding):
@@ -184,10 +215,22 @@ class W2V2Transformer(FairseqEncoderDecoderModel):
         decoder = TransformerDecoder(args, tgt_dict, decoder_embedding)
         return decoder
 
+    @classmethod
+    def build_discriminator(cls, args):
+        discriminator = Classifier(
+            nlayer=args.disc_nlayer,
+            ndim=args.disc_ndim,
+            nhid=args.disc_nhid,
+            nhead=args.disc_nhead,
+            nclass=args.disc_nclass,
+            drop=args.disc_drop,
+        )
+        return discriminator
+
     def forward_with_internal(self, src_tokens, src_lengths, prev_output_tokens, **extra_args):
         encoder_out = self.encoder(src_tokens=src_tokens, src_lengths=src_lengths)
         decoder_out = self.decoder(prev_output_tokens=prev_output_tokens, encoder_out=encoder_out)
-        return decoder_out, encoder_out.encoder_embedding
+        return decoder_out, encoder_out
 
     def forward(self, src_tokens, src_lengths, prev_output_tokens, **extra_args):
         encoder_out = self.encoder(src_tokens=src_tokens, src_lengths=src_lengths)
@@ -279,3 +322,11 @@ def w2v2_transformer_base(args):
     args.pooler_dropout = getattr(args, "pooler_dropout", 0.0)
 
     args.quant_noise_pq = getattr(args, "quant_noise_pq", 0.0)
+
+    # Discriminator
+    args.disc_nlayer = getattr(args, "disc_nlayer", 2)
+    args.disc_ndim = getattr(args, "disc_ndim", args.encoder_embed_dim)
+    args.disc_nhid = getattr(args, "disc_nhid", args.encoder_ffn_embed_dim)
+    args.disc_nhead = getattr(args, "disc_nhead", 4)
+    args.disc_nclass = getattr(args, "disc_nclass", 19)
+    args.disc_drop = getattr(args, "disc_drop", args.dropout)
