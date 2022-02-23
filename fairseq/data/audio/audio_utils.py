@@ -41,7 +41,7 @@ def get_waveform(
     """
     if isinstance(path_or_fp, str):
         ext = op.splitext(op.basename(path_or_fp))[1]
-        if ext not in {".flac", ".wav"}:
+        if ext not in {".flac", ".wav", ".ogg"}:
             raise ValueError(f"Unsupported audio format: {ext}")
 
     try:

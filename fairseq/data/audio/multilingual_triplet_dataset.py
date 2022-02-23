@@ -6,6 +6,7 @@
 import csv
 import logging
 import os.path as op
+from collections import OrderedDict
 from typing import Dict, List, Optional, Tuple
 
 import torch
@@ -24,12 +25,17 @@ from fairseq.data.audio.speech_to_text_dataset import (
     SpeechToTextDataset,
     SpeechToTextDatasetCreator,
 )
+import numpy as np
 
 import torch.nn.functional as F
+from fairseq.data.joint_dataset import JointDataset
+
+from fairseq.data.multi_corpus_sampled_dataset import MultiCorpusSampledDataset
 
 
 logger = logging.getLogger(__name__)
 
+MAX_FRAME = 320000
 
 class MultilingualTripletDataConfig(S2TDataConfig):
     """Wrapper class for data config YAML"""
@@ -54,6 +60,14 @@ class MultilingualTripletDataConfig(S2TDataConfig):
     @property
     def prepend_src_lang_tag(self):
         return self.config.get("prepend_src_lang_tag", False)
+
+    @property
+    def voxpopuli_root(self):
+        return self.config.get("voxpopuli_root", None)
+
+    @property
+    def unlabeled_sampling_ratio(self):
+        return self.config.get("unlabeled_sampling_ratio", 1.0)
 
 
 class MultilingualTripletDataset(SpeechToTextDataset):
@@ -81,10 +95,12 @@ class MultilingualTripletDataset(SpeechToTextDataset):
         mask=True,
         sample_rate=16000,
         src_lang2idx=None,
+        labeled=True,
     ):
         self.split, self.is_train_split = split, is_train_split
         self.data_cfg = data_cfg
-        self.audio_paths, self.n_frames = audio_paths, n_frames
+        self.audio_paths = audio_paths
+        self.n_frames = [min(n_f, MAX_FRAME) for n_f in n_frames]
         self.n_samples = len(audio_paths)
         assert len(n_frames) == self.n_samples > 0
         assert src_texts is None or len(src_texts) == self.n_samples
@@ -93,10 +109,10 @@ class MultilingualTripletDataset(SpeechToTextDataset):
         assert src_langs is None or len(src_langs) == self.n_samples
         assert tgt_langs is None or len(tgt_langs) == self.n_samples
         assert ids is None or len(ids) == self.n_samples
-        assert (tgt_dict is None and tgt_texts is None) or (
+        assert (tgt_texts is None) or (
             tgt_dict is not None and tgt_texts is not None
         )
-        assert (src_dict is None and src_texts is None) or (
+        assert (src_texts is None) or (
             src_dict is not None and src_texts is not None
         )
         self.src_texts, self.tgt_texts = src_texts, tgt_texts
@@ -106,7 +122,9 @@ class MultilingualTripletDataset(SpeechToTextDataset):
         self.lang2langcode = {code[:2] : code for code in self.lang_codes}
         self.tgt_dict = tgt_dict
         self.src_dict = src_dict
-        self.check_lang_tag()
+        self.labeled = labeled
+        if labeled:
+            self.check_lang_tag()
         self.ids = ids
         self.shuffle = data_cfg.shuffle if is_train_split else False
 
@@ -164,6 +182,7 @@ class MultilingualTripletDataset(SpeechToTextDataset):
             need_waveform=self.data_cfg.use_audio_input,
             sample_rate=self.sample_rate,
         )
+        source = source[:MAX_FRAME] # hard coded for now
         if self.feature_transforms is not None:
             assert not self.data_cfg.use_audio_input
             source = self.feature_transforms(source)
@@ -202,7 +221,9 @@ class MultilingualTripletDataset(SpeechToTextDataset):
                     0
                 )
 
-        src_lang_idx = self.src_lang2idx[self.src_langs[index]]
+        src_lang_idx = None
+        if self.src_langs[index] in self.src_lang2idx:
+            src_lang_idx = self.src_lang2idx[self.src_langs[index]]
 
         return index, source, target, src_text, src_lang_idx
 
@@ -225,7 +246,7 @@ class MultilingualTripletDataset(SpeechToTextDataset):
         target, target_lengths = None, None
         prev_output_tokens = None
         ntokens = None
-        if self.tgt_texts is not None:
+        if self.labeled:
             target = fairseq_data_utils.collate_tokens(
                 [t for _, _, t, _, _ in samples],
                 self.tgt_dict.pad(),
@@ -249,7 +270,7 @@ class MultilingualTripletDataset(SpeechToTextDataset):
 
         src_text, src_text_lengths = None, None
         asr_target, asr_target_lengths, asr_prev_output_tokens = None, None, None
-        if self.src_texts is not None:
+        if self.labeled:
             src_text = fairseq_data_utils.collate_tokens(
                 [s for _, _, _, s, _ in samples],
                 self.src_dict.pad(),
@@ -280,9 +301,11 @@ class MultilingualTripletDataset(SpeechToTextDataset):
                 move_eos_to_beginning=True,
             ).index_select(0, order)
 
-        src_lang_indices = torch.tensor(
-            [src_lang_idx for _, _, _, _, src_lang_idx in samples], dtype=torch.long
-        ).index_select(0, order)
+        src_lang_indices = None
+        if not self.labeled:
+            src_lang_indices = torch.tensor(
+                [src_lang_idx for _, _, _, _, src_lang_idx in samples], dtype=torch.long
+            ).index_select(0, order)
 
         out = {
             "id": indices,
@@ -332,24 +355,39 @@ class MultilingualTripletDatasetCreator(SpeechToTextDatasetCreator):
         sample_rate,
         src_lang2idx
     ) -> MultilingualTripletDataset:
-        audio_paths, n_frames, src_texts, tgt_texts, ids = [], [], [], [], []
-        speakers, src_langs, tgt_langs = [], [], []
-        for s in samples:
-            ids.extend([ss[cls.KEY_ID] for ss in s])
-            audio_paths.extend(
-                [op.join(data_cfg.audio_root, ss[cls.KEY_SRC_LANG], '16kHz', ss[cls.KEY_AUDIO]) for ss in s]
-            )
-            n_frames.extend([int(ss[cls.KEY_N_FRAMES]) for ss in s])
-            tgt_texts.extend([ss[cls.KEY_TGT_TEXT] for ss in s])
-            src_texts.extend(
-                [ss.get(cls.KEY_SRC_TEXT, cls.DEFAULT_SRC_TEXT) for ss in s]
-            )
-            speakers.extend([ss.get(cls.KEY_SPEAKER, cls.DEFAULT_SPEAKER)
-                             for ss in s])
-            src_langs.extend([ss.get(cls.KEY_SRC_LANG, cls.DEFAULT_LANG)
-                              for ss in s])
-            tgt_langs.extend([ss.get(cls.KEY_TGT_LANG, cls.DEFAULT_LANG)
-                              for ss in s])
+        parts = split_name.split('_')
+        if len(parts) == 1: # unlabeled data
+            labeled = False
+            audio_paths, n_frames, src_texts, tgt_texts, ids = [], [], None, None, []
+            speakers, src_langs, tgt_langs = None, [], None
+            for s in samples:
+                ids.extend([ss[cls.KEY_ID] for ss in s])
+                audio_paths.extend(
+                    [op.join(data_cfg.voxpopuli_root, 'unlabelled_data', ss[cls.KEY_SRC_LANG], ss[cls.KEY_AUDIO]) for ss in s]
+                )
+                n_frames.extend([int(ss[cls.KEY_N_FRAMES]) for ss in s])
+                src_langs.extend([ss.get(cls.KEY_SRC_LANG, cls.DEFAULT_LANG)
+                                for ss in s])            
+        else:
+            labeled = True
+            audio_paths, n_frames, src_texts, tgt_texts, ids = [], [], [], [], []
+            speakers, src_langs, tgt_langs = [], [], []
+            for s in samples:
+                ids.extend([ss[cls.KEY_ID] for ss in s])
+                audio_paths.extend(
+                    [op.join(data_cfg.audio_root, ss[cls.KEY_SRC_LANG], '16kHz', ss[cls.KEY_AUDIO]) for ss in s]
+                )
+                n_frames.extend([int(ss[cls.KEY_N_FRAMES]) for ss in s])
+                tgt_texts.extend([ss[cls.KEY_TGT_TEXT] for ss in s])
+                src_texts.extend(
+                    [ss.get(cls.KEY_SRC_TEXT, cls.DEFAULT_SRC_TEXT) for ss in s]
+                )
+                speakers.extend([ss.get(cls.KEY_SPEAKER, cls.DEFAULT_SPEAKER)
+                                for ss in s])
+                src_langs.extend([ss.get(cls.KEY_SRC_LANG, cls.DEFAULT_LANG)
+                                for ss in s])
+                tgt_langs.extend([ss.get(cls.KEY_TGT_LANG, cls.DEFAULT_LANG)
+                                for ss in s])
 
         return MultilingualTripletDataset(
             split_name,
@@ -370,7 +408,8 @@ class MultilingualTripletDatasetCreator(SpeechToTextDatasetCreator):
             src_bpe_tokenizer,
             normalize,
             mask,
-            src_lang2idx=src_lang2idx
+            src_lang2idx=src_lang2idx,
+            labeled=labeled
         )
 
     @classmethod
@@ -394,11 +433,21 @@ class MultilingualTripletDatasetCreator(SpeechToTextDatasetCreator):
         samples = []
         _splits = splits.split(",") # here the splits contain codes of language pair that we use
         src_lang2idx = {}
+        types = [False, False]
         for split in _splits:
-            src_code, tgt_code, tp = split.split('_')
-            tsv_path = op.join(root, src_code, "{}_st_{}_{}.tsv".format(tp, src_code, tgt_code))
-            if src_code not in src_lang2idx:
-                src_lang2idx[src_code] = len(src_lang2idx)
+            parts = split.split('_')
+            if len(parts) == 1: # unlabelled data
+                src_code = parts[0]
+                voxp_root = data_cfg.voxpopuli_root
+                assert voxp_root is not None
+                tsv_path = op.join(voxp_root, 'unlabelled_data', src_code, "{}.tsv".format(src_code))
+                if src_code not in src_lang2idx:
+                    src_lang2idx[src_code] = len(src_lang2idx)
+                types[0] = True
+            else:
+                src_code, tgt_code, tp = split.split('_')
+                tsv_path = op.join(root, src_code, "{}_st_{}_{}.tsv".format(tp, src_code, tgt_code))
+                types[1] = True
             if not op.isfile(tsv_path):
                 raise FileNotFoundError(f"Dataset not found: {tsv_path}")
             with open(tsv_path) as f:
@@ -445,4 +494,33 @@ class MultilingualTripletDatasetCreator(SpeechToTextDatasetCreator):
                 )
                 for d, r in zip(datasets, size_ratios)
             ]
+
+        # sampling ratio for unlabeled dataset
+        if all(types):
+            unlabeled_r = data_cfg.unlabeled_sampling_ratio
+
+            labeled_dataset = ConcatDataset([d for d in datasets if d.labeled])
+            unlabeled_dataset = ConcatDataset([
+                ResamplingDataset(
+                    d, size_ratio=unlabeled_r, seed=seed, epoch=epoch, replace=(unlabeled_r >= 1.0)
+                ) for d in datasets if not d.labeled
+            ])
+
+            datasets = OrderedDict({
+                'labeled': labeled_dataset,
+                'unlabeled': unlabeled_dataset
+            })
+
+            configs = OrderedDict({
+                'labeled': data_cfg,
+                'unlabeled': data_cfg
+            })
+
+            ratios = OrderedDict({
+                'labeled': 1,
+                'unlabeled': 1
+            })
+
+            return JointDataset(datasets, configs, ratios)
+
         return ConcatDataset(datasets)

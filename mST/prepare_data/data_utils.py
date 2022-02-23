@@ -36,6 +36,12 @@ class DataConfigWriter(object):
     def set_lang_list_filename(self, lang_list_filename):
         self.config["lang_list_filename"] = lang_list_filename
 
+    def set_voxpopuli_root(self, voxpopuli_root):
+        self.config["voxpopuli_root"] = voxpopuli_root
+
+    def set_unlabeled_sampling_ratio(self, unlabeled_sampling_ratio):
+        self.config["unlabeled_sampling_ratio"] = unlabeled_sampling_ratio
+
     def set_prepend_tgt_lang_tag(self, flag=True):
         self.config["prepend_tgt_lang_tag"] = flag
 
@@ -57,6 +63,8 @@ def gen_config_yaml(
     prepend_tgt_lang_tag=False,
     prepend_src_lang_tag=False,
     use_audio_input=False,
+    voxpopuli_root=None,
+    unlabeled_sampling_ratio=1.0,
 ):
     data_root = op.abspath(data_root)
     writer = DataConfigWriter(op.join(data_root, yaml_filename))
@@ -76,6 +84,10 @@ def gen_config_yaml(
         writer.set_prepend_src_lang_tag(True)
     if use_audio_input:
         writer.set_use_audio_input(True)
+    if voxpopuli_root:
+        writer.set_voxpopuli_root(voxpopuli_root)
+    if unlabeled_sampling_ratio:
+        writer.set_unlabeled_sampling_ratio(unlabeled_sampling_ratio)
     writer.flush()
 
     

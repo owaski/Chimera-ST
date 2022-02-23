@@ -155,3 +155,4 @@ cs291k/analysis/*
 *.html
 *.png
 *.pyc
+events.out.tfevents.*

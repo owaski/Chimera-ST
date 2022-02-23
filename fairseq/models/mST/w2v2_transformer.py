@@ -234,6 +234,10 @@ class W2V2Transformer(FairseqEncoderDecoderModel):
         )
         return discriminator
 
+    def forward_encoder(self, src_tokens, src_lengths, **extra_args):
+        encoder_out = self.encoder(src_tokens=src_tokens, src_lengths=src_lengths)
+        return encoder_out
+
     def forward_with_internal(self, src_tokens, src_lengths, prev_output_tokens, **extra_args):
         encoder_out = self.encoder(src_tokens=src_tokens, src_lengths=src_lengths)
         decoder_out = self.decoder(prev_output_tokens=prev_output_tokens, encoder_out=encoder_out)

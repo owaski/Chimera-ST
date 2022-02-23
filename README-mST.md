@@ -3,6 +3,7 @@
 Prepare CoVoST 2 dataset (using zh-CN as an example)
 ```bash
 export COVOST2_ROOT=/mnt/raid0/siqi/datasets/covost2
+export COVOST2_ROOT=/local/home/siqiouyang/work/dataset/covost2
 
 python mST/prepare_data/prep_covost_data.py \
   --data-root $COVOST2_ROOT --src-lang zh-CN --tgt-lang en # for single direction
@@ -20,6 +21,7 @@ prepend_src_lang_tag should be set to True.
 Additional data from VoxPopuli.
 ```bash
 export VOXP_ROOT=/mnt/raid0/siqi/datasets/voxpopuli
+export VOXP_ROOT=/local/home/siqiouyang/work/dataset/voxpopuli
 
 cd /mnt/nvme/siqi/work/libraries/voxpopuli
 
@@ -30,24 +32,29 @@ python -m voxpopuli.get_unlabelled_data --root $VOXP_ROOT --subset 10k
 
 ```bash
 export mBART50_DIR=/mnt/raid0/siqi/checkpoints/pretrained/mbart50.ft.n1
+export mBART50_DIR=/local/home/siqiouyang/work/checkpoint/pretrained/mbart50.ft.n1
 
 cp $mBART50_DIR/dict.zh_CN.txt $mBART50_DIR/dict.txt
 
 python mST/prepare_data/gen_data_config.py --audio-root $COVOST2_ROOT \
   --spm-path $mBART50_DIR/sentence.bpe.model \
   --dict-path $mBART50_DIR/dict.txt \
-  --lang-list-path $mBART50_DIR/ML50_langs.txt
+  --lang-list-path $mBART50_DIR/ML50_langs.txt \
+  --voxpopuli-root $VOXP_ROOT \
+  --unlabeled-sampling-ratio 0.1
 ```
 
 Training:
 ```bash
-export EXP_ID="xlsr_mbart_n1_eu"
+export EXP_ID="xlsr_mbart_n1_eu_adv_sampling_0.1_period_6"
 export SAVE_DIR=/mnt/raid0/siqi/checkpoints/$EXP_ID
+export SAVE_DIR=/local/home/siqiouyang/work/checkpoint/$EXP_ID
 export TB_DIR=tensorboard_logs
 export W2V2_PATH=/mnt/raid0/siqi/checkpoints/pretrained/xlsr2_300m.pt
+export W2V2_PATH=/local/home/siqiouyang/work/checkpoint/pretrained/xlsr2_300m.pt
 
 export max_updates=150000
-export num_gpus=2
+export num_gpus=4
 export seed=1
 
 # exclude Catalan (ca) and Welsh (cy) since it is not in mBart50 vocab
@@ -56,21 +63,21 @@ export train_subset=fr_en_train,de_en_train,es_en_train,it_en_train,ru_en_train,
 export valid_subset=fr_en_dev,de_en_dev,es_en_dev,it_en_dev,ru_en_dev,zh-CN_en_dev,pt_en_dev,fa_en_dev,et_en_dev,mn_en_dev,nl_en_dev,tr_en_dev,ar_en_dev,sv-SE_en_dev,lv_en_dev,sl_en_dev,ta_en_dev,ja_en_dev,id_en_dev # ,en_de_dev,en_tr_dev,en_fa_dev,en_sv-SE_dev,en_mn_dev,en_zh-CN_dev,en_sl_dev,en_et_dev,en_id_dev,en_ar_dev,en_ta_dev,en_lv_dev,en_ja_dev
 
 # only EU languages
-export train_subset=fr_en_train,de_en_train,es_en_train,it_en_train,pt_en_train,et_en_train,nl_en_train,sv-SE_en_train,lv_en_train,sl_en_train
+export train_subset=fr_en_train,de_en_train,es_en_train,it_en_train,pt_en_train,et_en_train,nl_en_train,sv-SE_en_train,lv_en_train,sl_en_train,fr,de,es,it,pt,et,nl,sv,lv,sl
 export valid_subset=fr_en_dev,de_en_dev,es_en_dev,it_en_dev,pt_en_dev,et_en_dev,nl_en_dev,sv-SE_en_dev,lv_en_dev,sl_en_dev
 
-CUDA_LAUNCH_BLOCKING=1 TORCH_DISTRIBUTED_DEBUG=DETAIL TORCH_SHOW_CPP_STACKTRACES=1 CUDA_VISIBLE_DEVICES=0,1 \
+CUDA_LAUNCH_BLOCKING=1 TORCH_DISTRIBUTED_DEBUG=DETAIL TORCH_SHOW_CPP_STACKTRACES=1 CUDA_VISIBLE_DEVICES=0,5,6,7 \
 fairseq-train $COVOST2_ROOT \
   --task multilingual_triplet_task \
   --train-subset $train_subset --valid-subset $valid_subset \
-  --max-tokens 800000 --max-source-positions 800000 \
+  --max-tokens 320000 --max-source-positions 320000 \
   --save-dir $SAVE_DIR --save-interval-updates 5000 --save-interval 1 \
   --keep-last-epochs 1 --keep-interval-updates 1 \
   --tensorboard-logdir $TB_DIR/$EXP_ID \
   --config-yaml config_mST.yaml \
   \
-  --criterion multilingual_triplet_criterion --label-smoothing 0.1 \
-  --report-accuracy --loss-ratio 1.0 0.1 1.0 0.0 --ignore-prefix-size 1 \
+  --criterion multilingual_triplet_semi_criterion --label-smoothing 0.1 \
+  --report-accuracy --loss-ratio 1.0 0.1 1.0 1.0 --disc-period 6 --ignore-prefix-size 1 \
   \
   --arch xlsr_mbart50_base \
   --w2v2-model-path $W2V2_PATH \
@@ -81,11 +88,10 @@ fairseq-train $COVOST2_ROOT \
   --lr 2e-4 --lr-scheduler inverse_sqrt --weight-decay 0.0 \
   --max-update $max_updates --warmup-updates 5000 \
   \
-  --update-freq $(expr 20 / $num_gpus) --num-workers 1 \
-  --ddp-backend no_c10d \
+  --update-freq $(expr 50 / $num_gpus) --num-workers 1 \
+  --ddp-backend no_c10d --use-bmuf \
   \
-  --fp16 --seed $seed --all-gather-list-size 32768 \
-  --disc-period 6
+  --memory-efficient-fp16 --seed $seed --all-gather-list-size 32768
   # --encoder-layer-to-remove-residual 4 8
   # \
   # --eval-bleu --eval-bleu-args '{"beam": 4, "lenpen": 1.0}' \

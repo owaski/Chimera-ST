@@ -206,9 +206,7 @@ class JointDataset(FairseqDataset):
         indices_array = np.array(indices)
 
         for _name, _dataset in self.datasets.items():
-            task_max_positions = utils.resolve_max_positions(
-                max_positions, self.tasks[_name].max_positions()
-            )
+            task_max_positions = max_positions
             logger.info(
                 f"filtering dataset {_name}")
 
@@ -235,7 +233,7 @@ class JointDataset(FairseqDataset):
             valid_flag[mask] = local_valid_flag
 
         indices_array = indices_array[valid_flag]
-        return indices_array.tolist()
+        return indices_array.tolist(), []
 
     def batch_by_size(
         self, indices, max_tokens=None, max_sentences=None,
@@ -252,9 +250,10 @@ class JointDataset(FairseqDataset):
                 indices_array[dataset_names == _name],
                 _name, out_to_in=True
             )
-            local_max_tokens = self.dataset_configs[_name].max_tokens
-            if max_tokens is not None and max_tokens > 0:
-                local_max_tokens = min(max_tokens, local_max_tokens)
+            # local_max_tokens = self.dataset_configs[_name].max_tokens
+            # if max_tokens is not None and max_tokens > 0:
+            #     local_max_tokens = min(max_tokens, local_max_tokens)
+            local_max_tokens = max_tokens
 
             local_batches = _dataset.batch_by_size(
                 local_indices.tolist(),
