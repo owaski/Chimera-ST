@@ -1,17 +1,17 @@
 #!/bin/bash
 
 # prerequisits and environment variables
-export name="w2v_transformer_pretrain_align"
+export name="w2v_transformer_v2_raw"
 export ST_SAVE_DIR="$SAVE_ROOT/$name"
 export MT_SAVE_DIR="$SAVE_ROOT/mt"
 export SAVE_DIR=$ST_SAVE_DIR
 export WAVE2VEC_DIR="$SAVE_ROOT/pretrained"
 pretrained_ckpt=wav2vec_small.pt
-mkdir -p $ST_SAVE_DIR $MT_SAVE_DIR $WAVE2VEC_DIR $WMT_ROOT $MUSTC_ROOT
-resume="True"
+mkdir -p $ST_SAVE_DIR $MT_SAVE_DIR $WAVE2VEC_DIR # $WMT_ROOT $MUSTC_ROOT
+# resume="True"
 reset_optimizer="--reset-optimizer"
 max_updates=150000
-num_gpus=8
+num_gpus=4
 target=de
 seed=1
 
@@ -31,12 +31,12 @@ fairseq-train ${MUSTC_ROOT}/en-$target \
     --train-subset train_wave --valid-subset dev_wave \
     --max-tokens 2000000 --max-source-positions 2000000 \
     --save-dir $SAVE_DIR --save-interval-updates 1000 --save-interval 1 \
-    --keep-last-epochs 1 --keep-interval-updates 20 \
+    --keep-last-epochs 1 --keep-interval-updates 1 \
     --tensorboard-logdir $TB_DIR/$name \
     --config-yaml config_wave.yaml \
     \
     --criterion cs291k_criterion --label-smoothing 0.1 \
-    --report-accuracy --loss-ratio 1 0.2 1 1 0 \
+    --report-accuracy --loss-ratio 1 0 0 0 0 \
     \
     --arch cs291k_model_base --share-decoder-input-output-embed \
     --w2v2-model-path $WAVE2VEC_DIR/$pretrained_ckpt \
@@ -55,5 +55,5 @@ fairseq-train ${MUSTC_ROOT}/en-$target \
     --best-checkpoint-metric bleu --maximize-best-checkpoint-metric \
     \
     --fp16 --seed $seed \
-    --align-after-encoder 0
-    # --cnn-subsampler
+    --align-after-encoder 0 \
+    --cnn-subsampler

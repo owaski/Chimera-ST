@@ -1,11 +1,13 @@
 import copy
 from typing import Optional
 from argparse import Namespace
+import math
 
 import numpy as np
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+from torch import Tensor
 
 from fairseq.data.data_utils import lengths_to_mask, lengths_to_padding_mask
 from fairseq.model_parallel.models.transformer import TransformerEncoder
@@ -15,8 +17,10 @@ from fairseq.models.wav2vec import Wav2Vec2Model
 from fairseq.models.speech_to_text.s2t_transformer import Conv1dSubsampler
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.layer_norm import LayerNorm
+from fairseq.modules import LayerDropModuleList, TransformerEncoderLayer
 from fairseq.modules.positional_embedding import PositionalEmbedding
 from fairseq.modules.grad_multiply import GradMultiply
+from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 
 class W2V2TransformerEncoder(FairseqEncoder):
     '''Speech-to-text Transformer encoder that consists of
@@ -87,7 +91,7 @@ class W2V2TransformerEncoder(FairseqEncoder):
             input_lengths = src_lengths
             embed_positions = self.transformer_encoder.embed_positions
         else:
-            w2v2_feature, _, w2v2_lengths = self._get_w2v2_feature(src_tokens, src_lengths)
+            w2v2_feature, w2v2_padding_mask, w2v2_lengths = self._get_w2v2_feature(src_tokens, src_lengths)
             embedding, input_lengths = self.cnn_subsampler(w2v2_feature, w2v2_lengths)
             embedding = embedding.transpose(0, 1)
             embed_positions = self.embed_positions
@@ -144,6 +148,10 @@ class W2V2TransformerEncoder(FairseqEncoder):
         if encoder_states is not None:
             for idx, state in enumerate(encoder_states):
                 encoder_states[idx] = state.index_select(1, new_order)
+        internal_states = encoder_out.internal_states
+        if internal_states is not None:
+            for idx, state in enumerate(internal_states):
+                internal_states[idx] = state.index_select(0, new_order)        
         return EncoderOut(
             encoder_out=new_encoder_out,
             encoder_padding_mask=new_encoder_padding_mask,
@@ -157,7 +165,63 @@ class W2V2TransformerEncoder(FairseqEncoder):
 
 class _TransformerEncoder(TransformerEncoder):
     def __init__(self, args, dictionary, embed_tokens):
-        super().__init__(args, dictionary, embed_tokens)
+        super(TransformerEncoder, self).__init__(dictionary)
+        self.register_buffer("version", th.Tensor([3]))
+
+        self.dropout_module = FairseqDropout(
+            args.dropout, module_name=self.__class__.__name__
+        )
+        self.encoder_layerdrop = args.encoder_layerdrop
+
+        embed_dim = embed_tokens.embedding_dim
+        self.padding_idx = embed_tokens.padding_idx
+        self.max_source_positions = args.max_source_positions
+
+        self.embed_tokens = embed_tokens
+
+        self.embed_scale = 1.0 if args.no_scale_embedding else math.sqrt(embed_dim)
+
+        self.embed_positions = (
+            PositionalEmbedding(
+                args.max_source_positions,
+                embed_dim,
+                self.padding_idx,
+                learned=args.encoder_learned_pos,
+            )
+            if not args.no_token_positional_embeddings
+            else None
+        )
+
+        if getattr(args, "layernorm_embedding", False):
+            self.layernorm_embedding = LayerNorm(embed_dim)
+        else:
+            self.layernorm_embedding = None
+
+        if not args.adaptive_input and args.quant_noise_pq > 0:
+            self.quant_noise = apply_quant_noise_(
+                nn.Linear(embed_dim, embed_dim, bias=False),
+                args.quant_noise_pq,
+                args.quant_noise_pq_block_size,
+            )
+        else:
+            self.quant_noise = None
+
+        if self.encoder_layerdrop > 0.0:
+            self.layers = LayerDropModuleList(p=self.encoder_layerdrop)
+        else:
+            self.layers = nn.ModuleList([])
+        self.layers.extend(
+            [self.build_encoder_layer(args, i) for i in range(args.encoder_layers)]
+        )
+        self.num_layers = len(self.layers)
+
+        if args.encoder_normalize_before:
+            self.layer_norm = LayerNorm(embed_dim)
+        else:
+            self.layer_norm = None
+
+    def build_encoder_layer(self, args, idx):
+        return _TransformerEncoderLayer(args, idx)
 
     def forward(
         self,
@@ -217,3 +281,62 @@ class _TransformerEncoder(TransformerEncoder):
             src_tokens=None,
             src_lengths=None,
         )
+
+
+class _TransformerEncoderLayer(TransformerEncoderLayer):
+    def __init__(self, args, idx):
+        super().__init__(args)
+        self.remove_residual = idx in args.encoder_layer_to_remove_residual
+
+    def forward(self, x, encoder_padding_mask, attn_mask: Optional[Tensor] = None):
+        """
+        Args:
+            x (Tensor): input to the layer of shape `(seq_len, batch, embed_dim)`
+            encoder_padding_mask (ByteTensor): binary ByteTensor of shape
+                `(batch, seq_len)` where padding elements are indicated by ``1``.
+            attn_mask (ByteTensor): binary tensor of shape `(tgt_len, src_len)`,
+                where `tgt_len` is the length of output and `src_len` is the
+                length of input, though here both are equal to `seq_len`.
+                `attn_mask[tgt_i, src_j] = 1` means that when calculating the
+                embedding for `tgt_i`, we exclude (mask out) `src_j`. This is
+                useful for strided self-attention.
+
+        Returns:
+            encoded output of shape `(seq_len, batch, embed_dim)`
+        """
+        # anything in original attn_mask = 1, becomes -1e8
+        # anything in original attn_mask = 0, becomes 0
+        # Note that we cannot use -inf here, because at some edge cases,
+        # the attention weight (before softmax) for some padded element in query
+        # will become -inf, which results in NaN in model parameters
+        if attn_mask is not None:
+            attn_mask = attn_mask.masked_fill(attn_mask.to(th.bool), -1e8)
+
+        residual = x
+        if self.normalize_before:
+            x = self.self_attn_layer_norm(x)
+        x, _ = self.self_attn(
+            query=x,
+            key=x,
+            value=x,
+            key_padding_mask=encoder_padding_mask,
+            attn_mask=attn_mask,
+        )
+        x = self.dropout_module(x)
+        if not self.remove_residual: # optional to remove residual connection
+            x = self.residual_connection(x, residual)
+        if not self.normalize_before:
+            x = self.self_attn_layer_norm(x)
+
+        residual = x
+        if self.normalize_before:
+            x = self.final_layer_norm(x)
+
+        x = self.activation_fn(self.fc1(x))
+        x = self.activation_dropout_module(x)
+        x = self.fc2(x)
+        x = self.dropout_module(x)
+        x = self.residual_connection(x, residual)
+        if not self.normalize_before:
+            x = self.final_layer_norm(x)
+        return x

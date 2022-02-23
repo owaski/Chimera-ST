@@ -9,6 +9,8 @@ import torch
 import torchaudio
 from tqdm import tqdm
 import pandas as pd
+import editdistance
+from num2words import num2words
 
 import re
 import soundfile
@@ -140,21 +142,42 @@ noises = ['(Applause)', '(Audience)', '(Audio)', '(Beat)', '(Beatboxing)', '(Bee
     '(Ringing)', '(Shouts)', '(Sigh)', '(Sighs)', '(Silence)', '(Singing)', '(Sings)', '(Spanish)', '(Static)', '(Tones)', '(Trumpet)', '(Video)', '(Voice-over)', \
     '(Whistle)', '(Whistling)', '(video)']
 
+import spacy
+nlp = spacy.load("en_core_web_trf")
+
+noises = ['(Applause)', '(Audience)', '(Audio)', '(Beat)', '(Beatboxing)', '(Beep)', '(Beeps)', '(Cheering)', '(Cheers)', '(Claps)', '(Clicking)', '(Clunk)', '(Coughs)', \
+    '(Drums)', '(Explosion)', '(Gasps)', '(Guitar)', '(Honk)', '(Laugher)', '(Laughing)', '(Laughs)', '(Laughter)', '(Mumbling)', '(Music)', '(Noise)', '(Recording)', \
+    '(Ringing)', '(Shouts)', '(Sigh)', '(Sighs)', '(Silence)', '(Singing)', '(Sings)', '(Spanish)', '(Static)', '(Tones)', '(Trumpet)', '(Video)', '(Voice-over)', \
+    '(Whistle)', '(Whistling)', '(video)']
 def clean(text):
     prefix = re.match("(.{,20}:).*", text)
+
     if prefix is not None:
-        text = text[len(prefix.group(1)):]
+        prefix_ents = nlp(prefix.group(0)).ents
+        if len(prefix_ents) > 0 and prefix_ents[0] == 'PERSON':
+            text = text[len(prefix.group(1)):]
     for noise in noises:
         text = text.replace(noise, '')
     tokens = []
-    for c in text:
+    i = 0
+    while i < len(text):
+        c = text[i]
         if c.isalpha():
             if c.upper() in dictionary:
                 tokens.append(c.upper())
         elif c == "'":
             tokens.append(c)
+        elif c.isnumeric():
+            j = i
+            while j + 1 < len(text) and \
+                (text[j + 1].isnumeric() or ((text[j + 1] == ',' or text[j + 1] == '.') and (j + 2) < len(text) and text[j + 2].isnumeric())):
+                    j += 1
+            words = num2words(text[i : j + 1].replace(',', '')).replace(',', '').replace('-', ' ').replace(' ', '|')
+            tokens.append(words.upper())
+            i = j
         else:
             tokens.append('|')
+        i += 1
     transcript = []
     for c in tokens:
         if c == '|':
@@ -167,18 +190,50 @@ def clean(text):
     
     return ''.join(transcript)
 
+class GreedyCTCDecoder(torch.nn.Module):
+  def __init__(self, labels, ignore):
+    super().__init__()
+    self.labels = labels
+    self.ignore = ignore
+
+  def forward(self, emission: torch.Tensor) -> str:
+    """Given a sequence emission over labels, get the best path string
+    Args:
+      emission (Tensor): Logit tensors. Shape `[num_seq, num_label]`.
+
+    Returns:
+      str: The resulting transcript
+    """
+    indices = torch.argmax(emission, dim=-1)  # [num_seq,]
+    indices = torch.unique_consecutive(indices, dim=-1)
+    indices = [i for i in indices if i not in self.ignore]
+    return ''.join([self.labels[i] for i in indices])
+
+decoder = GreedyCTCDecoder(
+    labels=bundle.get_labels(),
+    ignore=(0, 1, 2, 3),
+)
+
+# cnt = 0
+
 mismatch_df = pd.DataFrame(columns=train_df.columns)
 iterator = tqdm(train_df.iterrows(), total=train_df.shape[0], desc='0 mismatch found')
 for _, row in iterator:
     try:
+        # cnt += 1
+        # if cnt > 1000:
+        #     break
+
         splits = row['audio'].split(':')
         ori_start, ori_duration = splits[-2:]
         ori_start, ori_duration = int(ori_start), int(ori_duration)
         
+        ext = 1
+
         wav_file = os.path.join(mustc_root, ''.join(splits[:-2]))
         with torch.inference_mode():
             waveform, _ = torchaudio.load(wav_file, \
-                frame_offset=max(ori_start - 3 * 16000, 0), num_frames=ori_duration + 6 * 16000)
+                frame_offset=max(ori_start - int(ext * 16000), 0), num_frames=ori_duration + 2 * ext * 16000)
             emissions, _ = model(waveform.to(device))
             emissions = torch.log_softmax(emissions, dim=-1)
         emission = emissions[0].cpu().detach()
@@ -196,7 +251,27 @@ for _, row in iterator:
         start = ratio * word_segments[0].start
         end = ratio * word_segments[-1].end
 
-        if start < 2.75 * 16000 or end > waveform.size(1) - 2.75 * 16000:
+        ext_len = waveform.size(1)
+        flag = start < 0.85 * ext * 16000 or end > ext_len - 0.85 * ext * 16000
+
+        if not flag:
+            with torch.inference_mode():
+                waveform, _ = torchaudio.load(wav_file, frame_offset=ori_start, num_frames=ori_duration)
+                emissions, _ = model(waveform.to(device))
+                emissions = torch.log_softmax(emissions, dim=-1)
+            emission = emissions[0].cpu().detach()
+            asr_transcript = decoder(emission)
+            edit_distance = editdistance.eval(transcript, asr_transcript)
+
+            flag |= ext * 16000 < start and ext_len - ext * 16000 > end and \
+                ((ext + 1) * 16000 < start or ext_len - (ext + 1) * 16000 > end) and edit_distance / len(transcript) > 0.3
+
+            flag |= edit_distance / len(transcript) > 0.7
+
+            if flag:
+                print(transcript, asr_transcript, sep='\n')
+
+        if flag:
             mismatch_df = mismatch_df.append(row, ignore_index=True)
             iterator.set_description('{} mismatch found'.format(mismatch_df.shape[0]))
     except:
@@ -204,16 +279,17 @@ for _, row in iterator:
 
 string = '<table>\n'
 string += '\t<tr>\n\t\t<th>Transcript</th>\n\t\t<th>Translation</th>\n\t\t<th>Source Audio</th>\n\t</tr>\n'
+os.makedirs('mST/analysis/forced_alignment/resources/train-mismatch-v4', exist_ok=True)
 for i in tqdm(range(mismatch_df.shape[0])):
     match = re.match('(.*):(\d+):(\d+)', mismatch_df['audio'][i])
     wav = os.path.join(mustc_root, match.group(1))
     speech_array, sampling_rate = soundfile.read( wav )
     speech_array = speech_array[int(match.group(2)):int(match.group(2))+int(match.group(3))]
-    soundfile.write('mST/analysis/forced_alignment/resources/train-mismatch/audio_{}.wav'.format(i), speech_array, 16000)
+    soundfile.write('mST/analysis/forced_alignment/resources/train-mismatch-v4/audio_{}.wav'.format(i), speech_array, 16000)
     string += '\t<tr>\n\t\t<td>{}</td>\n\t\t<td>{}</td>\n\t\t<td>{}</td>\n\t</tr>\n'.format(\
         mismatch_df['src_text'][i], mismatch_df['tgt_text'][i], \
-        '<audio controls><source src="train-mismatch/audio_{}.wav" type="audio/wav"></audio>'.format(i))
+        '<audio controls><source src="train-mismatch-v4/audio_{}.wav" type="audio/wav"></audio>'.format(i))
 string += '</table>'
 
-with open('mST/analysis/forced_alignment/train-mismatch.html', 'w') as w:
+with open('mST/analysis/forced_alignment/train-mismatch-v4.html', 'w') as w:
     w.write(string)

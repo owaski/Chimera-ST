@@ -75,6 +75,7 @@ fairseq/criterions/label_smoothed_cross_entropy.py
 fairseq/criterions/label_smoothed_cross_entropy_with_alignment.py
 fairseq/criterions/legacy_masked_lm.py
 fairseq/criterions/masked_lm.py
+fairseq/criterions/multilingual_triplet.py
 fairseq/criterions/nat_loss.py
 fairseq/criterions/sentence_prediction.py
 fairseq/criterions/sentence_ranking.py
@@ -135,6 +136,8 @@ fairseq/data/transform_eos_lang_pair_dataset.py
 fairseq/data/audio/__init__.py
 fairseq/data/audio/audio_utils.py
 fairseq/data/audio/cs291k_dataset.py
+fairseq/data/audio/multilingual_speech_to_text_dataset.py
+fairseq/data/audio/multilingual_triplet_dataset.py
 fairseq/data/audio/raw_audio_dataset.py
 fairseq/data/audio/speech_to_text_dataset.py
 fairseq/data/audio/triplet_dataset.py
@@ -430,6 +433,10 @@ fairseq/models/cs291k/cs291k_encoder.py
 fairseq/models/cs291k/cs291k_model.py
 fairseq/models/huggingface/__init__.py
 fairseq/models/huggingface/hf_gpt2.py
+fairseq/models/mST/__init__.py
+fairseq/models/mST/discriminator.py
+fairseq/models/mST/w2v2_transformer.py
+fairseq/models/mST/w2v2_transformer_encoder.py
 fairseq/models/nat/__init__.py
 fairseq/models/nat/cmlm_transformer.py
 fairseq/models/nat/fairseq_nat_model.py
@@ -559,7 +566,9 @@ fairseq/tasks/legacy_masked_lm.py
 fairseq/tasks/masked_lm.py
 fairseq/tasks/multilingual_denoising.py
 fairseq/tasks/multilingual_masked_lm.py
+fairseq/tasks/multilingual_speech_to_text.py
 fairseq/tasks/multilingual_translation.py
+fairseq/tasks/multilingual_triplet.py
 fairseq/tasks/semisupervised_translation.py
 fairseq/tasks/sentence_prediction.py
 fairseq/tasks/sentence_ranking.py

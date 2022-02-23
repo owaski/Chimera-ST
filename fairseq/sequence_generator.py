@@ -106,7 +106,7 @@ class SequenceGenerator(nn.Module):
         if self.lm_model is not None:
             self.lm_model.eval()
 
-        # self.count = 0
+        self.count = 0
 
     def cuda(self):
         self.model.cuda()
@@ -240,8 +240,14 @@ class SequenceGenerator(nn.Module):
         encoder_outs = self.model.forward_encoder(net_input)
 
         # lang = os.environ['SRC_LANG']
-        # os.makedirs('/mnt/raid0/siqi/analysis/resources/{}'.format(lang), exist_ok=True)
-        # torch.save(encoder_outs, '/mnt/raid0/siqi/analysis/resources/{}/batch_{}.pt'.format(lang, self.count))
+        # ver = os.environ['VER']
+        # os.makedirs('/mnt/raid0/siqi/analysis/resources-{}/{}'.format(ver, lang), exist_ok=True)
+        # x, padding_mask = encoder_outs[0].internal_states
+        # bsz, _ = padding_mask.size()
+        # encoder_embeddings = []
+        # for i in range(bsz):
+        #     encoder_embeddings.append(x[i, :, :][~padding_mask[i]].mean(dim=0))
+        # torch.save(encoder_embeddings, '/mnt/raid0/siqi/analysis/resources-{}/{}/batch_{}.pt'.format(ver, lang, self.count))
         # self.count += 1
 
         # placeholder of indices for bsz * beam_size to hold tokens and accumulative scores

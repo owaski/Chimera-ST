@@ -14,11 +14,13 @@ class MultilingualTripletCriterion(LabelSmoothedCrossEntropyCriterion):
         label_smoothing, 
         ignore_prefix_size=0,
         report_accuracy=False, 
-        loss_ratio=[1.0, 1.0, 1.0, 1.0]
+        loss_ratio=[1.0, 1.0, 1.0, 1.0],
+        disc_period=2
     ):
         super().__init__(task, sentence_avg, label_smoothing, ignore_prefix_size, report_accuracy)
         self.loss_ratio = loss_ratio
         self.nstep = 0
+        self.disc_period = disc_period
 
     @staticmethod
     def get_num_updates():
@@ -51,6 +53,11 @@ class MultilingualTripletCriterion(LabelSmoothedCrossEntropyCriterion):
             type=float,
             nargs='+'
         )
+        parser.add_argument(
+            '--disc-period',
+            type=int,
+            default=2,
+        )
 
     def forward(self, model, sample, reduce=True):
         st_loss = st_nll_loss = th.tensor(0.)
@@ -59,7 +66,7 @@ class MultilingualTripletCriterion(LabelSmoothedCrossEntropyCriterion):
         adv_loss = th.tensor(0.)
 
         self.nstep += 1
-        normal = self.nstep % 2 == 0 or (not model.training)
+        normal = self.nstep % self.disc_period != 0 or (not model.training) or self.loss_ratio[3] == 0.
 
         if normal:
             if self.loss_ratio[0] > 0:

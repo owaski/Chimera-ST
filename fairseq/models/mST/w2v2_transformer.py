@@ -150,6 +150,13 @@ class W2V2Transformer(FairseqEncoderDecoderModel):
             help="share decoder input and output embeddings",
         )
 
+        # modify residual connection
+        parser.add_argument(
+            '--encoder-layer-to-remove-residual',
+            type=int,
+            nargs='+',
+        )
+
         # hyper-parameters for discriminators
         parser.add_argument(
             '--disc-nlayer',
@@ -323,10 +330,13 @@ def w2v2_transformer_base(args):
 
     args.quant_noise_pq = getattr(args, "quant_noise_pq", 0.0)
 
+    # residual connection
+    args.encoder_layer_to_remove_residual = getattr(args, "encoder_layer_to_remove_residual", [])
+
     # Discriminator
     args.disc_nlayer = getattr(args, "disc_nlayer", 2)
     args.disc_ndim = getattr(args, "disc_ndim", args.encoder_embed_dim)
     args.disc_nhid = getattr(args, "disc_nhid", args.encoder_ffn_embed_dim)
     args.disc_nhead = getattr(args, "disc_nhead", 4)
-    args.disc_nclass = getattr(args, "disc_nclass", 19)
+    args.disc_nclass = getattr(args, "disc_nclass", 22)
     args.disc_drop = getattr(args, "disc_drop", args.dropout)
