@@ -154,3 +154,4 @@ cs291k/analysis/*
 *.npy
 *.html
 *.png
+*.pyc
