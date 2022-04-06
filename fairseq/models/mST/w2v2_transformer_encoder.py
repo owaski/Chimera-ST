@@ -264,10 +264,10 @@ class _TransformerEncoder(TransformerEncoder):
         
         # encoder layers
         for layer in self.layers:
-            x = layer(x, encoder_padding_mask)
+            x, internal = layer(x, encoder_padding_mask)
             if return_all_hiddens:
                 assert encoder_states is not None
-                encoder_states.append(x)
+                encoder_states.append(internal)
 
         if self.layer_norm is not None:
             x = self.layer_norm(x)      
@@ -312,9 +312,12 @@ class _TransformerEncoderLayer(TransformerEncoderLayer):
         if attn_mask is not None:
             attn_mask = attn_mask.masked_fill(attn_mask.to(th.bool), -1e8)
 
+        internal_states = [x]
+
         residual = x
         if self.normalize_before:
             x = self.self_attn_layer_norm(x)
+        internal_states.append(x)
         x, _ = self.self_attn(
             query=x,
             key=x,
@@ -322,21 +325,28 @@ class _TransformerEncoderLayer(TransformerEncoderLayer):
             key_padding_mask=encoder_padding_mask,
             attn_mask=attn_mask,
         )
+        internal_states.append(x)
         x = self.dropout_module(x)
+        internal_states.append(x)
         if not self.remove_residual: # optional to remove residual connection
             x = self.residual_connection(x, residual)
+        internal_states.append(x)
         if not self.normalize_before:
             x = self.self_attn_layer_norm(x)
+        internal_states.append(x)
 
         residual = x
         if self.normalize_before:
             x = self.final_layer_norm(x)
+        internal_states.append(x)
 
         x = self.activation_fn(self.fc1(x))
         x = self.activation_dropout_module(x)
+        internal_states.append(x)
         x = self.fc2(x)
         x = self.dropout_module(x)
         x = self.residual_connection(x, residual)
+        internal_states.append(x)
         if not self.normalize_before:
             x = self.final_layer_norm(x)
-        return x
+        return x, internal_states

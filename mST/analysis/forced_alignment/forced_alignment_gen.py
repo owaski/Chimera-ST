@@ -21,7 +21,7 @@ from examples.speech_to_text.data_utils import load_df_from_tsv, save_df_to_tsv
 torch.random.manual_seed(0)
 device = torch.device("cuda")
 
-bundle = torchaudio.pipelines.WAV2VEC2_ASR_LARGE_LV60K_960H
+bundle = torchaudio.pipelines.  
 model = bundle.get_model().to(device)
 labels = bundle.get_labels()
 dictionary = {c: i for i, c in enumerate(labels)}

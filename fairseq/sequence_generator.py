@@ -242,11 +242,14 @@ class SequenceGenerator(nn.Module):
         # lang = os.environ['SRC_LANG']
         # ver = os.environ['VER']
         # os.makedirs('/mnt/raid0/siqi/analysis/resources-{}/{}'.format(ver, lang), exist_ok=True)
-        # x, padding_mask = encoder_outs[0].internal_states
+        # padding_mask = encoder_outs[0].encoder_padding_mask
         # bsz, _ = padding_mask.size()
         # encoder_embeddings = []
-        # for i in range(bsz):
-        #     encoder_embeddings.append(x[i, :, :][~padding_mask[i]].mean(dim=0))
+        # for x in encoder_outs[0].encoder_states:
+        #     layer_ft = []
+        #     for i in range(bsz):
+        #         layer_ft.append(x[:, i, :][~padding_mask[i]].mean(dim=0).detach().cpu())
+        #     encoder_embeddings.append(layer_ft)
         # torch.save(encoder_embeddings, '/mnt/raid0/siqi/analysis/resources-{}/{}/batch_{}.pt'.format(ver, lang, self.count))
         # self.count += 1
 

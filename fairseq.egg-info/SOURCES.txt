@@ -76,6 +76,7 @@ fairseq/criterions/label_smoothed_cross_entropy_with_alignment.py
 fairseq/criterions/legacy_masked_lm.py
 fairseq/criterions/masked_lm.py
 fairseq/criterions/multilingual_triplet.py
+fairseq/criterions/multilingual_triplet_semi.py
 fairseq/criterions/nat_loss.py
 fairseq/criterions/sentence_prediction.py
 fairseq/criterions/sentence_ranking.py
