@@ -26,18 +26,55 @@ from fairseq.data.audio.speech_to_text_dataset import (
     SpeechToTextDatasetCreator,
 )
 import numpy as np
-import torchaudio
 
 import torch.nn.functional as F
 from fairseq.data.joint_dataset import JointDataset
 
 from fairseq.data.multi_corpus_sampled_dataset import MultiCorpusSampledDataset
-from fairseq.data.audio.multilingual_triplet_dataset import MultilingualTripletDataConfig, MAX_FRAME
 
 
 logger = logging.getLogger(__name__)
 
-class MultilingualTripletContrastiveDataset(SpeechToTextDataset):
+MAX_FRAME = 320000
+
+class MultilingualTripletDataConfig(S2TDataConfig):
+    """Wrapper class for data config YAML"""
+
+    @property
+    def src_bpe_tokenizer(self) -> Dict:
+        """Subword tokenizer to apply after pre-tokenization. Returning
+        a dictionary with `bpe` providing the tokenizer name and
+        the other items providing the tokenizer-specific arguments.
+        Tokenizers are defined in `fairseq.data.encoders.*`"""
+        return self.config.get("src_bpe_tokenizer", {"bpe": None})
+
+    @property
+    def src_vocab_filename(self):
+        """fairseq vocabulary file under data root"""
+        return self.config.get("src_vocab_filename", "dict.txt")
+
+    @property
+    def phone_dict(self):
+        return self.config.get("phone_dict", None)
+
+    @property
+    def lang_list_filename(self):
+        return self.config.get("lang_list_filename", None)
+
+    @property
+    def prepend_src_lang_tag(self):
+        return self.config.get("prepend_src_lang_tag", False)
+
+    @property
+    def voxpopuli_root(self):
+        return self.config.get("voxpopuli_root", None)
+
+    @property
+    def unlabeled_sampling_ratio(self):
+        return self.config.get("unlabeled_sampling_ratio", 1.0)
+
+
+class MultilingualTripletDataset(SpeechToTextDataset):
     LANG_TAG_TEMPLATE = "<lang:{}>"
 
     def __init__(
@@ -49,12 +86,14 @@ class MultilingualTripletContrastiveDataset(SpeechToTextDataset):
         n_frames: List[int],
         src_texts: Optional[List[str]] = None,
         tgt_texts: Optional[List[str]] = None,
+        phones: Optional[List[str]] = None,
         speakers: Optional[List[str]] = None,
         src_langs: Optional[List[str]] = None,
         tgt_langs: Optional[List[str]] = None,
         ids: Optional[List[str]] = None,
         tgt_dict: Optional[Dictionary] = None,
         src_dict: Optional[Dictionary] = None,
+        phone_dict: Optional[Dict] = None,
         pre_tokenizer=None,
         bpe_tokenizer=None,
         src_bpe_tokenizer=None,
@@ -63,7 +102,6 @@ class MultilingualTripletContrastiveDataset(SpeechToTextDataset):
         sample_rate=16000,
         src_lang2idx=None,
         labeled=True,
-        ref_audio_paths=None,
     ):
         self.split, self.is_train_split = split, is_train_split
         self.data_cfg = data_cfg
@@ -76,7 +114,6 @@ class MultilingualTripletContrastiveDataset(SpeechToTextDataset):
         assert speakers is None or len(speakers) == self.n_samples
         assert src_langs is None or len(src_langs) == self.n_samples
         assert tgt_langs is None or len(tgt_langs) == self.n_samples
-        assert ref_audio_paths is None or len(ref_audio_paths) == self.n_samples
         assert ids is None or len(ids) == self.n_samples
         assert (tgt_texts is None) or (
             tgt_dict is not None and tgt_texts is not None
@@ -85,13 +122,14 @@ class MultilingualTripletContrastiveDataset(SpeechToTextDataset):
             src_dict is not None and src_texts is not None
         )
         self.src_texts, self.tgt_texts = src_texts, tgt_texts
+        self.phones = phones
         self.src_langs, self.tgt_langs = src_langs, tgt_langs
-        self.ref_audio_paths = ref_audio_paths
         self.src_lang2idx = src_lang2idx
         self.lang_codes = self.get_lang_codes(data_cfg.lang_list_filename)
         self.lang2langcode = {code[:2] : code for code in self.lang_codes}
         self.tgt_dict = tgt_dict
         self.src_dict = src_dict
+        self.phone_dict = phone_dict
         self.labeled = labeled
         if labeled:
             self.check_lang_tag()
@@ -176,6 +214,7 @@ class MultilingualTripletContrastiveDataset(SpeechToTextDataset):
                 )
 
         src_text = None
+        src_lang_tag_idx = None
         if self.src_texts is not None:
             src_tokenized = self.tokenize_text(self.src_texts[index], 'source')
             src_text = self.src_dict.encode_line(
@@ -184,38 +223,35 @@ class MultilingualTripletContrastiveDataset(SpeechToTextDataset):
             if self.data_cfg.prepend_src_lang_tag:
                 lang_tag = self.LANG_TAG_TEMPLATE.format( \
                     self.lang2langcode[self.src_langs[index][:2]])
-                lang_tag_idx = self.src_dict.index(lang_tag)
+                src_lang_tag_idx = self.src_dict.index(lang_tag)
                 src_text = torch.cat(
-                    (torch.LongTensor([lang_tag_idx]), src_text),
+                    (torch.LongTensor([src_lang_tag_idx]), src_text),
                     0
                 )
 
-        ref_source = None
-        if self.ref_audio_paths is not None:
-            if op.exists(self.ref_audio_paths[index]):
-                ref_source = get_features_or_waveform(
-                    self.ref_audio_paths[index],
-                    need_waveform=self.data_cfg.use_audio_input,
-                    sample_rate=self.sample_rate,
-                )
-                ref_source = torch.from_numpy(ref_source).float()
-                if self.normalize:
-                    with torch.no_grad():
-                        ref_source = F.layer_norm(ref_source, ref_source.shape)
+        phones = None
+        if self.phones is not None:
+            phones = [
+                self.phone_dict[phone] for phone in self.phones[index].split(' ')
+            ]
 
-        return index, source, target, src_text, ref_source
+        # src_lang_idx = None
+        # if self.src_langs[index] in self.src_lang2idx:
+        #     src_lang_idx = self.src_lang2idx[self.src_langs[index]]
+
+        return index, source, target, src_text, src_lang_tag_idx, phones
 
     def collater(
         self, samples: List[Tuple[int, torch.Tensor, torch.Tensor]]
     ) -> Dict:
         if len(samples) == 0:
             return {}
-        indices = torch.tensor([i for i, _, _, _, _ in samples], dtype=torch.long)
+        indices = torch.tensor([i for i, _, _, _, _, _ in samples], dtype=torch.long)
         frames = _collate_frames(
-            [s for _, s, _, _, _ in samples], self.data_cfg.use_audio_input
+            [s for _, s, _, _, _, _ in samples], self.data_cfg.use_audio_input
         )
         # sort samples by descending number of frames
-        n_frames = torch.tensor([s.size(0) for _, s, _, _, _ in samples],
+        n_frames = torch.tensor([s.size(0) for _, s, _, _, _, _ in samples],
                                 dtype=torch.long)
         n_frames, order = n_frames.sort(descending=True)
         indices = indices.index_select(0, order)
@@ -226,7 +262,7 @@ class MultilingualTripletContrastiveDataset(SpeechToTextDataset):
         ntokens = None
         if self.labeled:
             target = fairseq_data_utils.collate_tokens(
-                [t for _, _, t, _, _ in samples],
+                [t for _, _, t, _, _, _ in samples],
                 self.tgt_dict.pad(),
                 self.tgt_dict.eos(),
                 left_pad=False,
@@ -234,23 +270,23 @@ class MultilingualTripletContrastiveDataset(SpeechToTextDataset):
             )
             target = target.index_select(0, order)
             target_lengths = torch.tensor(
-                [t.size(0) - 1 for _, _, t, _, _ in samples], dtype=torch.long
+                [t.size(0) - 1 for _, _, t, _, _, _ in samples], dtype=torch.long
             ).index_select(0, order)
             prev_output_tokens = fairseq_data_utils.collate_tokens(
-                [t for _, _, t, _, _ in samples],
+                [t for _, _, t, _, _, _ in samples],
                 self.tgt_dict.pad(),
                 self.tgt_dict.eos(),
                 left_pad=False,
                 move_eos_to_beginning=True,
             )
             prev_output_tokens = prev_output_tokens.index_select(0, order)
-            ntokens = sum(t.size(0) for _, _, t, _, _ in samples)
+            ntokens = sum(t.size(0) for _, _, t, _, _, _ in samples)
 
         src_text, src_text_lengths = None, None
         asr_target, asr_target_lengths, asr_prev_output_tokens = None, None, None
         if self.labeled:
             src_text = fairseq_data_utils.collate_tokens(
-                [s for _, _, _, s, _ in samples],
+                [s for _, _, _, s, _, _ in samples],
                 self.src_dict.pad(),
                 self.src_dict.eos(),
                 left_pad=False,
@@ -258,41 +294,38 @@ class MultilingualTripletContrastiveDataset(SpeechToTextDataset):
             )
             src_text = src_text.index_select(0, order)
             src_text_lengths = torch.tensor(
-                [s.size(0) for _, _, _, s, _ in samples], dtype=torch.long
+                [s.size(0) for _, _, _, s, _, _ in samples], dtype=torch.long
             ).index_select(0, order)
 
             asr_target = fairseq_data_utils.collate_tokens(
-                [s for _, _, _, s, _ in samples],
+                [s for _, _, _, s, _, _ in samples],
                 self.src_dict.pad(),
                 self.src_dict.eos(),
                 left_pad=False,
                 move_eos_to_beginning=False,
             ).index_select(0, order)
             asr_target_lengths = torch.tensor(
-                [s.size(0) - 1 for _, _, _, s, _ in samples], dtype=torch.long
+                [s.size(0) - 1 for _, _, _, s, _, _ in samples], dtype=torch.long
             ).index_select(0, order)
             asr_prev_output_tokens = fairseq_data_utils.collate_tokens(
-                [s for _, _, _, s, _ in samples],
+                [s for _, _, _, s, _, _ in samples],
                 self.src_dict.pad(),
                 self.src_dict.eos(),
                 left_pad=False,
                 move_eos_to_beginning=True,
             ).index_select(0, order)
 
-        ref_tokens = None
-        ref_n_frames = None
-        ref_mask = torch.tensor(
-            [r is not None for _, _, _, _, r in samples], dtype=bool
-        ).index_select(0, order)
-        if ref_mask.sum() > 0:
-            mask_samples = [samples[o] for o in order]
-            ref_tokens = _collate_frames(
-                [r for _, _, _, _, r in mask_samples if r is not None], self.data_cfg.use_audio_input
-            )
-            ref_n_frames = torch.tensor(
-                [r.size(0) for _, _, _, _, r in mask_samples if r is not None], dtype=torch.long
-            )
+        src_lang_tag_indices = torch.tensor(
+            [src_lang_tag_idx for _, _, _, _, src_lang_tag_idx, _ in samples], dtype=torch.long
+        ).index_select(0, order).unsqueeze(-1)
 
+        phones = []
+        phone_lengths = []
+        for o in order:
+            phones.extend(samples[o][5])
+            phone_lengths.append(len(samples[o][5]))
+        phones = torch.LongTensor(phones)
+        phone_lengths = torch.LongTensor(phone_lengths)
 
         out = {
             "id": indices,
@@ -301,12 +334,7 @@ class MultilingualTripletContrastiveDataset(SpeechToTextDataset):
                 "src_lengths": n_frames,
                 "prev_output_tokens": prev_output_tokens,
                 "mask": self.mask,
-            },
-            "ref_input": {
-                "src_tokens": ref_tokens,
-                "src_lengths": ref_n_frames,
-                "prev_output_tokens": prev_output_tokens,
-                "mask": self.mask,
+                "src_lang_tag_indices": src_lang_tag_indices
             },
             "target": target,
             "target_lengths": target_lengths,
@@ -315,8 +343,8 @@ class MultilingualTripletContrastiveDataset(SpeechToTextDataset):
             "asr_target": asr_target,
             "asr_target_lengths": asr_target_lengths,
             "asr_prev_output_tokens": asr_prev_output_tokens,
-            "ref_tokens": ref_tokens,
-            "ref_mask": ref_mask,
+            "phones": phones,
+            "phone_lengths": phone_lengths,
             "ntokens": ntokens,
             "nsentences": len(samples),
         }
@@ -330,7 +358,7 @@ class MultilingualTripletContrastiveDataset(SpeechToTextDataset):
         return self.n_frames[index], t_len
 
 
-class MultilingualTripletContrastiveDatasetCreator(SpeechToTextDatasetCreator):
+class MultilingualTripletDatasetCreator(SpeechToTextDatasetCreator):
 
     @classmethod
     def _from_list(
@@ -341,14 +369,15 @@ class MultilingualTripletContrastiveDatasetCreator(SpeechToTextDatasetCreator):
         data_cfg: MultilingualTripletDataConfig,
         tgt_dict,
         src_dict,
+        phone_dict,
         pre_tokenizer,
         bpe_tokenizer,
         src_bpe_tokenizer,
         normalize,
         mask,
         sample_rate,
-        src_lang2idx,
-    ) -> MultilingualTripletContrastiveDataset:
+        src_lang2idx
+    ) -> MultilingualTripletDataset:
         parts = split_name.split('_')
         if len(parts) == 1: # unlabeled data
             labeled = False
@@ -366,25 +395,26 @@ class MultilingualTripletContrastiveDatasetCreator(SpeechToTextDatasetCreator):
             labeled = True
             audio_paths, n_frames, src_texts, tgt_texts, ids = [], [], [], [], []
             speakers, src_langs, tgt_langs = [], [], []
-            ref_audio_paths = []
+            phones = []
             for s in samples:
                 ids.extend([ss[cls.KEY_ID] for ss in s])
                 audio_paths.extend(
                     [op.join(data_cfg.audio_root, ss[cls.KEY_SRC_LANG], '16kHz', ss[cls.KEY_AUDIO]) for ss in s]
-                )
-                ref_audio_paths.extend( # TODO: change from hard-coding to be controlled by arguments
-                    [op.join(data_cfg.audio_root, ss[cls.KEY_SRC_LANG], '16kHz_de_silero_vad', ss[cls.KEY_AUDIO]) for ss in s]
                 )
                 n_frames.extend([int(ss[cls.KEY_N_FRAMES]) for ss in s])
                 tgt_texts.extend([ss[cls.KEY_TGT_TEXT] for ss in s])
                 src_texts.extend(
                     [ss.get(cls.KEY_SRC_TEXT, cls.DEFAULT_SRC_TEXT) for ss in s]
                 )
-                speakers.extend([ss.get(cls.KEY_SPEAKER, cls.DEFAULT_SPEAKER) for ss in s])
-                src_langs.extend([ss.get(cls.KEY_SRC_LANG, cls.DEFAULT_LANG)  for ss in s])
-                tgt_langs.extend([ss.get(cls.KEY_TGT_LANG, cls.DEFAULT_LANG)  for ss in s])
+                speakers.extend([ss.get(cls.KEY_SPEAKER, cls.DEFAULT_SPEAKER)
+                                for ss in s])
+                src_langs.extend([ss.get(cls.KEY_SRC_LANG, cls.DEFAULT_LANG)
+                                for ss in s])
+                tgt_langs.extend([ss.get(cls.KEY_TGT_LANG, cls.DEFAULT_LANG)
+                                for ss in s])
+                phones.extend([ss['phones'] for ss in s])
 
-        return MultilingualTripletContrastiveDataset(
+        return MultilingualTripletDataset(
             split_name,
             is_train_split,
             data_cfg,
@@ -392,20 +422,21 @@ class MultilingualTripletContrastiveDatasetCreator(SpeechToTextDatasetCreator):
             n_frames,
             src_texts,
             tgt_texts,
+            phones,
             speakers,
             src_langs,
             tgt_langs,
             ids,
             tgt_dict,
             src_dict,
+            phone_dict,
             pre_tokenizer,
             bpe_tokenizer,
             src_bpe_tokenizer,
             normalize,
             mask,
             src_lang2idx=src_lang2idx,
-            labeled=labeled,
-            ref_audio_paths=ref_audio_paths
+            labeled=labeled
         )
 
     @classmethod
@@ -416,6 +447,7 @@ class MultilingualTripletContrastiveDatasetCreator(SpeechToTextDatasetCreator):
         splits: str,
         tgt_dict,
         src_dict,
+        phone_dict,
         pre_tokenizer,
         bpe_tokenizer,
         src_bpe_tokenizer,
@@ -425,7 +457,7 @@ class MultilingualTripletContrastiveDatasetCreator(SpeechToTextDatasetCreator):
         normalize: bool = False,
         mask: bool = True,
         sample_rate: int = 16000,
-    ) -> MultilingualTripletContrastiveDataset:
+    ) -> MultilingualTripletDataset:
         samples = []
         _splits = splits.split(",") # here the splits contain codes of language pair that we use
         src_lang2idx = {}
@@ -441,8 +473,8 @@ class MultilingualTripletContrastiveDatasetCreator(SpeechToTextDatasetCreator):
                     src_lang2idx[src_code] = len(src_lang2idx)
                 types[0] = True
             else:
-                src_code, tgt_code, tp = split.split('_')
-                tsv_path = op.join(root, src_code, "{}_st_{}_{}.tsv".format(tp, src_code, tgt_code))
+                src_code, tgt_code, tp, tag = split.split('_')
+                tsv_path = op.join(root, src_code, "{}_st_{}_{}_{}.tsv".format(tp, src_code, tgt_code, tag))
                 types[1] = True
             if not op.isfile(tsv_path):
                 raise FileNotFoundError(f"Dataset not found: {tsv_path}")
@@ -457,7 +489,6 @@ class MultilingualTripletContrastiveDatasetCreator(SpeechToTextDatasetCreator):
                 )
                 samples.append([dict(e) for e in reader])
                 assert len(samples) > 0
-            
 
         datasets = [
             cls._from_list(
@@ -467,13 +498,14 @@ class MultilingualTripletContrastiveDatasetCreator(SpeechToTextDatasetCreator):
                 data_cfg,
                 tgt_dict,
                 src_dict,
+                phone_dict,
                 pre_tokenizer,
                 bpe_tokenizer,
                 src_bpe_tokenizer,
                 normalize,
                 mask,
                 sample_rate,
-                src_lang2idx,
+                src_lang2idx
             )
             for name, s in zip(_splits, samples)
         ]

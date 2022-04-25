@@ -1,13 +1,14 @@
 from random import choices
 import torch as th
 import torch.nn.functional as F
+from examples.speech_recognition.data.data_utils import encoder_padding_mask_to_lengths, padding_mask_to_lengths
 
 from fairseq import logging, metrics, utils
 from fairseq.criterions import register_criterion
 from fairseq.criterions.label_smoothed_cross_entropy import LabelSmoothedCrossEntropyCriterion
 
-@register_criterion('multilingual_triplet_contrastive_criterion_temp')
-class MultilingualTripletContrastiveCriterionTemp(LabelSmoothedCrossEntropyCriterion):
+@register_criterion('multilingual_triplet_phone_criterion')
+class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion):
     def __init__(
         self, 
         task, 
@@ -15,12 +16,10 @@ class MultilingualTripletContrastiveCriterionTemp(LabelSmoothedCrossEntropyCrite
         label_smoothing, 
         ignore_prefix_size=0,
         report_accuracy=False, 
-        loss_ratio=[1.0, 1.0, 1.0, 1.0],
-        contrast_layer=0,
+        loss_ratio=[1.0, 1.0, 1.0, 1.0, 1.0],
     ):
         super().__init__(task, sentence_avg, label_smoothing, ignore_prefix_size, report_accuracy)
         self.loss_ratio = loss_ratio
-        self.contrast_layer = contrast_layer
 
     @staticmethod
     def get_num_updates():
@@ -49,22 +48,16 @@ class MultilingualTripletContrastiveCriterionTemp(LabelSmoothedCrossEntropyCrite
         )
         parser.add_argument(
             '--loss-ratio',
-            default=[1.0, 1.0, 1.0, 1.0], # st, mt, asr, adv
+            default=[1.0, 1.0, 1.0, 1.0, 1.0], # st, mt, asr, ctc on phone, ctc on text
             type=float,
             nargs='+'
-        )
-        parser.add_argument(
-            '--contrast-layer',
-            type=int,
-            default=0,
-            choices=list(range(12)),
         )
 
     def forward(self, model, sample, reduce=True):
         st_loss = st_nll_loss = th.tensor(0.)
         mt_loss = mt_nll_loss = th.tensor(0.)
         asr_loss = asr_nll_loss = th.tensor(0.)
-        con_loss = th.tensor(0.)
+        ctc_phone = ctc_text = th.tensor(0.)
 
         if self.loss_ratio[0] > 0:
             st_net_output, st_encoder_out = model.forward_with_internal(**sample["net_input"])
@@ -79,49 +72,45 @@ class MultilingualTripletContrastiveCriterionTemp(LabelSmoothedCrossEntropyCrite
             }
             mt_net_output = model(**mt_input)
             mt_loss, mt_nll_loss = self.compute_loss(model, mt_net_output, sample["target"], reduce=reduce)
-
         
         if self.loss_ratio[2] > 0:
             asr_input = {
                 "src_tokens": sample["net_input"]["src_tokens"], 
                 "src_lengths": sample["net_input"]["src_lengths"], 
-                "prev_output_tokens": sample["asr_prev_output_tokens"]
+                "prev_output_tokens": sample["asr_prev_output_tokens"],
+                "src_lang_tag_indices": sample["net_input"]["src_lang_tag_indices"]
             }
             asr_net_output = model(**asr_input)
             asr_loss, asr_nll_loss = self.compute_loss(model, asr_net_output, sample["asr_target"], reduce=reduce)
 
         if self.loss_ratio[3] > 0:
-            st_encoder_out = model.forward_encoder(**sample["net_input"])
-            # mt_input = {
-            #     "src_tokens": sample["src_text"],
-            #     "src_lengths": sample["src_text_lengths"],
-            #     "prev_output_tokens": sample["net_input"]["prev_output_tokens"]
-            # }
-            # mt_encoder_out = model.forward_encoder(**mt_input)
-            ref_encoder_out = model.forward_encoder(**sample["ref_input"])
-            # ref_mask = th.ones_like(sample["ref_mask"]).bool()
-            ref_mask = sample["ref_mask"]
-            con_loss = self.compute_contrastive_loss(
-                st_encoder_out, ref_encoder_out, ref_mask, reduce
+            encoder_lengths = padding_mask_to_lengths(st_encoder_out.encoder_padding_mask) - 1
+            ctc_phone = F.ctc_loss(
+                st_encoder_out.phone_logp.transpose(0, 1).float(), sample["phones"], 
+                encoder_lengths, sample["phone_lengths"],
+                blank=0, reduction='sum' if reduce else 'none'
             )
-            # if sample["ref_input"]["src_tokens"] is not None and sample["net_input"]["src_tokens"].size(0) > 1:
-            #     st_net_output, st_encoder_out = model.forward_with_internal(**sample["net_input"])
-            #     mt_input = {
-            #         "src_tokens": sample["src_text"],
-            #         "src_lengths": sample["src_text_lengths"],
-            #         "prev_output_tokens": sample["net_input"]["prev_output_tokens"]
-            #     }
-            #     mt_encoder_out = model.forward_encoder(**mt_input)
-            #     ref_encoder_out = model.forward_encoder(**sample["ref_input"])
-            #     ref_mask = th.ones_like(sample["ref_mask"]).bool()
-            #     con_loss = self.compute_contrastive_loss(
-            #         st_encoder_out, mt_encoder_out, ref_mask, reduce
-            #     )
+
+        if self.loss_ratio[4] > 0:
+            encoder_lengths = padding_mask_to_lengths(st_encoder_out.encoder_padding_mask)
+
+            src_text = []
+            for idx in range(sample["src_text"].size(0)):
+                src_sent, src_len = sample["src_text"][idx], sample["src_text_lengths"][idx]
+                src_text.append(src_sent[:src_len])
+            src_text = th.cat(src_text, dim=0).long()
+
+            ctc_text = F.ctc_loss(
+                st_encoder_out.text_logp.transpose(0, 1).float(), src_text,
+                encoder_lengths, sample["src_text_lengths"],
+                blank=st_encoder_out.text_logp.size(-1) - 1, reduction='sum' if reduce else 'none'
+            )
 
         loss = self.loss_ratio[0] * st_loss + \
                self.loss_ratio[1] * mt_loss + \
                self.loss_ratio[2] * asr_loss + \
-               self.loss_ratio[3] * con_loss
+               self.loss_ratio[3] * ctc_phone + \
+               self.loss_ratio[4] * ctc_text
         nll_loss = self.loss_ratio[0] * st_nll_loss + \
                    self.loss_ratio[1] * mt_nll_loss + \
                    self.loss_ratio[2] * asr_nll_loss
@@ -144,8 +133,10 @@ class MultilingualTripletContrastiveCriterionTemp(LabelSmoothedCrossEntropyCrite
             "asr_sample_size": asr_sample_size,
             "adv_enc_sample_size": sample["target"].size(0),
             "adv_disc_sample_size": sample["target"].size(0),
-            "contrastive_loss": con_loss if self.loss_ratio[3] > 0 and sample["ref_input"]["src_tokens"] is not None else 0,
-            "contrastive_sample_size": sample["ref_mask"].sum() if sample["ref_mask"] is not None else 0,
+            "ctc_phone_loss": ctc_phone if self.loss_ratio[3] > 0 else 0,
+            "ctc_phone_sample_size": encoder_lengths.sum() if self.loss_ratio[3] > 0 else 0,
+            "ctc_text_loss": ctc_text if self.loss_ratio[4] > 0 else 0,
+            "ctc_text_sample_size": encoder_lengths.sum() if self.loss_ratio[4] > 0 else 0,
         }
 
         if self.report_accuracy:
@@ -165,36 +156,6 @@ class MultilingualTripletContrastiveCriterionTemp(LabelSmoothedCrossEntropyCrite
                 logging_output["asr_total"] = utils.item(asr_total.data)
 
         return loss, sample_size, logging_output
-
-    def compute_contrastive_loss(self, st_encoder_out, ref_encoder_out, ref_mask, reduce):
-        # st_feature = st_encoder_out.encoder_states[self.contrast_layer].transpose(0, 1).float()
-        # ref_feature = ref_encoder_out.encoder_states[self.contrast_layer].transpose(0, 1).float()
-        st_feature = st_encoder_out.encoder_embedding.float()
-        ref_feature = ref_encoder_out.encoder_embedding.float()
-
-        st_padding_mask = st_encoder_out.encoder_padding_mask
-        ref_padding_mask = ref_encoder_out.encoder_padding_mask
-
-        st_mean_feature = []
-        for idx in range(st_feature.size(0)):
-            st_mean_feature.append(st_feature[idx][~st_padding_mask[idx]].mean(dim=0))
-        ref_mean_feature = []
-        for idx in range(ref_feature.size(0)):
-            ref_mean_feature.append(ref_feature[idx][~ref_padding_mask[idx]].mean(dim=0))
-
-        st_mean_feature = th.stack(st_mean_feature)[ref_mask]
-        ref_mean_feature = th.stack(ref_mean_feature)
-
-        sim_matrix = F.cosine_similarity(
-            st_mean_feature.unsqueeze(0),
-            ref_mean_feature.unsqueeze(1).detach(),
-            dim=-1,
-        )
-
-        ref_ids = th.arange(sim_matrix.size(0)).to(sim_matrix).long()
-
-        con_loss = F.cross_entropy(sim_matrix, ref_ids, reduction='sum' if reduce else 'none')
-        return con_loss
 
     @classmethod
     def reduce_metrics(cls, logging_outputs) -> None:
@@ -236,11 +197,16 @@ class MultilingualTripletContrastiveCriterionTemp(LabelSmoothedCrossEntropyCrite
         if adv_disc_sample_size > 0:
             metrics.log_scalar('adv_disc_loss', adv_disc_loss_sum / adv_disc_sample_size, adv_disc_sample_size, round=3)
 
-        # contrastive
-        contrastive_sample_size = sum(log.get('contrastive_sample_size', 0) for log in logging_outputs)
-        contrastive_loss_sum = sum(log.get('contrastive_loss', 0) for log in logging_outputs)
-        if contrastive_sample_size > 0:
-            metrics.log_scalar('contrastive_loss', contrastive_loss_sum / contrastive_sample_size, contrastive_sample_size, round=3)
+        # ctc
+        ctc_phone_sample_size = sum(log.get('ctc_phone_sample_size', 0) for log in logging_outputs)
+        ctc_phone_loss_sum = sum(log.get('ctc_phone_loss', 0) for log in logging_outputs)
+        if ctc_phone_sample_size > 0:
+            metrics.log_scalar('ctc_phone_loss', ctc_phone_loss_sum / ctc_phone_sample_size, ctc_phone_sample_size, round=3)
+
+        ctc_text_sample_size = sum(log.get('ctc_text_sample_size', 0) for log in logging_outputs)
+        ctc_text_loss_sum = sum(log.get('ctc_text_loss', 0) for log in logging_outputs)
+        if ctc_text_sample_size > 0:
+            metrics.log_scalar('ctc_text_loss', ctc_text_loss_sum / ctc_text_sample_size, ctc_text_sample_size, round=3)
 
     @staticmethod
     def logging_outputs_can_be_summed() -> bool:

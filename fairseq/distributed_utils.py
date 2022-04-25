@@ -284,6 +284,8 @@ def distributed_main(i, main, cfg: FairseqConfig, kwargs):
 
 
 def call_main(cfg: FairseqConfig, main, **kwargs):
+    torch.multiprocessing.set_sharing_strategy("file_system")
+
     if cfg.distributed_training.distributed_init_method is None:
         infer_init_method(cfg.distributed_training)
 

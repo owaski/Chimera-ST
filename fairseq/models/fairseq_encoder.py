@@ -20,6 +20,8 @@ EncoderOut = NamedTuple(
         ("internal_states", Optional[Dict[AnyStr, Tensor]]),
         ("src_tokens", Optional[Tensor]),  # B x T
         ("src_lengths", Optional[Tensor]),  # B x 1
+        ("phone_logp", Optional[Tensor]),  # B x T * C
+        ("text_logp", Optional[Tensor]),  # B x T * C
     ],
 )
 

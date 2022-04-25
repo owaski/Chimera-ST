@@ -20,8 +20,8 @@ from fairseq.tasks import LegacyFairseqTask, register_task
 logger = logging.getLogger(__name__)
 
 
-@register_task("multilingual_speech_to_text")
-class MultilingualSpeechToTextTask(LegacyFairseqTask):
+@register_task("multilingual_speech_to_text_phone")
+class MultilingualSpeechToTextPhoneTask(LegacyFairseqTask):
     @staticmethod
     def add_args(parser):
         parser.add_argument("data", help="manifest root path")
@@ -51,9 +51,10 @@ class MultilingualSpeechToTextTask(LegacyFairseqTask):
             help="max number of tokens in the target sequence",
         )
 
-    def __init__(self, args, tgt_dict):
+    def __init__(self, args, tgt_dict, phone_dict):
         super().__init__(args)
         self.tgt_dict = tgt_dict
+        self.phone_dict = phone_dict
         self.data_cfg = MultilingualS2TDataConfig(op.join(args.data, args.config_yaml))
 
     @classmethod
@@ -68,6 +69,11 @@ class MultilingualSpeechToTextTask(LegacyFairseqTask):
         for code in codes:
             tgt_dict.add_symbol(MultilingualSpeechToTextDataset.LANG_TAG_TEMPLATE.format(code))
         tgt_dict.add_symbol('<mask>')
+
+        with open(data_cfg.phone_dict, 'r') as r:
+            phone_list = [l.strip() for l in r.readlines() if l.strip() != '']
+            phone_dict = {l: idx + 1 for idx, l in enumerate(phone_list)} # leave 0 as blank
+
         logger.info(
             f"dictionary size ({data_cfg.vocab_filename}): " f"{len(tgt_dict):,}"
         )
@@ -75,7 +81,7 @@ class MultilingualSpeechToTextTask(LegacyFairseqTask):
         # if getattr(args, "train_subset", None) is not None:
         #     if not all(s.startswith("train") for s in args.train_subset.split(",")):
         #         raise ValueError('Train splits should be named like "train*".')
-        return cls(args, tgt_dict)
+        return cls(args, tgt_dict, phone_dict)
 
     def build_criterion(self, args):
         from fairseq import criterions
@@ -116,7 +122,7 @@ class MultilingualSpeechToTextTask(LegacyFairseqTask):
         return self.args.max_source_positions, self.args.max_target_positions
 
     def build_model(self, args):
-        return super(MultilingualSpeechToTextTask, self).build_model(args)
+        return super(MultilingualSpeechToTextPhoneTask, self).build_model(args)
 
     def build_generator(
         self,

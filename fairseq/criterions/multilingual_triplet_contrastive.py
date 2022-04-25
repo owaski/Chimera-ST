@@ -17,10 +17,12 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
         report_accuracy=False, 
         loss_ratio=[1.0, 1.0, 1.0, 1.0],
         contrast_layer=0,
+        gamma=1.,
     ):
         super().__init__(task, sentence_avg, label_smoothing, ignore_prefix_size, report_accuracy)
         self.loss_ratio = loss_ratio
         self.contrast_layer = contrast_layer
+        self.gamma = gamma
 
     @staticmethod
     def get_num_updates():
@@ -57,7 +59,12 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
             '--contrast-layer',
             type=int,
             default=0,
-            choices=list(range(12)),
+            choices=list(range(14)),
+        )
+        parser.add_argument(
+            '--gamma',
+            type=float,
+            default=1.,
         )
 
     def forward(self, model, sample, reduce=True):
@@ -69,6 +76,12 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
         if self.loss_ratio[0] > 0:
             st_net_output, st_encoder_out = model.forward_with_internal(**sample["net_input"])
             st_loss, st_nll_loss = self.compute_loss(model, st_net_output, sample["target"], reduce=reduce)
+
+            if sample["ref_mask"].sum() > 0:
+                ref_net_output, ref_encoder_out = model.forward_with_internal(**sample["ref_input"])
+                ref_loss, ref_nll_loss = self.compute_loss(model, ref_net_output, sample["target"], reduce=reduce)
+                st_loss = st_loss + ref_loss
+                st_nll_loss = st_nll_loss + ref_nll_loss
 
         mt_loss = mt_nll_loss = 0.
         if self.loss_ratio[1] > 0:
@@ -90,27 +103,25 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
             asr_net_output = model(**asr_input)
             asr_loss, asr_nll_loss = self.compute_loss(model, asr_net_output, sample["asr_target"], reduce=reduce)
 
+        ref_mask = sample["ref_mask"]
         if self.loss_ratio[3] > 0:
-            st_encoder_out = model.forward_encoder(**sample["net_input"])
-            mt_input = {
-                "src_tokens": sample["src_text"],
-                "src_lengths": sample["src_text_lengths"],
-                "prev_output_tokens": sample["net_input"]["prev_output_tokens"]
-            }
-            if sample["ref_mask"].sum() > 0:
+            if self.loss_ratio[0] == 0:
+                st_encoder_out = model.forward_encoder(**sample["net_input"])
+            if ref_mask.sum() > 0:
                 # mt_encoder_out = model.forward_encoder(**mt_input)
-                ref_encoder_out = model.forward_encoder(**sample["ref_input"])
                 # ref_mask = th.ones_like(sample["ref_mask"]).bool()
-                ref_mask = sample["ref_mask"]
                 con_loss = self.compute_contrastive_loss(
                     st_encoder_out, ref_encoder_out, ref_mask, reduce
                 )
             else:
-                mt_encoder_out = model.forward_encoder(**mt_input)
-                ref_mask = th.ones_like(sample["ref_mask"]).bool()
-                con_loss = self.compute_contrastive_loss(
-                    st_encoder_out, mt_encoder_out, ref_mask, reduce
-                )
+                mt_input = {
+                    "src_tokens": sample["src_text"],
+                    "src_lengths": sample["src_text_lengths"],
+                    "prev_output_tokens": sample["net_input"]["prev_output_tokens"]
+                }
+                mt_net_output = model(**mt_input)
+                mt_loss, mt_nll_loss = self.compute_loss(model, mt_net_output, sample["target"], reduce=reduce)
+
             # if sample["ref_input"]["src_tokens"] is not None and sample["net_input"]["src_tokens"].size(0) > 1:
             #     st_net_output, st_encoder_out = model.forward_with_internal(**sample["net_input"])
             #     mt_input = {
@@ -128,7 +139,7 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
         loss = self.loss_ratio[0] * st_loss + \
                self.loss_ratio[1] * mt_loss + \
                self.loss_ratio[2] * asr_loss + \
-               self.loss_ratio[3] * con_loss
+               self.loss_ratio[3] * con_loss * sample["ntokens"] / sample["target"].size(0)
         nll_loss = self.loss_ratio[0] * st_nll_loss + \
                    self.loss_ratio[1] * mt_nll_loss + \
                    self.loss_ratio[2] * asr_nll_loss
@@ -174,38 +185,44 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
         return loss, sample_size, logging_output
 
     def compute_contrastive_loss(self, st_encoder_out, ref_encoder_out, ref_mask, reduce):
-        def compute(idx1):
-            # st_feature = st_encoder_out.encoder_states[self.contrast_layer][idx1].transpose(0, 1).float()
-            # ref_feature = ref_encoder_out.encoder_states[self.contrast_layer][idx1].transpose(0, 1).float()
+        if self.contrast_layer == 0:
+            st_feature = st_encoder_out.encoder_embedding.float()
+            ref_feature = ref_encoder_out.encoder_embedding.float()
+        elif self.contrast_layer == 13:
             st_feature = st_encoder_out.encoder_out.transpose(0, 1).float()
             ref_feature = ref_encoder_out.encoder_out.transpose(0, 1).float()
-            # st_feature = st_encoder_out.encoder_embedding.float()
-            # ref_feature = ref_encoder_out.encoder_embedding.float()
+        else:
+            st_feature = st_encoder_out.encoder_states[self.contrast_layer - 1].transpose(0, 1).float()
+            ref_feature = ref_encoder_out.encoder_states[self.contrast_layer - 1].transpose(0, 1).float()
 
-            st_padding_mask = st_encoder_out.encoder_padding_mask
-            ref_padding_mask = ref_encoder_out.encoder_padding_mask
+        st_padding_mask = st_encoder_out.encoder_padding_mask
+        ref_padding_mask = ref_encoder_out.encoder_padding_mask
 
-            st_mean_feature = []
-            for idx in range(st_feature.size(0)):
-                st_mean_feature.append(st_feature[idx][~st_padding_mask[idx]].mean(dim=0))
-            ref_mean_feature = []
-            for idx in range(ref_feature.size(0)):
-                ref_mean_feature.append(ref_feature[idx][~ref_padding_mask[idx]].mean(dim=0))
+        st_mean_feature = []
+        for idx in range(st_feature.size(0)):
+            st_mean_feature.append(st_feature[idx][~st_padding_mask[idx]].mean(dim=0))
+        ref_mean_feature = []
+        for idx in range(ref_feature.size(0)):
+            ref_mean_feature.append(ref_feature[idx][~ref_padding_mask[idx]].mean(dim=0))
 
-            st_mean_feature = th.stack(st_mean_feature)[ref_mask]
-            ref_mean_feature = th.stack(ref_mean_feature)
+        st_mean_feature = th.stack(st_mean_feature)[ref_mask]
+        ref_mean_feature = th.stack(ref_mean_feature)
 
-            sim_matrix = F.cosine_similarity(
-                st_mean_feature.unsqueeze(0),
-                ref_mean_feature.unsqueeze(1).detach(),
-                dim=-1,
-            )
+        sim_matrix = F.cosine_similarity(
+            st_mean_feature.unsqueeze(0),
+            ref_mean_feature.unsqueeze(1),
+            dim=-1,
+        ) 
 
-            ref_ids = th.arange(sim_matrix.size(0)).to(sim_matrix).long()
+        # with open('/mnt/nvme/siqi/work/projects/mST/mST/back_translation/sv_de/w_const_13.txt', 'a') as w:
+        #     w.write('\n'.join(map(str, sim_matrix.diag().detach().cpu().tolist())) + '\n')
+        
+        sim_matrix = sim_matrix / self.gamma
 
-            con_loss = F.cross_entropy(sim_matrix, ref_ids, reduction='sum' if reduce else 'none')
-            return con_loss
-        return compute(-1)
+        ref_ids = th.arange(sim_matrix.size(0)).to(sim_matrix).long()
+
+        con_loss = F.cross_entropy(sim_matrix, ref_ids, reduction='sum' if reduce else 'none')
+        return con_loss
 
     @classmethod
     def reduce_metrics(cls, logging_outputs) -> None:

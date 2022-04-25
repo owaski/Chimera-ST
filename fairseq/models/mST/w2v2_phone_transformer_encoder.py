@@ -22,11 +22,11 @@ from fairseq.modules.positional_embedding import PositionalEmbedding
 from fairseq.modules.grad_multiply import GradMultiply
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 
-class W2V2TransformerEncoder(FairseqEncoder):
+class W2V2PhoneTransformerEncoder(FairseqEncoder):
     '''Speech-to-text Transformer encoder that consists of
     input wav2vec2Encoder, CIF and Transformer encoder.'''
 
-    def __init__(self, args, src_dict, encoder_embedding):
+    def __init__(self, args, src_dict, phone_dict, encoder_embedding):
         super().__init__(None)
 
         assert args.w2v2_model_path is not None
@@ -40,6 +40,11 @@ class W2V2TransformerEncoder(FairseqEncoder):
 
         self.dropout = FairseqDropout(p=args.dropout, module_name=self.__class__.__name__)
         self.padding_idx = 1
+
+        self.phone_proj = Linear(self.w2v2_args.encoder_embed_dim, len(phone_dict) + 1)
+        self.language_layers = nn.ModuleList(
+            [TransformerEncoderLayer(args) for _ in range(3)]
+        )
         
         self.text_embedding = encoder_embedding
 
@@ -60,14 +65,14 @@ class W2V2TransformerEncoder(FairseqEncoder):
         # if args.encoder_normalize_before:
         #     self.layer_norm = LayerNorm(args.encoder_embed_dim)
 
-        self.cnn_subsampler = None
-        if args.cnn_subsampler:
-            self.cnn_subsampler = Conv1dSubsampler(
-                self.w2v2_args.encoder_embed_dim,
-                args.conv_channels,
-                args.encoder_embed_dim,
-                [int(k) for k in args.conv_kernel_sizes.split(",")],
-            )
+        # self.cnn_subsampler = None
+        # if args.cnn_subsampler:
+        #     self.cnn_subsampler = Conv1dSubsampler(
+        #         self.w2v2_args.encoder_embed_dim,
+        #         args.conv_channels,
+        #         args.encoder_embed_dim,
+        #         [int(k) for k in args.conv_kernel_sizes.split(",")],
+        #     )
 
     def _get_w2v2_feature(self, src_tokens, src_lengths):
         '''
@@ -86,19 +91,24 @@ class W2V2TransformerEncoder(FairseqEncoder):
         
     def forward(self, src_tokens, src_lengths, src_lang_tag_indices=None, **extra_args):       
         is_text = not src_tokens.dtype.is_floating_point
+        phone_logp = text_logp = None
         if is_text:
             embedding = self.text_embedding(src_tokens)
             input_lengths = src_lengths
             embed_positions = self.transformer_encoder.embed_positions
         else:
             w2v2_feature, w2v2_padding_mask, w2v2_lengths = self._get_w2v2_feature(src_tokens, src_lengths)
-            embedding, input_lengths = self.cnn_subsampler(w2v2_feature, w2v2_lengths)
-            embedding = embedding.transpose(0, 1)
-
+            phone_logp = F.log_softmax(self.phone_proj(w2v2_feature), dim=-1)
             assert src_lang_tag_indices is not None
             lang_tag_token = self.text_embedding(src_lang_tag_indices)
-            embedding = th.cat([lang_tag_token, embedding], dim=1)
-            input_lengths += 1
+            embedding = th.cat([lang_tag_token, w2v2_feature], dim=1)
+            input_lengths = w2v2_lengths + 1
+            embedding_padding_mask = lengths_to_padding_mask(input_lengths).transpose(0, 1)
+
+            for layer in self.language_layers:
+                embedding = layer(embedding, embedding_padding_mask)
+
+            text_logp = F.log_softmax(th.matmul(embedding, self.text_embedding.weight.T), dim=-1)
 
             embed_positions = self.embed_positions
 
@@ -131,9 +141,9 @@ class W2V2TransformerEncoder(FairseqEncoder):
             encoder_states=transformer_encoder_out.encoder_states,
             src_tokens=None,
             src_lengths=None,
-            phone_logp=None,
-            text_logp=None,
-        )          
+            phone_logp=phone_logp,
+            text_logp=text_logp,
+        )
 
     @th.jit.export
     def reorder_encoder_out(self, encoder_out, new_order):
@@ -159,7 +169,17 @@ class W2V2TransformerEncoder(FairseqEncoder):
         internal_states = encoder_out.internal_states
         if internal_states is not None:
             for idx, state in enumerate(internal_states):
-                internal_states[idx] = state.index_select(0, new_order)        
+                internal_states[idx] = state.index_select(0, new_order)  
+        new_phone_logp = (
+            encoder_out.phone_logp
+            if encoder_out.phone_logp is None
+            else encoder_out.phone_logp.index_select(0, new_order)
+        )
+        new_text_logp = (
+            encoder_out.text_logp
+            if encoder_out.text_logp is None
+            else encoder_out.text_logp.index_select(0, new_order)
+        )
         return EncoderOut(
             encoder_out=new_encoder_out,
             encoder_padding_mask=new_encoder_padding_mask,
@@ -168,8 +188,8 @@ class W2V2TransformerEncoder(FairseqEncoder):
             encoder_states=encoder_states,
             src_tokens=None,
             src_lengths=None,
-            phone_logp=None,
-            text_logp=None,
+            phone_logp=new_phone_logp,
+            text_logp=new_text_logp
         )
 
 

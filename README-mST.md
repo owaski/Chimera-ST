@@ -2,7 +2,7 @@
 
 Prepare CoVoST 2 dataset (using zh-CN as an example)
 ```bash
-export COVOST2_ROOT=/mnt/raid0/siqi/datasets/covost2
+export COVOST2_ROOT=/mnt/raid5/siqi/datasets/covost2
 export COVOST2_ROOT=/local/home/siqiouyang/work/dataset/covost2
 
 python mST/prepare_data/prep_covost_data.py \
@@ -20,7 +20,7 @@ prepend_src_lang_tag should be set to True.
 
 Additional data from VoxPopuli.
 ```bash
-export VOXP_ROOT=/mnt/raid0/siqi/datasets/voxpopuli
+export VOXP_ROOT=/mnt/raid5/siqi/datasets/voxpopuli
 export VOXP_ROOT=/local/home/siqiouyang/work/dataset/voxpopuli
 
 cd /mnt/nvme/siqi/work/libraries/voxpopuli
@@ -31,7 +31,7 @@ python -m voxpopuli.get_unlabelled_data --root $VOXP_ROOT --subset 10k
 
 
 ```bash
-export mBART50_DIR=/mnt/raid0/siqi/checkpoints/pretrained/mbart50.ft.n1
+export mBART50_DIR=/mnt/raid5/siqi/checkpoints/pretrained/mbart50.ft.n1
 export mBART50_DIR=/local/home/siqiouyang/work/checkpoint/pretrained/mbart50.ft.n1
 
 cp $mBART50_DIR/dict.zh_CN.txt $mBART50_DIR/dict.txt
@@ -46,11 +46,11 @@ python mST/prepare_data/gen_data_config.py --audio-root $COVOST2_ROOT \
 
 Training:
 ```bash
-export EXP_ID="test_untrained_model"
-export SAVE_DIR=/mnt/raid0/siqi/checkpoints/$EXP_ID
+export EXP_ID="xlsr_phone_mbart_de_zh_ctc_text"
+export SAVE_DIR=/mnt/raid5/siqi/checkpoints/$EXP_ID
 export SAVE_DIR=/local/home/siqiouyang/work/checkpoint/$EXP_ID
 export TB_DIR=tensorboard_logs
-export W2V2_PATH=/mnt/raid0/siqi/checkpoints/pretrained/xlsr2_300m.pt
+export W2V2_PATH=/mnt/raid5/siqi/checkpoints/pretrained/xlsr2_300m.pt
 export W2V2_PATH=/local/home/siqiouyang/work/checkpoint/pretrained/xlsr2_300m.pt
 
 export max_updates=150000
@@ -71,18 +71,18 @@ export train_subset=sv-SE_en_train,de_en_train
 export valid_subset=sv-SE_en_dev,de_en_dev
 
 
-CUDA_LAUNCH_BLOCKING=1 TORCH_DISTRIBUTED_DEBUG=DETAIL TORCH_SHOW_CPP_STACKTRACES=1 CUDA_VISIBLE_DEVICES=0 \
+CUDA_LAUNCH_BLOCKING=1 TORCH_DISTRIBUTED_DEBUG=DETAIL TORCH_SHOW_CPP_STACKTRACES=1 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 fairseq-train $COVOST2_ROOT \
   --task multilingual_triplet_task \
   --train-subset $train_subset --valid-subset $valid_subset \
   --max-tokens 800000 --max-source-positions 800000 \
-  --save-dir $SAVE_DIR --save-interval-updates 5000 --save-interval 1 \
+  --save-dir $SAVE_DIR --save-interval-updates 1000 --save-interval 1 \
   --keep-last-epochs 1 --keep-interval-updates 1 \
   --tensorboard-logdir $TB_DIR/$EXP_ID \
   --config-yaml config_mST.yaml \
   \
-  --criterion multilingual_triplet_semi_criterion --label-smoothing 0.1 \
-  --report-accuracy --loss-ratio 1.0 0.1 1.0 0.0 --disc-period 6 --ignore-prefix-size 1 \
+  --criterion multilingual_triplet_criterion --label-smoothing 0.1 \
+  --report-accuracy --loss-ratio 1.0 0.1 1.0 0.0 --ignore-prefix-size 1 \
   \
   --arch xlsr_mbart50_base \
   --w2v2-model-path $W2V2_PATH \
@@ -90,13 +90,13 @@ fairseq-train $COVOST2_ROOT \
   --cnn-subsampler \
   \
   --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 10.0 \
-  --lr 2e-4 --lr-scheduler inverse_sqrt --weight-decay 0.0 \
+  --lr 2e-4 --lr-scheduler inverse_sqrt --weight-decay 0.0 --dropout 0.1 \
   --max-update $max_updates --warmup-updates 5000 \
   \
   --update-freq $(expr 20 / $num_gpus) --num-workers 1 \
   --ddp-backend no_c10d \
   \
-  --memory-efficient-fp16 --seed $seed --all-gather-list-size 32768 
+  --fp16 --seed $seed --all-gather-list-size 32768 
   # --encoder-layer-to-remove-residual 4 8
   # \
   # --eval-bleu --eval-bleu-args '{"beam": 4, "lenpen": 1.0}' \
@@ -116,21 +116,28 @@ python mST/prepare_data/gen_positive_pairs.py \
   -k 1 \
   --threshold 0.7
 
-export train_subset=de_en_train
-export valid_subset=de_en_dev
+export train_subset=sv-SE_en_train
+export valid_subset=sv-SE_en_dev
 
-CUDA_VISIBLE_DEVICES=4,5 \
+mkdir $SAVE_DIR
+cp /mnt/raid5/siqi/checkpoints/xlsr_mbart_n1/checkpoint_best.pt $SAVE_DIR/checkpoint_last.pt
+
+cp /mnt/raid5/siqi/checkpoints/sv_ft_5/checkpoint_best.pt $SAVE_DIR/checkpoint_last.pt
+
+export num_gpus=1
+CUDA_VISIBLE_DEVICES=0 \
 fairseq-train $COVOST2_ROOT \
   --task multilingual_triplet_contrastive_task \
   --train-subset $train_subset --valid-subset $valid_subset \
   --max-tokens 800000 --max-source-positions 800000 \
-  --save-dir $SAVE_DIR --save-interval-updates 5000 --save-interval 10 \
+  --save-dir $SAVE_DIR --save-interval-updates 5000 --save-interval 1 \
   --keep-last-epochs 1 --keep-interval-updates 1 \
   --tensorboard-logdir $TB_DIR/$EXP_ID \
   --config-yaml config_mST.yaml \
   \
   --criterion multilingual_triplet_contrastive_criterion --label-smoothing 0.1 \
-  --report-accuracy --loss-ratio 0.0 0.0 0.0 1.0 --ignore-prefix-size 1 --contrast-layer 11 \
+  --report-accuracy --loss-ratio 0.0001 0.0 0.0 0.0001 --ignore-prefix-size 1 \
+  --contrast-layer 0 --gamma 0.05 \
   \
   --arch xlsr_mbart50_base \
   --w2v2-model-path $W2V2_PATH \
@@ -138,20 +145,55 @@ fairseq-train $COVOST2_ROOT \
   --cnn-subsampler \
   \
   --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 10.0 \
-  --lr 2e-4 --lr-scheduler inverse_sqrt --weight-decay 0.0 \
-  --max-update $max_updates --warmup-updates 1 \
+  --lr 5e-5 --lr-scheduler inverse_sqrt --weight-decay 0.0 \
+  --max-update $max_updates --warmup-updates 5000 \
   \
-  --update-freq $(expr 20 / 2) --num-workers 1 \
+  --update-freq $(expr 20 / $num_gpus) --num-workers 1 \
   --ddp-backend no_c10d \
   \
-  --memory-efficient-fp16 --seed $seed --all-gather-list-size 32768 \
-  --reset-optimizer
+  --fp16 --seed $seed --all-gather-list-size 40000 \
+  --reset-optimizer --reset-dataloader
+
+
+# for phone
+export train_subset=de_en_train_phone,zh-CN_en_train_phone
+export valid_subset=de_en_dev_phone,zh-CN_en_dev_phone
+
+export num_gpus=2
+CUDA_VISIBLE_DEVICES=2,3 \
+fairseq-train $COVOST2_ROOT \
+  --task multilingual_triplet_phone_task \
+  --train-subset $train_subset --valid-subset $valid_subset \
+  --max-tokens 400000 --max-source-positions 400000 \
+  --save-dir $SAVE_DIR --save-interval-updates 5000 --save-interval 1 \
+  --keep-last-epochs 1 --keep-interval-updates 1 \
+  --tensorboard-logdir $TB_DIR/$EXP_ID \
+  --config-yaml config_mST.yaml \
+  \
+  --criterion multilingual_triplet_phone_criterion --label-smoothing 0.1 \
+  --report-accuracy --loss-ratio 1.0 0.1 1.0 0.0 1.0 --ignore-prefix-size 1 \
+  \
+  --arch xlsr_phone_mbart50_base \
+  --w2v2-model-path $W2V2_PATH \
+  --mbart50-dir $mBART50_DIR \
+  --cnn-subsampler \
+  \
+  --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 10.0 \
+  --lr 5e-5 --lr-scheduler inverse_sqrt --weight-decay 0.0 \
+  --max-update $max_updates --warmup-updates 5000 \
+  \
+  --update-freq $(expr 40 / $num_gpus) --num-workers 1 \
+  --ddp-backend no_c10d \
+  \
+  --fp16 --seed $seed --all-gather-list-size 131072 \
+  --reset-optimizer --reset-dataloader
+
 ```
 
 Test
 ```bash
-CUDA_VISIBLE_DEVICES=0 fairseq-generate ${COVOST2_ROOT} --gen-subset de_en_test \
-  --task multilingual_speech_to_text --path /mnt/raid0/siqi/checkpoints/xlsr_mbart_de_sv/checkpoint_best.pt \
+CUDA_VISIBLE_DEVICES=6 fairseq-generate ${COVOST2_ROOT} --gen-subset zh-CN_en_test \
+  --task multilingual_speech_to_text_phone --path /mnt/raid5/siqi/checkpoints/xlsr_phone_mbart_de_zh_ctc_text/checkpoint_best.pt \
   --prefix-size 1 --max-tokens 800000 --max-source-positions 800000 --beam 4 --scoring sacrebleu \
   --config-yaml config_mST.yaml --lenpen 1.0
 ```

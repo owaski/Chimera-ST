@@ -88,7 +88,8 @@ class MultilingualTripletCriterion(LabelSmoothedCrossEntropyCriterion):
                 asr_input = {
                     "src_tokens": sample["net_input"]["src_tokens"], 
                     "src_lengths": sample["net_input"]["src_lengths"], 
-                    "prev_output_tokens": sample["asr_prev_output_tokens"]
+                    "prev_output_tokens": sample["asr_prev_output_tokens"],
+                    "src_lang_tag_indices": sample["net_input"]["src_lang_tag_indices"],
                 }
                 asr_net_output = model(**asr_input)
                 asr_loss, asr_nll_loss = self.compute_loss(model, asr_net_output, sample["asr_target"], reduce=reduce)

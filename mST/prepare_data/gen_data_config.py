@@ -2,7 +2,7 @@ import argparse
 
 from data_utils import gen_config_yaml
 
-def parse_args():
+def parse_args(): # TODO: add phone dict
     parser = argparse.ArgumentParser()
     parser.add_argument('--audio-root', type=str, required=True)
     parser.add_argument('--spm-path', type=str, required=True)

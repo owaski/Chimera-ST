@@ -12,7 +12,7 @@ import numpy as np
 
 from fairseq import utils, metrics, criterions
 from fairseq.data import Dictionary, encoders
-from fairseq.data.audio.multilingual_triplet_v2_dataset import (
+from fairseq.data.audio.multilingual_triplet_v2_phone_dataset import (
     MultilingualTripletDataConfig,
     MultilingualTripletDataset,
     MultilingualTripletDatasetCreator
@@ -29,8 +29,8 @@ logger = logging.getLogger(__name__)
 
 EVAL_BLEU_ORDER = 4
 
-@register_task("multilingual_triplet_task")
-class MultilingualTripletTask(LegacyFairseqTask):
+@register_task("multilingual_triplet_phone_task")
+class MultilingualTripletPhoneTask(LegacyFairseqTask):
     @staticmethod
     def add_args(parser):
         parser.add_argument("data", help="manifest root path")
@@ -92,10 +92,11 @@ class MultilingualTripletTask(LegacyFairseqTask):
         parser.add_argument('--eval-bleu-bpe-path', type=str, metavar='BPE',
                             help='args for building the bpe, if needed')
 
-    def __init__(self, args, tgt_dict, src_dict, data_cfg):
+    def __init__(self, args, tgt_dict, src_dict, phone_dict, data_cfg):
         super().__init__(args)
         self.tgt_dict = tgt_dict
         self.src_dict = src_dict
+        self.phone_dict = phone_dict
         self.data_cfg = data_cfg
         self.dump_feature_to_file = args.dump_feature_to_file
         if self.dump_feature_to_file is not None:
@@ -124,6 +125,11 @@ class MultilingualTripletTask(LegacyFairseqTask):
 
         tgt_dict = load_dict(data_cfg.vocab_filename)
         src_dict = load_dict(data_cfg.src_vocab_filename)
+
+        with open(data_cfg.phone_dict, 'r') as r:
+            phone_list = [l.strip() for l in r.readlines() if l.strip() != '']
+            phone_dict = {l: idx + 1 for idx, l in enumerate(phone_list)} # leave 0 as blank
+        
         logger.info(
             f"target dictionary size ({data_cfg.vocab_filename}): "
             f"{len(tgt_dict):,}"
@@ -132,8 +138,12 @@ class MultilingualTripletTask(LegacyFairseqTask):
             f"source dictionary size ({data_cfg.src_vocab_filename}): "
             f"{len(src_dict):,}"
         )
+        logger.info(
+            f"source phone dictionary size ({data_cfg.phone_dict}): "
+            f"{len(phone_dict):,}"
+        )
 
-        return cls(args, tgt_dict, src_dict, data_cfg)
+        return cls(args, tgt_dict, src_dict, phone_dict, data_cfg)
 
     def build_criterion(self, args):
         if self.data_cfg.prepend_tgt_lang_tag and args.ignore_prefix_size != 1:
@@ -154,6 +164,7 @@ class MultilingualTripletTask(LegacyFairseqTask):
             split,
             self.tgt_dict,
             self.src_dict,
+            self.phone_dict,
             pre_tokenizer,
             bpe_tokenizer,
             src_bpe_tokenizer,

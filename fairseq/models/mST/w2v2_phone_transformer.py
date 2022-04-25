@@ -16,12 +16,12 @@ from fairseq.models.transformer import Embedding, TransformerDecoder
 from fairseq.models.bart import BARTModel
 from fairseq.modules.layer_norm import LayerNorm
 
-from .w2v2_transformer_encoder import W2V2TransformerEncoder
+from .w2v2_phone_transformer_encoder import W2V2PhoneTransformerEncoder
 from .discriminator import Classifier
 
 logger = logging.getLogger(__name__)
 
-@register_model("w2v2_transformer")
+@register_model("w2v2_phone_transformer")
 class W2V2Transformer(FairseqEncoderDecoderModel):
     '''Transformer model for ST tasks'''
 
@@ -186,7 +186,7 @@ class W2V2Transformer(FairseqEncoderDecoderModel):
     @classmethod
     def build_model(cls, args, task):
         # initialize base model arguments
-        w2v2_transformer_base(args)
+        w2v2_phone_transformer_base(args)
 
         def build_embedding(dictionary, embed_dim):
             num_embeddings = len(dictionary)
@@ -196,7 +196,7 @@ class W2V2Transformer(FairseqEncoderDecoderModel):
         encoder_embedding = None
         task.src_dict = getattr(task, "src_dict", task.tgt_dict) # in case of s2t gen without src dict
         encoder_embedding = build_embedding(task.src_dict, args.encoder_embed_dim)
-        encoder = cls.build_encoder(args, task.src_dict, encoder_embedding)
+        encoder = cls.build_encoder(args, task.src_dict, task.phone_dict, encoder_embedding)
 
         decoder_embedding = build_embedding(task.tgt_dict, args.decoder_embed_dim)
         decoder = cls.build_decoder(args, task.tgt_dict, decoder_embedding)
@@ -213,8 +213,8 @@ class W2V2Transformer(FairseqEncoderDecoderModel):
         return cls(encoder, decoder, discriminator)
 
     @classmethod
-    def build_encoder(cls, args, src_dict, encoder_embedding):
-        encoder = W2V2TransformerEncoder(args, src_dict, encoder_embedding)
+    def build_encoder(cls, args, src_dict, phone_dict, encoder_embedding):
+        encoder = W2V2PhoneTransformerEncoder(args, src_dict, phone_dict, encoder_embedding)
         return encoder
     
     @classmethod
@@ -249,8 +249,8 @@ class W2V2Transformer(FairseqEncoderDecoderModel):
         return decoder_out
 
 
-@register_model_architecture('w2v2_transformer', 'xlsr_mbart50_base')
-def w2v2_transformer_base(args):
+@register_model_architecture('w2v2_phone_transformer', 'xlsr_phone_mbart50_base')
+def w2v2_phone_transformer_base(args):
     # args.activation_fn = getattr(args, 'activation_fn', 'relu')
     # args.dropout = getattr(args, 'dropout', 0.1)
     # args.attention_dropout = args.dropout

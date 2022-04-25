@@ -98,3 +98,6 @@ def encoder_padding_mask_to_lengths(
     assert encoder_padding_mask.size(1) == batch_size, "batch_size does not match"
 
     return max_lengths - torch.sum(encoder_padding_mask, dim=0)
+
+def padding_mask_to_lengths(padding_mask):
+    return padding_mask.size(1) - torch.sum(padding_mask, dim=1)
