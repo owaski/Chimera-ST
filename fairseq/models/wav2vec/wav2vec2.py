@@ -579,10 +579,10 @@ class Wav2Vec2Model(BaseFairseqModel):
             y = unmasked_features
             mask_indices = None
 
-        x, padding_mask = self.encoder(x, padding_mask=padding_mask)
+        x, padding_mask, layer_results = self.encoder(x, padding_mask=padding_mask)
 
         if features_only:
-            return {"x": x, "padding_mask": padding_mask}
+            return {"x": x, "padding_mask": padding_mask, "layer_results": layer_results}
 
         if self.quantizer:
             q = self.quantizer(y, produce_targets=False)
@@ -807,12 +807,12 @@ class TransformerEncoder(nn.Module):
         self.apply(init_bert_params)
 
     def forward(self, x, padding_mask=None):
-        x, padding_mask = self.extract_features(x, padding_mask)
+        x, padding_mask, layer_results = self.extract_features(x, padding_mask)
 
         if self.layer_norm_first:
             x = self.layer_norm(x)
 
-        return x, padding_mask
+        return x, padding_mask, layer_results
 
     def extract_features(self, x, padding_mask=None):
 
@@ -835,13 +835,13 @@ class TransformerEncoder(nn.Module):
         for i, layer in enumerate(self.layers):
             dropout_probability = np.random.random()
             if not self.training or (dropout_probability > self.layerdrop):
-                x, z = layer(x, self_attn_padding_mask=padding_mask, need_weights=False)
-                layer_results.append(x)
+                x, x_after_layer_norm, z = layer(x, self_attn_padding_mask=padding_mask, need_weights=False)
+                layer_results.append(z)
 
         # T x B x C -> B x T x C
         x = x.transpose(0, 1)
 
-        return x, padding_mask
+        return x, padding_mask, layer_results
 
     def max_positions(self):
         """Maximum output length supported by the encoder."""
@@ -915,12 +915,15 @@ class TransformerSentenceEncoderLayer(nn.Module):
 
         if self.layer_norm_first:
             x = self.self_attn_layer_norm(x)
+
+            x_after_layer_norm = x
+
             x, attn = self.self_attn(
                 query=x,
                 key=x,
                 value=x,
                 key_padding_mask=self_attn_padding_mask,
-                need_weights=False,
+                need_weights=True,
                 attn_mask=self_attn_mask,
             )
             x = self.dropout1(x)
@@ -955,7 +958,7 @@ class TransformerSentenceEncoderLayer(nn.Module):
             x = residual + x
             x = self.final_layer_norm(x)
 
-        return x, attn
+        return x, x_after_layer_norm, attn
 
 
 @register_model_architecture("wav2vec2", "wav2vec2")

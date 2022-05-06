@@ -46,7 +46,7 @@ python mST/prepare_data/gen_data_config.py --audio-root $COVOST2_ROOT \
 
 Training:
 ```bash
-export EXP_ID="xlsr_phone_mbart_de_zh_ctc_text"
+export EXP_ID="xlsr_phone_mbart_tr"
 export SAVE_DIR=/mnt/raid5/siqi/checkpoints/$EXP_ID
 export SAVE_DIR=/local/home/siqiouyang/work/checkpoint/$EXP_ID
 export TB_DIR=tensorboard_logs
@@ -156,11 +156,14 @@ fairseq-train $COVOST2_ROOT \
 
 
 # for phone
-export train_subset=de_en_train_phone,zh-CN_en_train_phone
-export valid_subset=de_en_dev_phone,zh-CN_en_dev_phone
+export train_subset=de_en_train_phone,tr_en_train_phone # ,zh-CN_en_train_phone
+export valid_subset=de_en_dev_phone,tr_en_dev_phone # ,zh-CN_en_dev_phone
 
-export num_gpus=2
-CUDA_VISIBLE_DEVICES=2,3 \
+export train_subset=tr_en_train_phone # ,zh-CN_en_train_phone
+export valid_subset=tr_en_dev_phone # ,zh-CN_en_dev_phone
+  
+export num_gpus=4
+CUDA_VISIBLE_DEVICES=0,1,2,3 \
 fairseq-train $COVOST2_ROOT \
   --task multilingual_triplet_phone_task \
   --train-subset $train_subset --valid-subset $valid_subset \
@@ -171,7 +174,7 @@ fairseq-train $COVOST2_ROOT \
   --config-yaml config_mST.yaml \
   \
   --criterion multilingual_triplet_phone_criterion --label-smoothing 0.1 \
-  --report-accuracy --loss-ratio 1.0 0.1 1.0 0.0 1.0 --ignore-prefix-size 1 \
+  --report-accuracy --loss-ratio 1.0 0.1 1.0 0.0 0.0 --ignore-prefix-size 1 \
   \
   --arch xlsr_phone_mbart50_base \
   --w2v2-model-path $W2V2_PATH \
@@ -192,8 +195,8 @@ fairseq-train $COVOST2_ROOT \
 
 Test
 ```bash
-CUDA_VISIBLE_DEVICES=6 fairseq-generate ${COVOST2_ROOT} --gen-subset zh-CN_en_test \
-  --task multilingual_speech_to_text_phone --path /mnt/raid5/siqi/checkpoints/xlsr_phone_mbart_de_zh_ctc_text/checkpoint_best.pt \
+CUDA_VISIBLE_DEVICES=1 fairseq-generate ${COVOST2_ROOT} --gen-subset tr_en_test \
+  --task multilingual_speech_to_text_phone --path /mnt/raid5/siqi/checkpoints/xlsr_phone_mbart_de_tr/checkpoint_best.pt \
   --prefix-size 1 --max-tokens 800000 --max-source-positions 800000 --beam 4 --scoring sacrebleu \
   --config-yaml config_mST.yaml --lenpen 1.0
 ```
