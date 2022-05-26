@@ -144,7 +144,7 @@ class MultilingualTripletTask(LegacyFairseqTask):
         return criterions.build_criterion(args, self)
 
     def load_dataset(self, split, epoch=1, combine=False, **kwargs):
-        is_train_split = split.startswith("train")
+        is_train_split = 'train' in split
         pre_tokenizer = self.build_tokenizer(self.args)
         bpe_tokenizer = self.build_bpe(self.args)
         src_bpe_tokenizer = self.build_src_bpe()
@@ -314,12 +314,12 @@ class MultilingualTripletTask(LegacyFairseqTask):
             return s
 
         gen_out = self.inference_step(generator, [model], sample, \
-            prefix_tokens=sample['net_input']['prev_output_tokens'][:, :1])
+            prefix_tokens=sample['net_input']['prev_output_tokens'][:, 1 : 1 + int(self.data_cfg.prepend_tgt_lang_tag)])
         hyps, refs = [], []
         for i in range(len(gen_out)):
             hyp = decode(gen_out[i][0]["tokens"][1:])
             ref = decode(
-                utils.strip_pad(sample["target"][i], self.tgt_dict.pad()),
+                utils.strip_pad(sample["target"][i][1:], self.tgt_dict.pad()),
                 escape_unk=True,  # don't count <unk> as matches to the hypo
             )
             # if self.args.lang_prefix_tok is not None:
@@ -364,12 +364,14 @@ class MultilingualTripletTask(LegacyFairseqTask):
                     import inspect
                     import sacrebleu
 
-                    fn_sig = inspect.getfullargspec(sacrebleu.compute_bleu)[0]
+                    compute_bleu = sacrebleu.metrics.bleu.BLEU.compute_bleu
+
+                    fn_sig = inspect.getfullargspec(compute_bleu)[0]
                     if "smooth_method" in fn_sig:
                         smooth = {"smooth_method": "exp"}
                     else:
                         smooth = {"smooth": "exp"}
-                    bleu = sacrebleu.compute_bleu(
+                    bleu = compute_bleu(
                         correct=meters["_bleu_counts"].sum,
                         total=meters["_bleu_totals"].sum,
                         sys_len=meters["_bleu_sys_len"].sum,

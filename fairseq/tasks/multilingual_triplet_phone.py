@@ -154,7 +154,7 @@ class MultilingualTripletPhoneTask(LegacyFairseqTask):
         return criterions.build_criterion(args, self)
 
     def load_dataset(self, split, epoch=1, combine=False, **kwargs):
-        is_train_split = split.startswith("train")
+        is_train_split = 'train' in split
         pre_tokenizer = self.build_tokenizer(self.args)
         bpe_tokenizer = self.build_bpe(self.args)
         src_bpe_tokenizer = self.build_src_bpe()

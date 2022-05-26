@@ -59,6 +59,23 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
         asr_loss = asr_nll_loss = th.tensor(0.)
         ctc_phone = ctc_text = th.tensor(0.)
 
+        # disable gradient for certain parts of model during training
+        # if model.training:
+        #     for param in model.encoder.w2v2_model.encoder.layers[:15].parameters():
+        #         param.requires_grad = False
+            # for param in model.parameters():
+            #     param.requires_grad = False
+            
+            # modules_need_grad = [
+            #     model.encoder.transformer_encoder,
+            #     model.decoder
+            # ]
+
+            # for module in modules_need_grad:
+            #     for param in module.parameters():
+            #         param.requires_grad = True
+        # end
+
         if self.loss_ratio[0] > 0:
             st_net_output, st_encoder_out = model.forward_with_internal(**sample["net_input"])
             st_loss, st_nll_loss = self.compute_loss(model, st_net_output, sample["target"], reduce=reduce)

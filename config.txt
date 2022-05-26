@@ -10,15 +10,18 @@ tmux new -s st
 
 # environment
 cd /notebooks/Chimera-ST/
-conda create -n st -y python=3.9
+conda create -n st -y python=3.8
 conda init
 source ~/.bashrc
 conda activate st
 xargs apt-get install -y < requirements-apt.txt
 conda install -y pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch
-pip install -r requirements.txt
-pip install sentencepiece soundfile tensorboardX tornado
+conda install pandas matplotlib seaborn tqdm
+pip install tensorboard tensorboardX
+pip install sacremoses sacrebleu sentencepiece soundfile  
+pip install tornado editdistance PyYAML
 pip install -e ./
+pip install --upgrade numpy  
 
 # cpu/gpu monitor
 apt-get install -y htop

@@ -139,8 +139,9 @@ def main(cfg: DictConfig) -> None:
         if should_stop:
             break
 
-        # only use first validation loss to update the learning rate
-        lr = trainer.lr_step(epoch_itr.epoch, valid_losses[0])
+        # use sum validation loss to update the learning rate
+        sum_valid_loss = sum(valid_losses) if valid_losses[0] is not None else None
+        lr = trainer.lr_step(epoch_itr.epoch, sum_valid_loss)
 
         epoch_itr = trainer.get_train_iterator(
             epoch_itr.next_epoch_idx,
@@ -293,9 +294,11 @@ def validate_and_save(cfg: DictConfig, trainer: Trainer, task: tasks.FairseqTask
     if do_validate:
         valid_losses = validate(cfg, trainer, task, epoch_itr, valid_subsets)
 
+    sum_valid_loss = sum(valid_losses) if valid_losses[0] is not None else None
+
     # Stopping conditions
     should_stop = (
-        should_stop_early(cfg, valid_losses[0])
+        should_stop_early(cfg, sum_valid_loss)
         or num_updates >= max_update
         or (
             cfg.optimization.stop_time_hours > 0
@@ -306,7 +309,7 @@ def validate_and_save(cfg: DictConfig, trainer: Trainer, task: tasks.FairseqTask
     # Save checkpoint
     if do_save or should_stop:
         logger.info("begin save checkpoint")
-        checkpoint_utils.save_checkpoint(cfg.checkpoint, trainer, epoch_itr, valid_losses[0])
+        checkpoint_utils.save_checkpoint(cfg.checkpoint, trainer, epoch_itr, sum_valid_loss)
 
     return valid_losses, should_stop
 

@@ -12,10 +12,14 @@ import numpy as np
 
 from fairseq import utils, metrics, criterions
 from fairseq.data import Dictionary, encoders
-from fairseq.data.audio.multilingual_triplet_contrastive_dataset import (
+from fairseq.data.audio import (
+    multilingual_triplet_v2_dataset,
+    multilingual_triplet_v2_contrastive_dataset
+)
+from fairseq.data.audio.multilingual_triplet_v2_contrastive_dataset import (
     MultilingualTripletDataConfig,
-    MultilingualTripletContrastiveDataset,
-    MultilingualTripletContrastiveDatasetCreator
+    MultilingualTripletDataset,
+    MultilingualTripletDatasetCreator
 )
 from fairseq.data.audio.triplet_dataset import (
     get_features_or_waveform,
@@ -110,7 +114,7 @@ class MultilingualTripletContrastiveTask(LegacyFairseqTask):
     def setup_task(cls, args, **kwargs):
         data_cfg = MultilingualTripletDataConfig(op.join(args.data, args.config_yaml))
         
-        codes = MultilingualTripletContrastiveDataset.get_lang_codes(data_cfg.lang_list_filename)
+        codes = MultilingualTripletDataset.get_lang_codes(data_cfg.lang_list_filename)
 
         def load_dict(vocab_filename):
             _dict_path = op.join(args.data, vocab_filename)
@@ -118,7 +122,7 @@ class MultilingualTripletContrastiveTask(LegacyFairseqTask):
                 raise FileNotFoundError(f"Dict not found: {_dict_path}")
             _dict = Dictionary.load(_dict_path)
             for code in codes:
-                _dict.add_symbol(MultilingualTripletContrastiveDataset.LANG_TAG_TEMPLATE.format(code))
+                _dict.add_symbol(MultilingualTripletDataset.LANG_TAG_TEMPLATE.format(code))
             _dict.add_symbol('<mask>')
             return _dict
 
@@ -144,11 +148,11 @@ class MultilingualTripletContrastiveTask(LegacyFairseqTask):
         return criterions.build_criterion(args, self)
 
     def load_dataset(self, split, epoch=1, combine=False, **kwargs):
-        is_train_split = split.startswith("train")
+        is_train_split = 'train' in split
         pre_tokenizer = self.build_tokenizer(self.args)
         bpe_tokenizer = self.build_bpe(self.args)
         src_bpe_tokenizer = self.build_src_bpe()
-        self.datasets[split] = MultilingualTripletContrastiveDatasetCreator.from_tsv(
+        self.datasets[split] = MultilingualTripletDatasetCreator.from_tsv(
             self.args.data,
             self.data_cfg,
             split,
@@ -214,7 +218,7 @@ class MultilingualTripletContrastiveTask(LegacyFairseqTask):
         lang_token_ids = {
             i
             for s, i in self.tgt_dict.indices.items()
-            if MultilingualTripletContrastiveDataset.is_lang_tag(s)
+            if MultilingualTripletDataset.is_lang_tag(s)
         }
         extra_gen_cls_kwargs = {"symbols_to_strip_from_output": lang_token_ids}
         return super().build_generator(
@@ -256,7 +260,7 @@ class MultilingualTripletContrastiveTask(LegacyFairseqTask):
         return lines, n_frames
 
     def build_dataset_for_inference(self, src_tokens, src_lengths, **kwargs):
-        return MultilingualTripletContrastiveDataset(
+        return MultilingualTripletDataset(
             "interactive", False, self.data_cfg, src_tokens, src_lengths
         )
 
@@ -314,12 +318,12 @@ class MultilingualTripletContrastiveTask(LegacyFairseqTask):
             return s
 
         gen_out = self.inference_step(generator, [model], sample, \
-            prefix_tokens=sample['net_input']['prev_output_tokens'][:, :1])
+            prefix_tokens=sample['net_input']['prev_output_tokens'][:, 1 : 1 + int(self.data_cfg.prepend_tgt_lang_tag)])
         hyps, refs = [], []
         for i in range(len(gen_out)):
             hyp = decode(gen_out[i][0]["tokens"][1:])
             ref = decode(
-                utils.strip_pad(sample["target"][i], self.tgt_dict.pad()),
+                utils.strip_pad(sample["target"][i][1:], self.tgt_dict.pad()),
                 escape_unk=True,  # don't count <unk> as matches to the hypo
             )
             # if self.args.lang_prefix_tok is not None:
@@ -364,12 +368,14 @@ class MultilingualTripletContrastiveTask(LegacyFairseqTask):
                     import inspect
                     import sacrebleu
 
-                    fn_sig = inspect.getfullargspec(sacrebleu.compute_bleu)[0]
+                    compute_bleu = sacrebleu.metrics.bleu.BLEU.compute_bleu
+
+                    fn_sig = inspect.getfullargspec(compute_bleu)[0]
                     if "smooth_method" in fn_sig:
                         smooth = {"smooth_method": "exp"}
                     else:
                         smooth = {"smooth": "exp"}
-                    bleu = sacrebleu.compute_bleu(
+                    bleu = compute_bleu(
                         correct=meters["_bleu_counts"].sum,
                         total=meters["_bleu_totals"].sum,
                         sys_len=meters["_bleu_sys_len"].sum,

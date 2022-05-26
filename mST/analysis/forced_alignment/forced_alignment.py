@@ -1,10 +1,8 @@
 import os
+import csv
+
 from dataclasses import dataclass
 
-import IPython
-import matplotlib
-import matplotlib.pyplot as plt
-import requests
 import torch
 import torchaudio
 from tqdm import tqdm
@@ -14,7 +12,6 @@ from num2words import num2words
 
 import re
 import soundfile
-from examples.speech_to_text.data_utils import load_df_from_tsv
 
 torch.random.manual_seed(0)
 device = torch.device("cuda")
@@ -23,6 +20,17 @@ bundle = torchaudio.pipelines.WAV2VEC2_ASR_LARGE_LV60K_960H
 model = bundle.get_model().to(device)
 labels = bundle.get_labels()
 dictionary = {c: i for i, c in enumerate(labels)}
+
+def load_df_from_tsv(path: str):
+    return pd.read_csv(
+        path,
+        sep="\t",
+        header=0,
+        encoding="utf-8",
+        escapechar="\\",
+        quoting=csv.QUOTE_NONE,
+        na_filter=False,
+    )
 
 def get_trellis(emission, tokens, blank_id=0):
     num_frame = emission.size(0)
@@ -47,7 +55,6 @@ class Point:
     token_index: int
     time_index: int
     score: float
-
 
 def backtrack(trellis, emission, tokens, blank_id=0):
     # Note:

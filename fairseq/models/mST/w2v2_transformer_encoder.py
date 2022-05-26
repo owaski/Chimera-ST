@@ -99,10 +99,10 @@ class W2V2TransformerEncoder(FairseqEncoder):
             embedding, input_lengths = self.cnn_subsampler(w2v2_feature, w2v2_lengths)
             embedding = embedding.transpose(0, 1)
 
-            assert src_lang_tag_indices is not None
-            lang_tag_token = self.text_embedding(src_lang_tag_indices)
-            embedding = th.cat([lang_tag_token, embedding], dim=1)
-            input_lengths += 1
+            # assert src_lang_tag_indices is not None
+            # lang_tag_token = self.text_embedding(src_lang_tag_indices)
+            # embedding = th.cat([lang_tag_token, embedding], dim=1)
+            # input_lengths += 1
 
             embed_positions = self.embed_positions
 

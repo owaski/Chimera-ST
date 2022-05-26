@@ -1,6 +1,7 @@
 from random import choices
 import torch as th
 import torch.nn.functional as F
+from examples.speech_recognition.data.data_utils import encoder_padding_mask_to_lengths, padding_mask_to_lengths
 
 from fairseq import logging, metrics, utils
 from fairseq.criterions import register_criterion
@@ -16,12 +17,10 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
         ignore_prefix_size=0,
         report_accuracy=False, 
         loss_ratio=[1.0, 1.0, 1.0, 1.0],
-        contrast_layer=0,
-        gamma=1.,
+        gamma=1.0,
     ):
         super().__init__(task, sentence_avg, label_smoothing, ignore_prefix_size, report_accuracy)
         self.loss_ratio = loss_ratio
-        self.contrast_layer = contrast_layer
         self.gamma = gamma
 
     @staticmethod
@@ -51,37 +50,39 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
         )
         parser.add_argument(
             '--loss-ratio',
-            default=[1.0, 1.0, 1.0, 1.0], # st, mt, asr, adv
+            default=[1.0, 1.0, 1.0, 1.0], # st, mt, asr, contrastive
             type=float,
             nargs='+'
         )
         parser.add_argument(
-            '--contrast-layer',
-            type=int,
-            default=0,
-            choices=list(range(14)),
-        )
-        parser.add_argument(
             '--gamma',
+            default=1.0,
             type=float,
-            default=1.,
         )
 
     def forward(self, model, sample, reduce=True):
         st_loss = st_nll_loss = th.tensor(0.)
         mt_loss = mt_nll_loss = th.tensor(0.)
         asr_loss = asr_nll_loss = th.tensor(0.)
-        con_loss = th.tensor(0.)
+        const_loss = th.tensor(0.)
 
         if self.loss_ratio[0] > 0:
             st_net_output, st_encoder_out = model.forward_with_internal(**sample["net_input"])
             st_loss, st_nll_loss = self.compute_loss(model, st_net_output, sample["target"], reduce=reduce)
 
-            if sample["ref_mask"].sum() > 0:
-                ref_net_output, ref_encoder_out = model.forward_with_internal(**sample["ref_input"])
-                ref_loss, ref_nll_loss = self.compute_loss(model, ref_net_output, sample["target"], reduce=reduce)
-                st_loss = st_loss + ref_loss
-                st_nll_loss = st_nll_loss + ref_nll_loss
+            if sample["mixed_src_tokens"] is not None:
+                mixed_st_input = {
+                    "src_tokens": sample["mixed_src_tokens"],
+                    "src_lengths": sample["mixed_src_lengths"],
+                    "prev_output_tokens": sample["net_input"]["prev_output_tokens"][sample["mixed_indices"]],
+                    "mask": sample["net_input"]["mask"],
+                    "src_lang_tag_indices": sample["net_input"]["src_lang_tag_indices"],
+                }
+                mixed_st_net_output, mixed_st_encoder_out = model.forward_with_internal(**mixed_st_input)
+                mixed_st_loss, mixed_st_nll_loss = self.compute_loss(model, mixed_st_net_output, sample["target"][sample["mixed_indices"]], reduce=reduce)
+
+                st_loss = st_loss + mixed_st_loss
+                st_nll_loss = st_nll_loss + mixed_st_nll_loss
 
         mt_loss = mt_nll_loss = 0.
         if self.loss_ratio[1] > 0:
@@ -92,54 +93,42 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
             }
             mt_net_output = model(**mt_input)
             mt_loss, mt_nll_loss = self.compute_loss(model, mt_net_output, sample["target"], reduce=reduce)
-
         
         if self.loss_ratio[2] > 0:
             asr_input = {
                 "src_tokens": sample["net_input"]["src_tokens"], 
                 "src_lengths": sample["net_input"]["src_lengths"], 
-                "prev_output_tokens": sample["asr_prev_output_tokens"]
+                "prev_output_tokens": sample["asr_prev_output_tokens"],
+                "src_lang_tag_indices": sample["net_input"]["src_lang_tag_indices"]
             }
             asr_net_output = model(**asr_input)
             asr_loss, asr_nll_loss = self.compute_loss(model, asr_net_output, sample["asr_target"], reduce=reduce)
 
-        ref_mask = sample["ref_mask"]
-        if self.loss_ratio[3] > 0:
-            if self.loss_ratio[0] == 0:
-                st_encoder_out = model.forward_encoder(**sample["net_input"])
-            if ref_mask.sum() > 0:
-                # mt_encoder_out = model.forward_encoder(**mt_input)
-                # ref_mask = th.ones_like(sample["ref_mask"]).bool()
-                con_loss = self.compute_contrastive_loss(
-                    st_encoder_out, ref_encoder_out, ref_mask, reduce
-                )
-            else:
-                mt_input = {
-                    "src_tokens": sample["src_text"],
-                    "src_lengths": sample["src_text_lengths"],
-                    "prev_output_tokens": sample["net_input"]["prev_output_tokens"]
+            if sample["mixed_src_tokens"] is not None:
+                mixed_asr_input = {
+                    "src_tokens": sample["mixed_src_tokens"], 
+                    "src_lengths": sample["mixed_src_lengths"], 
+                    "prev_output_tokens": sample["asr_prev_output_tokens"][sample["mixed_indices"]],
+                    "src_lang_tag_indices": sample["net_input"]["src_lang_tag_indices"]
                 }
-                mt_net_output = model(**mt_input)
-                mt_loss, mt_nll_loss = self.compute_loss(model, mt_net_output, sample["target"], reduce=reduce)
+                mixed_asr_net_output = model(**mixed_asr_input)
+                mixed_asr_loss, mixed_asr_nll_loss = self.compute_loss(model, mixed_asr_net_output, sample["asr_target"][sample["mixed_indices"]], reduce=reduce)
 
-            # if sample["ref_input"]["src_tokens"] is not None and sample["net_input"]["src_tokens"].size(0) > 1:
-            #     st_net_output, st_encoder_out = model.forward_with_internal(**sample["net_input"])
-            #     mt_input = {
-            #         "src_tokens": sample["src_text"],
-            #         "src_lengths": sample["src_text_lengths"],
-            #         "prev_output_tokens": sample["net_input"]["prev_output_tokens"]
-            #     }
-            #     mt_encoder_out = model.forward_encoder(**mt_input)
-            #     ref_encoder_out = model.forward_encoder(**sample["ref_input"])
-            #     ref_mask = th.ones_like(sample["ref_mask"]).bool()
-            #     con_loss = self.compute_contrastive_loss(
-            #         st_encoder_out, mt_encoder_out, ref_mask, reduce
-            #     )
+                asr_loss = asr_loss + mixed_asr_loss
+                asr_nll_loss = asr_nll_loss + mixed_asr_nll_loss
+        
+        const_sample_size = 0
+        if sample["mixed_src_tokens"] is not None and self.loss_ratio[3] > 0:
+            const_loss, const_sample_size = self.contrastive(
+                st_encoder_out.encoder_out, mixed_st_encoder_out.encoder_out,
+                st_encoder_out.encoder_padding_mask, mixed_st_encoder_out.encoder_padding_mask, 
+                sample["matches"], sample["mixed_indices"]
+            )
 
         loss = self.loss_ratio[0] * st_loss + \
                self.loss_ratio[1] * mt_loss + \
                self.loss_ratio[2] * asr_loss + \
-               self.loss_ratio[3] * con_loss * sample["ntokens"] / sample["target"].size(0)
+               self.loss_ratio[3] * const_loss
         nll_loss = self.loss_ratio[0] * st_nll_loss + \
                    self.loss_ratio[1] * mt_nll_loss + \
                    self.loss_ratio[2] * asr_nll_loss
@@ -147,6 +136,7 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
         sample_size = asr_sample_size = 0
         sample_size = sample["target"].size(0) if self.sentence_avg else sample["ntokens"]
         asr_sample_size = sample["asr_target"].size(0) if self.sentence_avg else sample["asr_target_lengths"].sum()
+
         logging_output = {
             "loss": loss.data,
             "nll_loss": nll_loss.data,
@@ -156,14 +146,12 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
             "mt_nll_loss": mt_nll_loss.data if self.loss_ratio[1] > 0 else 0,
             "asr_loss": asr_loss.data if self.loss_ratio[2] > 0 else 0,
             "asr_nll_loss": asr_nll_loss.data if self.loss_ratio[2] > 0 else 0,
+            "const_loss": const_loss.data if sample["mixed_src_tokens"] is not None and self.loss_ratio[3] > 0 else 0,
             "ntokens": sample["ntokens"],
             "nsentences": sample["target"].size(0),
             "sample_size": sample_size,
             "asr_sample_size": asr_sample_size,
-            "adv_enc_sample_size": sample["target"].size(0),
-            "adv_disc_sample_size": sample["target"].size(0),
-            "contrastive_loss": con_loss if self.loss_ratio[3] > 0 else 0,
-            "contrastive_sample_size": ref_mask.sum() if self.loss_ratio[3] > 0 else 0,
+            "const_sample_size": const_sample_size
         }
 
         if self.report_accuracy:
@@ -184,45 +172,54 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
 
         return loss, sample_size, logging_output
 
-    def compute_contrastive_loss(self, st_encoder_out, ref_encoder_out, ref_mask, reduce):
-        if self.contrast_layer == 0:
-            st_feature = st_encoder_out.encoder_embedding.float()
-            ref_feature = ref_encoder_out.encoder_embedding.float()
-        elif self.contrast_layer == 13:
-            st_feature = st_encoder_out.encoder_out.transpose(0, 1).float()
-            ref_feature = ref_encoder_out.encoder_out.transpose(0, 1).float()
-        else:
-            st_feature = st_encoder_out.encoder_states[self.contrast_layer - 1].transpose(0, 1).float()
-            ref_feature = ref_encoder_out.encoder_states[self.contrast_layer - 1].transpose(0, 1).float()
+    def contrastive(self, orig_x, mixed_x, orig_padding_mask, mixed_padding_mask, matches, indices):
+        orig_length = padding_mask_to_lengths(orig_padding_mask)
+        mixed_length = padding_mask_to_lengths(mixed_padding_mask)
 
-        st_padding_mask = st_encoder_out.encoder_padding_mask
-        ref_padding_mask = ref_encoder_out.encoder_padding_mask
+        orig_x = orig_x.float()
+        mixed_x = mixed_x.float()
 
-        st_mean_feature = []
-        for idx in range(st_feature.size(0)):
-            st_mean_feature.append(st_feature[idx][~st_padding_mask[idx]].mean(dim=0))
-        ref_mean_feature = []
-        for idx in range(ref_feature.size(0)):
-            ref_mean_feature.append(ref_feature[idx][~ref_padding_mask[idx]].mean(dim=0))
+        # assume orig_x and mixed_x be (L * B * H)
+        _, bsz, _ = orig_x.size()
+        const_loss = th.tensor(0.).to(orig_x.device)
+        const_sample_size = 0
 
-        st_mean_feature = th.stack(st_mean_feature)[ref_mask]
-        ref_mean_feature = th.stack(ref_mean_feature)
+        for mixed_idx, orig_idx in enumerate(indices):
+            orig_len = orig_length[orig_idx]
+            mixed_len = mixed_length[mixed_idx]
+            mix_mask, orig_norm_itv, mixed_norm_itv = matches[mixed_idx]
+            if mix_mask.sum() > 0:
+                orig_itv = orig_norm_itv * orig_len
+                orig_itv[:, 0] = orig_itv[:, 0].floor()
+                orig_itv[:, 1] = orig_itv[:, 1].ceil()
+                orig_itv = orig_itv.long()
 
-        sim_matrix = F.cosine_similarity(
-            st_mean_feature.unsqueeze(0),
-            ref_mean_feature.unsqueeze(1),
-            dim=-1,
-        ) 
+                mixed_itv = mixed_norm_itv * mixed_len
+                mixed_itv[:, 0] = mixed_itv[:, 0].floor()
+                mixed_itv[:, 1] = mixed_itv[:, 1].ceil()
+                mixed_itv = mixed_itv.long()
 
-        # with open('/mnt/nvme/siqi/work/projects/mST/mST/back_translation/sv_de/w_const_13.txt', 'a') as w:
-        #     w.write('\n'.join(map(str, sim_matrix.diag().detach().cpu().tolist())) + '\n')
-        
-        sim_matrix = sim_matrix / self.gamma
+                orig_ft = []
+                mixed_ft = []
+                for orig_rg, mixed_rg in zip(orig_itv, mixed_itv):
+                    orig_ft.append(orig_x[orig_rg[0] : orig_rg[1], orig_idx].mean(dim=0, keepdim=True))
+                    mixed_ft.append(mixed_x[mixed_rg[0] : mixed_rg[1], mixed_idx].mean(dim=0, keepdim=True))
+                orig_ft = th.cat(orig_ft, dim=0)
+                mixed_ft = th.cat(mixed_ft, dim=0)
 
-        ref_ids = th.arange(sim_matrix.size(0)).to(sim_matrix).long()
+                sim_matrix = F.cosine_similarity(
+                    orig_ft.unsqueeze(0),
+                    mixed_ft.unsqueeze(1),
+                    dim=-1
+                ) / self.gamma
 
-        con_loss = F.cross_entropy(sim_matrix, ref_ids, reduction='sum' if reduce else 'none')
-        return con_loss
+                labels = th.arange(orig_ft.size(0))[mix_mask].to(orig_ft).long()
+                const_loss = const_loss + F.cross_entropy(sim_matrix[mix_mask, :], labels, reduction='sum')
+                const_loss = const_loss + F.cross_entropy(sim_matrix[:, mix_mask].T, labels, reduction='sum')
+                const_sample_size += mix_mask.sum() * 2
+
+        return const_loss, const_sample_size
+                
 
     @classmethod
     def reduce_metrics(cls, logging_outputs) -> None:
@@ -238,6 +235,11 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
                 _sum = sum(log.get(name, 0) for log in logging_outputs)
                 metrics.log_scalar(name, _sum / asr_sample_size, asr_sample_size, round=3)
 
+        const_sample_size = sum(log.get('const_sample_size', 0) for log in logging_outputs)
+        if const_sample_size > 0:
+            _sum = sum(log.get('const_loss', 0) for log in logging_outputs)
+            metrics.log_scalar('const_loss', _sum / const_sample_size, const_sample_size, round=3)
+
         # metrics.log_scalar('ntokens', sum(log.get('ntokens', 0) for log in logging_outputs))
         
         if sample_size > 0:
@@ -252,23 +254,6 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
                 n_correct = utils.item(sum(log.get(name + 'n_correct', 0) for log in logging_outputs))
                 metrics.log_scalar(name + 'n_correct', n_correct)
                 metrics.log_scalar(name + 'accuracy', n_correct / total)
-
-        # discriminator
-        adv_enc_sample_size = sum(log.get('adv_enc_sample_size', 0) for log in logging_outputs)
-        adv_enc_loss_sum = sum(log.get('adv_enc_loss', 0) for log in logging_outputs)
-        if adv_enc_sample_size > 0:
-            metrics.log_scalar('adv_enc_loss', adv_enc_loss_sum / adv_enc_sample_size, adv_enc_sample_size, round=3)
-
-        adv_disc_sample_size = sum(log.get('adv_disc_sample_size', 0) for log in logging_outputs)
-        adv_disc_loss_sum = sum(log.get('adv_disc_loss', 0) for log in logging_outputs)
-        if adv_disc_sample_size > 0:
-            metrics.log_scalar('adv_disc_loss', adv_disc_loss_sum / adv_disc_sample_size, adv_disc_sample_size, round=3)
-
-        # contrastive
-        contrastive_sample_size = sum(log.get('contrastive_sample_size', 0) for log in logging_outputs)
-        contrastive_loss_sum = sum(log.get('contrastive_loss', 0) for log in logging_outputs)
-        if contrastive_sample_size > 0:
-            metrics.log_scalar('contrastive_loss', contrastive_loss_sum / contrastive_sample_size, contrastive_sample_size, round=3)
 
     @staticmethod
     def logging_outputs_can_be_summed() -> bool:

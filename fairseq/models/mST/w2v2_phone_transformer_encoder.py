@@ -93,6 +93,21 @@ class W2V2PhoneTransformerEncoder(FairseqEncoder):
         padding_mask = lengths_to_padding_mask(src_lengths)
         return self.w2v2_model(src_tokens, padding_mask, mask=False, features_only=True)
 
+    def forward_speech2(self, src_tokens, src_lengths, **extra_args):
+        w2v2_feature, w2v2_padding_mask, w2v2_lengths = self._get_w2v2_feature(src_tokens, src_lengths)
+        embedding = w2v2_feature
+        input_lengths = w2v2_lengths
+        embedding_padding_mask = lengths_to_padding_mask(input_lengths).transpose(0, 1)
+
+        for layer in self.language_layers:
+            embedding = layer(embedding, embedding_padding_mask)
+
+        out = {
+            "x": embedding,
+            "padding_mask": w2v2_padding_mask
+        }
+        return out
+
     def forward(self, src_tokens, src_lengths, src_lang_tag_indices=None, **extra_args):       
         is_text = not src_tokens.dtype.is_floating_point
         phone_logp = text_logp = None
