@@ -70,20 +70,6 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
             st_net_output, st_encoder_out = model.forward_with_internal(**sample["net_input"])
             st_loss, st_nll_loss = self.compute_loss(model, st_net_output, sample["target"], reduce=reduce)
 
-            if sample["mixed_src_tokens"] is not None:
-                mixed_st_input = {
-                    "src_tokens": sample["mixed_src_tokens"],
-                    "src_lengths": sample["mixed_src_lengths"],
-                    "prev_output_tokens": sample["net_input"]["prev_output_tokens"][sample["mixed_indices"]],
-                    "mask": sample["net_input"]["mask"],
-                    "src_lang_tag_indices": sample["net_input"]["src_lang_tag_indices"],
-                }
-                mixed_st_net_output, mixed_st_encoder_out = model.forward_with_internal(**mixed_st_input)
-                mixed_st_loss, mixed_st_nll_loss = self.compute_loss(model, mixed_st_net_output, sample["target"][sample["mixed_indices"]], reduce=reduce)
-
-                st_loss = st_loss + mixed_st_loss
-                st_nll_loss = st_nll_loss + mixed_st_nll_loss
-
         mt_loss = mt_nll_loss = 0.
         if self.loss_ratio[1] > 0:
             mt_input = {
@@ -103,27 +89,14 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
             }
             asr_net_output = model(**asr_input)
             asr_loss, asr_nll_loss = self.compute_loss(model, asr_net_output, sample["asr_target"], reduce=reduce)
-
-            if sample["mixed_src_tokens"] is not None:
-                mixed_asr_input = {
-                    "src_tokens": sample["mixed_src_tokens"], 
-                    "src_lengths": sample["mixed_src_lengths"], 
-                    "prev_output_tokens": sample["asr_prev_output_tokens"][sample["mixed_indices"]],
-                    "src_lang_tag_indices": sample["net_input"]["src_lang_tag_indices"]
-                }
-                mixed_asr_net_output = model(**mixed_asr_input)
-                mixed_asr_loss, mixed_asr_nll_loss = self.compute_loss(model, mixed_asr_net_output, sample["asr_target"][sample["mixed_indices"]], reduce=reduce)
-
-                asr_loss = asr_loss + mixed_asr_loss
-                asr_nll_loss = asr_nll_loss + mixed_asr_nll_loss
         
         const_sample_size = 0
-        if sample["mixed_src_tokens"] is not None and self.loss_ratio[3] > 0:
-            const_loss, const_sample_size = self.contrastive(
-                st_encoder_out.encoder_out, mixed_st_encoder_out.encoder_out,
-                st_encoder_out.encoder_padding_mask, mixed_st_encoder_out.encoder_padding_mask, 
-                sample["matches"], sample["mixed_indices"]
-            )
+        # if sample["mixed_src_tokens"] is not None and self.loss_ratio[3] > 0:
+        #     const_loss, const_sample_size = self.contrastive(
+        #         st_encoder_out.encoder_out, mixed_st_encoder_out.encoder_out,
+        #         st_encoder_out.encoder_padding_mask, mixed_st_encoder_out.encoder_padding_mask, 
+        #         sample["matches"], sample["mixed_indices"]
+        #     )
 
         loss = self.loss_ratio[0] * st_loss + \
                self.loss_ratio[1] * mt_loss + \
@@ -146,7 +119,7 @@ class MultilingualTripletContrastiveCriterion(LabelSmoothedCrossEntropyCriterion
             "mt_nll_loss": mt_nll_loss.data if self.loss_ratio[1] > 0 else 0,
             "asr_loss": asr_loss.data if self.loss_ratio[2] > 0 else 0,
             "asr_nll_loss": asr_nll_loss.data if self.loss_ratio[2] > 0 else 0,
-            "const_loss": const_loss.data if sample["mixed_src_tokens"] is not None and self.loss_ratio[3] > 0 else 0,
+            "const_loss": const_loss.data if sample["mixed_indices"] is not None and self.loss_ratio[3] > 0 else 0,
             "ntokens": sample["ntokens"],
             "nsentences": sample["target"].size(0),
             "sample_size": sample_size,

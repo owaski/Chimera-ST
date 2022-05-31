@@ -11,6 +11,7 @@ from tkinter import N
 from typing import Dict, List, Optional, Tuple
 
 import torch
+import torchaudio
 from fairseq.data import (
     ConcatDataset,
     Dictionary,
@@ -105,8 +106,11 @@ class MultilingualTripletDataset(SpeechToTextDataset):
         self.audio_paths = audio_paths
         self.mixed_audio_paths = mixed_audio_paths
         self.match_paths = match_paths
-        self.n_frames = [min(n_f, MAX_FRAME) for n_f in n_frames]
+        self.n_frames = [n_f for n_f in n_frames]
         self.n_samples = len(audio_paths)
+        for idx in range(self.n_samples):
+            if op.exists(self.mixed_audio_paths[idx]):
+                self.n_frames[idx] += torchaudio.info(self.mixed_audio_paths[idx]).num_frames
         assert len(n_frames) == self.n_samples > 0
         assert src_texts is None or len(src_texts) == self.n_samples
         assert tgt_texts is None or len(tgt_texts) == self.n_samples
@@ -259,85 +263,88 @@ class MultilingualTripletDataset(SpeechToTextDataset):
         if len(samples) == 0:
             return {}
         indices = torch.tensor([i for i, _, _, _, _, _, _ in samples], dtype=torch.long)
-        frames = _collate_frames(
-            [s for _, s, _, _, _, _, _ in samples], self.data_cfg.use_audio_input
-        )
+        frames = [s for _, s, _, _, _, _, _ in samples]
         mixed_indices = torch.tensor([
             idx for idx, (_, _, s, _, _, _, _) in enumerate(samples) if s is not None
         ], dtype=torch.long)
         if mixed_indices.size(0) > 0:
-            mixed_frames = _collate_frames(
-                [s for _, _, s, _, _, _, _ in samples if s is not None], self.data_cfg.use_audio_input
-            )
-        else:
-            mixed_frames = None
+            frames += [s for _, _, s, _, _, _, _ in samples if s is not None]
+        n_frames = torch.tensor([f.size(0) for f in frames], dtype=torch.long)
+        frames = _collate_frames(frames, self.data_cfg.use_audio_input)
+        
         # sort samples by descending number of frames
-        n_frames = torch.tensor([s.size(0) for _, s, _, _, _, _, _ in samples],
-                                dtype=torch.long)
-        mixed_n_frames = torch.tensor([s.size(0) for _, _, s, _, _, _, _ in samples if s is not None],
-                                dtype=torch.long)
+        
         matches = [m for _, _, _, m, _, _, _ in samples if m is not None]
 
         target, target_lengths = None, None
         prev_output_tokens = None
         ntokens = None
         if self.labeled:
-            target = fairseq_data_utils.collate_tokens(
-                [t for _, _, _, _, t, _, _ in samples],
-                self.tgt_dict.pad(),
-                self.tgt_dict.eos(),
-                left_pad=False,
-                move_eos_to_beginning=False,
-            )
+            target = [t for _, _, _, _, t, _, _ in samples]
+            for idx in mixed_indices:
+                target.append(target[idx])
+            
             target_lengths = torch.tensor(
-                [t.size(0) - 1 for _, _, _, _, t, _, _ in samples], dtype=torch.long
+                [t.size(0) - 1 for t in target], dtype=torch.long
             )
             prev_output_tokens = fairseq_data_utils.collate_tokens(
-                [t for _, _, _, _, t, _, _ in samples],
+                target,
                 self.tgt_dict.pad(),
                 self.tgt_dict.eos(),
                 left_pad=False,
                 move_eos_to_beginning=True,
             )
-            prev_output_tokens = prev_output_tokens
-            ntokens = sum(t.size(0) for _, _, _, _, t, _, _ in samples)
+            ntokens = sum(t.size(0) for t in target)
+            target = fairseq_data_utils.collate_tokens(
+                target,
+                self.tgt_dict.pad(),
+                self.tgt_dict.eos(),
+                left_pad=False,
+                move_eos_to_beginning=False,
+            )
 
         src_text, src_text_lengths = None, None
         asr_target, asr_target_lengths, asr_prev_output_tokens = None, None, None
         if self.labeled:
-            src_text = fairseq_data_utils.collate_tokens(
-                [s for _, _, _, _, _, s, _ in samples],
-                self.src_dict.pad(),
-                self.src_dict.eos(),
-                left_pad=False,
-                move_eos_to_beginning=False,
-            )
-            src_text = src_text
+            src_text = [s for _, _, _, _, _, s, _ in samples]
+            for idx in mixed_indices:
+                src_text.append(src_text[idx])
+
             src_text_lengths = torch.tensor(
-                [s.size(0) for _, _, _, _, _, s, _ in samples], dtype=torch.long
+                [s.size(0) for s in src_text], dtype=torch.long
             )
 
             asr_target = fairseq_data_utils.collate_tokens(
-                [s for _, _, _, _, _, s, _ in samples],
+                src_text,
                 self.src_dict.pad(),
                 self.src_dict.eos(),
                 left_pad=False,
                 move_eos_to_beginning=False,
             )
             asr_target_lengths = torch.tensor(
-                [s.size(0) - 1 for _, _, _, _, _, s, _ in samples], dtype=torch.long
+                [s.size(0) - 1 for s in src_text], dtype=torch.long
             )
             asr_prev_output_tokens = fairseq_data_utils.collate_tokens(
-                [s for _, _, _, _, _, s, _ in samples],
+                src_text,
                 self.src_dict.pad(),
                 self.src_dict.eos(),
                 left_pad=False,
                 move_eos_to_beginning=True,
             )
 
-        src_lang_tag_indices = torch.tensor(
-            [src_lang_tag_idx for _, _, _, _, _, _, src_lang_tag_idx in samples], dtype=torch.long
-        ).unsqueeze(-1)
+            src_text = fairseq_data_utils.collate_tokens(
+                src_text,
+                self.src_dict.pad(),
+                self.src_dict.eos(),
+                left_pad=False,
+                move_eos_to_beginning=False,
+            )
+           
+
+        src_lang_tag_indices = [src_lang_tag_idx for _, _, _, _, _, _, src_lang_tag_idx in samples]
+        for idx in mixed_indices:
+            src_lang_tag_indices.append(src_lang_tag_indices[idx])
+        src_lang_tag_indices = torch.tensor(src_lang_tag_indices, dtype=torch.long).unsqueeze(-1)
 
         out = {
             "id": indices,
@@ -348,8 +355,6 @@ class MultilingualTripletDataset(SpeechToTextDataset):
                 "mask": self.mask,
                 "src_lang_tag_indices": src_lang_tag_indices
             },
-            "mixed_src_tokens": mixed_frames,
-            "mixed_src_lengths": mixed_n_frames,
             "mixed_indices": mixed_indices,
             "matches": matches,
             "target": target,
