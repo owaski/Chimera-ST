@@ -93,7 +93,7 @@ class W2V2TransformerEncoder(FairseqEncoder):
         padding_mask = lengths_to_padding_mask(src_lengths)
         return self.w2v2_model(src_tokens, padding_mask, mask=False, features_only=True)
         
-    def forward(self, src_tokens, src_lengths, src_lang_tag_indices=None, **extra_args):       
+    def forward(self, src_tokens, src_lengths, **extra_args):       
         is_text = not src_tokens.dtype.is_floating_point
         if is_text:
             embedding = self.text_embedding(src_tokens)

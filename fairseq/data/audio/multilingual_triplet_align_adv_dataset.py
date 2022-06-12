@@ -214,7 +214,6 @@ class MultilingualTripletDataset(SpeechToTextDataset):
                 )
 
         src_text = None
-        src_lang_tag_idx = None
         if self.src_texts is not None:
             src_tokenized = self.tokenize_text(self.src_texts[index], 'source')
             src_text = self.src_dict.encode_line(
@@ -229,11 +228,11 @@ class MultilingualTripletDataset(SpeechToTextDataset):
                     0
                 )
 
-        # src_lang_idx = None
-        # if self.src_langs[index] in self.src_lang2idx:
-        #     src_lang_idx = self.src_lang2idx[self.src_langs[index]]
+        src_lang_idx = None
+        if self.src_langs[index][:2] in self.src_lang2idx:
+            src_lang_idx = self.src_lang2idx[self.src_langs[index][:2]]
 
-        return index, source, target, src_text, src_lang_tag_idx, align
+        return index, source, target, src_text, src_lang_idx, align
 
     def collater(
         self, samples: List[Tuple[int, torch.Tensor, torch.Tensor]]
@@ -260,7 +259,7 @@ class MultilingualTripletDataset(SpeechToTextDataset):
         target, target_lengths = None, None
         prev_output_tokens = None
         ntokens = None
-
+        asr_target, asr_target_lengths, asr_prev_output_tokens = None, None, None
         if st_indices.size(0) > 0:
             target = fairseq_data_utils.collate_tokens(
                 [t for _, _, t, _, _, _ in samples if t is not None],
@@ -280,10 +279,27 @@ class MultilingualTripletDataset(SpeechToTextDataset):
                 move_eos_to_beginning=True,
             )
 
+            asr_target = fairseq_data_utils.collate_tokens(
+                [s for _, _, t, s, _, _ in samples if t is not None],
+                self.src_dict.pad(),
+                self.src_dict.eos(),
+                left_pad=False,
+                move_eos_to_beginning=False,
+            )
+            asr_target_lengths = torch.tensor(
+                [s.size(0) - 1 for _, _, t, s, _, _ in samples if t is not None], dtype=torch.long
+            )
+            asr_prev_output_tokens = fairseq_data_utils.collate_tokens(
+                [s for _, _, t, s, _, _ in samples if t is not None],
+                self.src_dict.pad(),
+                self.src_dict.eos(),
+                left_pad=False,
+                move_eos_to_beginning=True,
+            )
+
         ntokens = sum(t.size(0) if t is not None else s.size(0) for _, _, t, s, _, _ in samples)
 
-        src_text, src_text_lengths = None, None
-
+        # src_text, src_text_lengths = None, None
         src_text = fairseq_data_utils.collate_tokens(
             [s for _, _, _, s, _, _ in samples],
             self.src_dict.pad(),
@@ -294,15 +310,18 @@ class MultilingualTripletDataset(SpeechToTextDataset):
         src_text_lengths = torch.tensor(
             [s.size(0) for _, _, _, s, _, _ in samples], dtype=torch.long
         )
-
-        src_lang_tag_indices = torch.tensor(
-            [src_lang_tag_idx for _, _, _, _, src_lang_tag_idx, _ in samples], dtype=torch.long
-        ).unsqueeze(-1)
+        
+        src_lang_indices = torch.tensor(
+            [src_lang_idx for _, _, _, _, src_lang_idx, _ in samples], dtype=torch.long
+        )
 
         st_n_frames = n_frames[st_indices]
         st_frames = frames[st_indices]
+        mt_src = src_text[st_indices]
+        mt_src_lengths = src_text_lengths[st_indices]
         if st_n_frames.size(0) > 0:
             st_frames = st_frames[:, :st_n_frames.max()]
+            mt_src = mt_src[:, :mt_src_lengths.max()]
 
         align_n_frames = n_frames[align_indices]
         align_frames = frames[align_indices]
@@ -318,8 +337,20 @@ class MultilingualTripletDataset(SpeechToTextDataset):
                 "src_tokens": st_frames,
                 "src_lengths": st_n_frames,
                 "prev_output_tokens": prev_output_tokens,
-                "mask": self.mask,
-                "src_lang_tag_indices": src_lang_tag_indices[st_indices]
+            },
+            "mt_input": {
+                "src_tokens": mt_src,
+                "src_lengths": mt_src_lengths,
+                "prev_output_tokens": prev_output_tokens
+            },
+            "asr_input": {
+                "src_tokens": st_frames,
+                "src_lengths": st_n_frames,
+                "prev_output_tokens": asr_prev_output_tokens,
+            },
+            "adv_input": {
+                "src_tokens": frames,
+                "src_lengths": n_frames,
             },
             "align_indices": align_indices,
             "align": align,
@@ -331,8 +362,11 @@ class MultilingualTripletDataset(SpeechToTextDataset):
             },
             "target": target,
             "target_lengths": target_lengths,
+            "asr_target": asr_target,
+            "asr_target_lengths": asr_target_lengths,
             "src_text": src_text,
             "src_text_lengths": src_text_lengths,
+            "src_lang_indices": src_lang_indices,
             "ntokens": ntokens,
             "nsentences": len(samples),
         }
@@ -445,6 +479,8 @@ class MultilingualTripletDatasetCreator(SpeechToTextDatasetCreator):
             else:
                 src_code, tgt_code, tp = parts
                 tsv_path = op.join(root, src_code, "{}_st_{}_{}.tsv".format(tp, src_code, tgt_code))
+            if src_code[:2] not in src_lang2idx:
+                src_lang2idx[src_code[:2]] = len(src_lang2idx)
             if not op.isfile(tsv_path):
                 raise FileNotFoundError(f"Dataset not found: {tsv_path}")
             with open(tsv_path) as f:

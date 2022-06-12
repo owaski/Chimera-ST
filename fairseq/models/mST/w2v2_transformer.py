@@ -249,6 +249,15 @@ class W2V2Transformer(FairseqEncoderDecoderModel):
         decoder_out = self.decoder(prev_output_tokens=prev_output_tokens, encoder_out=encoder_out)
         return decoder_out
 
+    def set_num_updates(self, update_num):
+        self.update_num = update_num
+
+        def _apply(m):
+            if hasattr(m, "set_num_updates") and m != self:
+                m.set_num_updates(update_num)
+
+        self.apply(_apply)
+
 
 @register_model_architecture('w2v2_transformer', 'xlsr_mbart50_base')
 def w2v2_transformer_base(args):

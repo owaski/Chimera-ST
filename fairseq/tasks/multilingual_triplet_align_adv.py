@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from dataclasses import dataclass
 import logging
 import os.path as op
 from argparse import Namespace
@@ -12,7 +13,7 @@ import numpy as np
 
 from fairseq import utils, metrics, criterions
 from fairseq.data import Dictionary, encoders
-from fairseq.data.audio.multilingual_triplet_v2_align_dataset import (
+from fairseq.data.audio.multilingual_triplet_align_adv_dataset import (
     MultilingualTripletDataConfig,
     MultilingualTripletDataset,
     MultilingualTripletDatasetCreator
@@ -29,8 +30,8 @@ logger = logging.getLogger(__name__)
 
 EVAL_BLEU_ORDER = 4
 
-@register_task("multilingual_triplet_align_task")
-class MultilingualTripletAlignTask(LegacyFairseqTask):
+@register_task("multilingual_triplet_align_adv_task")
+class MultilingualTripletAlignAdvTask(LegacyFairseqTask):
     @staticmethod
     def add_args(parser):
         parser.add_argument("data", help="manifest root path")
