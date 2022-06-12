@@ -32,6 +32,7 @@ class W2V2TransformerEncoder(FairseqEncoder):
         assert args.w2v2_model_path is not None
         self.w2v2_model_path = args.w2v2_model_path
 
+        self.w2v2_model_path = '/mnt/data/siqiouyang/runs/mST/pretrained/xlsr2_300m.pt' # Temporary fix
         w2v2_ckpt = th.load(self.w2v2_model_path)
         self.w2v2_args = Namespace(**w2v2_ckpt['cfg']['model'])
         self.w2v2_model = Wav2Vec2Model.build_model(self.w2v2_args, task=None)
@@ -68,6 +69,10 @@ class W2V2TransformerEncoder(FairseqEncoder):
                 args.encoder_embed_dim,
                 [int(k) for k in args.conv_kernel_sizes.split(",")],
             )
+
+        self.silence_emb = nn.parameter.Parameter(
+            data=th.rand(args.encoder_embed_dim),
+        )
 
     def _get_w2v2_feature(self, src_tokens, src_lengths):
         '''
@@ -131,13 +136,13 @@ class W2V2TransformerEncoder(FairseqEncoder):
             encoder_out=transformer_encoder_out.encoder_out,
             encoder_padding_mask=transformer_encoder_out.encoder_padding_mask,
             internal_states=None, 
-            encoder_embedding=transformer_encoder_out.encoder_embedding,
+            encoder_embedding=embedding,
             encoder_states=transformer_encoder_out.encoder_states,
             src_tokens=None,
             src_lengths=None,
             phone_logp=None,
             text_logp=None,
-        )          
+        )
 
     @th.jit.export
     def reorder_encoder_out(self, encoder_out, new_order):

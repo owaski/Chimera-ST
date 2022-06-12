@@ -35,8 +35,6 @@ from fairseq.data.multi_corpus_sampled_dataset import MultiCorpusSampledDataset
 
 logger = logging.getLogger(__name__)
 
-MAX_FRAME = 320000
-
 class MultilingualTripletDataConfig(S2TDataConfig):
     """Wrapper class for data config YAML"""
 
@@ -79,6 +77,7 @@ class MultilingualTripletDataset(SpeechToTextDataset):
         is_train_split: bool,
         data_cfg: MultilingualTripletDataConfig,
         audio_paths: List[str],
+        align_paths,
         n_frames: List[int],
         src_texts: Optional[List[str]] = None,
         tgt_texts: Optional[List[str]] = None,
@@ -100,7 +99,8 @@ class MultilingualTripletDataset(SpeechToTextDataset):
         self.split, self.is_train_split = split, is_train_split
         self.data_cfg = data_cfg
         self.audio_paths = audio_paths
-        self.n_frames = [min(n_f, MAX_FRAME) for n_f in n_frames]
+        self.align_paths = align_paths
+        self.n_frames = n_frames
         self.n_samples = len(audio_paths)
         assert len(n_frames) == self.n_samples > 0
         assert src_texts is None or len(src_texts) == self.n_samples
@@ -150,13 +150,13 @@ class MultilingualTripletDataset(SpeechToTextDataset):
         return codes
 
     def check_lang_tag(self):
-        if self.data_cfg.prepend_tgt_lang_tag:
+        if self.data_cfg.prepend_tgt_lang_tag and self.tgt_langs:
             assert self.tgt_langs is not None and self.tgt_dict is not None
             tgt_lang_tags = [
                 self.LANG_TAG_TEMPLATE.format(self.lang2langcode[t[:2]]) for t in set(self.tgt_langs)
             ]
             assert all(t in self.tgt_dict for t in tgt_lang_tags)
-        if self.data_cfg.prepend_src_lang_tag:
+        if self.data_cfg.prepend_src_lang_tag and self.src_langs:
             assert self.src_langs is not None and self.src_dict is not None
             src_lang_tags = [
                 self.LANG_TAG_TEMPLATE.format(self.lang2langcode[s[:2]]) for s in set(self.src_langs)
@@ -189,6 +189,14 @@ class MultilingualTripletDataset(SpeechToTextDataset):
         if self.normalize:
             with torch.no_grad():
                 source = F.layer_norm(source, source.shape)
+
+        align = None
+        if op.exists(self.align_paths[index]):
+            seg, itv = torch.load(self.align_paths[index])
+            if self.data_cfg.prepend_src_lang_tag:
+                seg = [(s[0] + 1, s[1] + 1) for s in seg]
+            align = (seg, itv)
+
 
         target = None
         if self.tgt_texts is not None:
@@ -225,102 +233,106 @@ class MultilingualTripletDataset(SpeechToTextDataset):
         # if self.src_langs[index] in self.src_lang2idx:
         #     src_lang_idx = self.src_lang2idx[self.src_langs[index]]
 
-        return index, source, target, src_text, src_lang_tag_idx
+        return index, source, target, src_text, src_lang_tag_idx, align
 
     def collater(
         self, samples: List[Tuple[int, torch.Tensor, torch.Tensor]]
     ) -> Dict:
         if len(samples) == 0:
             return {}
-        indices = torch.tensor([i for i, _, _, _, _ in samples], dtype=torch.long)
+        st_indices = torch.tensor([
+            idx for idx, (_, _, t, _, _, _) in enumerate(samples) if t is not None
+        ], dtype=torch.long)
+        align_indices = torch.tensor([
+            idx for idx, (_, _, _, _, _, a) in enumerate(samples) if a is not None
+        ], dtype=torch.long)
         frames = _collate_frames(
-            [s for _, s, _, _, _ in samples], self.data_cfg.use_audio_input
+            [s for _, s, _, _, _, _ in samples], self.data_cfg.use_audio_input
         )
         # sort samples by descending number of frames
-        n_frames = torch.tensor([s.size(0) for _, s, _, _, _ in samples],
+        n_frames = torch.tensor([s.size(0) for _, s, _, _, _, _ in samples],
                                 dtype=torch.long)
-        n_frames, order = n_frames.sort(descending=True)
-        indices = indices.index_select(0, order)
-        frames = frames.index_select(0, order)
+
+        align = None
+        if align_indices.size(0) > 0:
+            align = [a for _, _, _, _, _, a in samples if a is not None]
 
         target, target_lengths = None, None
         prev_output_tokens = None
         ntokens = None
-        if self.labeled:
+
+        if st_indices.size(0) > 0:
             target = fairseq_data_utils.collate_tokens(
-                [t for _, _, t, _, _ in samples],
+                [t for _, _, t, _, _, _ in samples if t is not None],
                 self.tgt_dict.pad(),
                 self.tgt_dict.eos(),
                 left_pad=False,
                 move_eos_to_beginning=False,
             )
-            target = target.index_select(0, order)
             target_lengths = torch.tensor(
-                [t.size(0) - 1 for _, _, t, _, _ in samples], dtype=torch.long
-            ).index_select(0, order)
+                [t.size(0) - 1 for _, _, t, _, _, _ in samples if t is not None], dtype=torch.long
+            )
             prev_output_tokens = fairseq_data_utils.collate_tokens(
-                [t for _, _, t, _, _ in samples],
+                [t for _, _, t, _, _, _ in samples if t is not None],
                 self.tgt_dict.pad(),
                 self.tgt_dict.eos(),
                 left_pad=False,
                 move_eos_to_beginning=True,
             )
-            prev_output_tokens = prev_output_tokens.index_select(0, order)
-            ntokens = sum(t.size(0) for _, _, t, _, _ in samples)
+
+        ntokens = sum(t.size(0) if t is not None else s.size(0) for _, _, t, s, _, _ in samples)
 
         src_text, src_text_lengths = None, None
-        asr_target, asr_target_lengths, asr_prev_output_tokens = None, None, None
-        if self.labeled:
-            src_text = fairseq_data_utils.collate_tokens(
-                [s for _, _, _, s, _ in samples],
-                self.src_dict.pad(),
-                self.src_dict.eos(),
-                left_pad=False,
-                move_eos_to_beginning=False,
-            )
-            src_text = src_text.index_select(0, order)
-            src_text_lengths = torch.tensor(
-                [s.size(0) for _, _, _, s, _ in samples], dtype=torch.long
-            ).index_select(0, order)
 
-            asr_target = fairseq_data_utils.collate_tokens(
-                [s for _, _, _, s, _ in samples],
-                self.src_dict.pad(),
-                self.src_dict.eos(),
-                left_pad=False,
-                move_eos_to_beginning=False,
-            ).index_select(0, order)
-            asr_target_lengths = torch.tensor(
-                [s.size(0) - 1 for _, _, _, s, _ in samples], dtype=torch.long
-            ).index_select(0, order)
-            asr_prev_output_tokens = fairseq_data_utils.collate_tokens(
-                [s for _, _, _, s, _ in samples],
-                self.src_dict.pad(),
-                self.src_dict.eos(),
-                left_pad=False,
-                move_eos_to_beginning=True,
-            ).index_select(0, order)
+        src_text = fairseq_data_utils.collate_tokens(
+            [s for _, _, _, s, _, _ in samples],
+            self.src_dict.pad(),
+            self.src_dict.eos(),
+            left_pad=False,
+            move_eos_to_beginning=False,
+        )
+        src_text_lengths = torch.tensor(
+            [s.size(0) for _, _, _, s, _, _ in samples], dtype=torch.long
+        )
 
         src_lang_tag_indices = torch.tensor(
-            [src_lang_tag_idx for _, _, _, _, src_lang_tag_idx in samples], dtype=torch.long
-        ).index_select(0, order).unsqueeze(-1)
+            [src_lang_tag_idx for _, _, _, _, src_lang_tag_idx, _ in samples], dtype=torch.long
+        ).unsqueeze(-1)
+
+        st_n_frames = n_frames[st_indices]
+        st_frames = frames[st_indices]
+        if st_n_frames.size(0) > 0:
+            st_frames = st_frames[:, :st_n_frames.max()]
+
+        align_n_frames = n_frames[align_indices]
+        align_frames = frames[align_indices]
+        align_text_lengths = src_text_lengths[align_indices]
+        align_text = src_text[align_indices]
+        if align_n_frames.size(0) > 0:
+            align_frames = align_frames[:, :align_n_frames.max()]
+            align_text = align_text[:, :align_text_lengths.max()]
 
         out = {
-            "id": indices,
+            "st_indices": st_indices,
             "net_input": {
-                "src_tokens": frames,
-                "src_lengths": n_frames,
+                "src_tokens": st_frames,
+                "src_lengths": st_n_frames,
                 "prev_output_tokens": prev_output_tokens,
                 "mask": self.mask,
-                "src_lang_tag_indices": src_lang_tag_indices
+                "src_lang_tag_indices": src_lang_tag_indices[st_indices]
+            },
+            "align_indices": align_indices,
+            "align": align,
+            "align_inputs": {
+                "src_tokens": align_frames,
+                "src_lengths": align_n_frames,
+                "src_text": align_text,
+                "src_text_lengths": align_text_lengths,
             },
             "target": target,
             "target_lengths": target_lengths,
             "src_text": src_text,
             "src_text_lengths": src_text_lengths,
-            "asr_target": asr_target,
-            "asr_target_lengths": asr_target_lengths,
-            "asr_prev_output_tokens": asr_prev_output_tokens,
             "ntokens": ntokens,
             "nsentences": len(samples),
         }
@@ -354,44 +366,39 @@ class MultilingualTripletDatasetCreator(SpeechToTextDatasetCreator):
         src_lang2idx
     ) -> MultilingualTripletDataset:
         parts = split_name.split('_')
-        if len(parts) == 1: # unlabeled data
-            labeled = False
-            audio_paths, n_frames, src_texts, tgt_texts, ids = [], [], None, None, []
-            speakers, src_langs, tgt_langs = None, [], None
-            for s in samples:
-                ids.extend([ss[cls.KEY_ID] for ss in s])
-                audio_paths.extend(
-                    [op.join(data_cfg.voxpopuli_root, 'unlabelled_data', ss[cls.KEY_SRC_LANG], ss[cls.KEY_AUDIO]) for ss in s]
-                )
-                n_frames.extend([int(ss[cls.KEY_N_FRAMES]) for ss in s])
-                src_langs.extend([ss.get(cls.KEY_SRC_LANG, cls.DEFAULT_LANG)
-                                for ss in s])            
-        else:
-            labeled = True
-            audio_paths, n_frames, src_texts, tgt_texts, ids = [], [], [], [], []
-            speakers, src_langs, tgt_langs = [], [], []
-            for s in samples:
-                ids.extend([ss[cls.KEY_ID] for ss in s])
-                audio_paths.extend(
-                    [op.join(data_cfg.audio_root, ss[cls.KEY_SRC_LANG], '16kHz', ss[cls.KEY_AUDIO]) for ss in s]
-                )
-                n_frames.extend([int(ss[cls.KEY_N_FRAMES]) for ss in s])
+        audio_paths, n_frames, src_texts, tgt_texts, ids = [], [], [], [], []
+        speakers, src_langs, tgt_langs = [], [], []
+        align_paths = []
+        for s in samples:
+            ids.extend([ss[cls.KEY_ID] for ss in s])
+            audio_paths.extend(
+                [op.join(data_cfg.audio_root, ss[cls.KEY_SRC_LANG], '16kHz', ss[cls.KEY_AUDIO]) for ss in s]
+            )
+            align_paths.extend(
+                [op.join(data_cfg.audio_root, ss[cls.KEY_SRC_LANG], '16kHz', ss[cls.KEY_ID] + '.pt') for ss in s]
+            )
+            n_frames.extend([int(ss[cls.KEY_N_FRAMES]) for ss in s])
+            if len(parts) == 3:
                 tgt_texts.extend([ss[cls.KEY_TGT_TEXT] for ss in s])
-                src_texts.extend(
-                    [ss.get(cls.KEY_SRC_TEXT, cls.DEFAULT_SRC_TEXT) for ss in s]
-                )
-                speakers.extend([ss.get(cls.KEY_SPEAKER, cls.DEFAULT_SPEAKER)
-                                for ss in s])
-                src_langs.extend([ss.get(cls.KEY_SRC_LANG, cls.DEFAULT_LANG)
-                                for ss in s])
-                tgt_langs.extend([ss.get(cls.KEY_TGT_LANG, cls.DEFAULT_LANG)
-                                for ss in s])
+            src_texts.extend(
+                [ss.get(cls.KEY_SRC_TEXT, cls.DEFAULT_SRC_TEXT) for ss in s]
+            )
+            speakers.extend([ss.get(cls.KEY_SPEAKER, cls.DEFAULT_SPEAKER)
+                            for ss in s])
+            src_langs.extend([ss.get(cls.KEY_SRC_LANG, cls.DEFAULT_LANG)
+                            for ss in s])
+            if len(parts) == 3:
+                tgt_langs.extend([ss.get(cls.KEY_TGT_LANG, cls.DEFAULT_LANG) for ss in s])
+
+        if len(parts) == 2:
+            tgt_langs = tgt_texts = None
 
         return MultilingualTripletDataset(
             split_name,
             is_train_split,
             data_cfg,
             audio_paths,
+            align_paths,
             n_frames,
             src_texts,
             tgt_texts,
@@ -407,7 +414,6 @@ class MultilingualTripletDatasetCreator(SpeechToTextDatasetCreator):
             normalize,
             mask,
             src_lang2idx=src_lang2idx,
-            labeled=labeled
         )
 
     @classmethod
@@ -431,21 +437,14 @@ class MultilingualTripletDatasetCreator(SpeechToTextDatasetCreator):
         samples = []
         _splits = splits.split(",") # here the splits contain codes of language pair that we use
         src_lang2idx = {}
-        types = [False, False]
         for split in _splits:
             parts = split.split('_')
-            if len(parts) == 1: # unlabelled data
-                src_code = parts[0]
-                voxp_root = data_cfg.voxpopuli_root
-                assert voxp_root is not None
-                tsv_path = op.join(voxp_root, 'unlabelled_data', src_code, "{}.tsv".format(src_code))
-                if src_code not in src_lang2idx:
-                    src_lang2idx[src_code] = len(src_lang2idx)
-                types[0] = True
+            if len(parts) == 2: # asr data
+                src_code, tp = parts
+                tsv_path = op.join(root, src_code, "{}_asr_{}.tsv".format(tp, src_code))
             else:
-                src_code, tgt_code, tp = split.split('_')
+                src_code, tgt_code, tp = parts
                 tsv_path = op.join(root, src_code, "{}_st_{}_{}.tsv".format(tp, src_code, tgt_code))
-                types[1] = True
             if not op.isfile(tsv_path):
                 raise FileNotFoundError(f"Dataset not found: {tsv_path}")
             with open(tsv_path) as f:
@@ -492,33 +491,5 @@ class MultilingualTripletDatasetCreator(SpeechToTextDatasetCreator):
                 )
                 for d, r in zip(datasets, size_ratios)
             ]
-
-        # sampling ratio for unlabeled dataset
-        if all(types):
-            unlabeled_r = data_cfg.unlabeled_sampling_ratio
-
-            labeled_dataset = ConcatDataset([d for d in datasets if d.labeled])
-            unlabeled_dataset = ConcatDataset([
-                ResamplingDataset(
-                    d, size_ratio=unlabeled_r, seed=seed, epoch=epoch, replace=(unlabeled_r >= 1.0)
-                ) for d in datasets if not d.labeled
-            ])
-
-            datasets = OrderedDict({
-                'labeled': labeled_dataset,
-                'unlabeled': unlabeled_dataset
-            })
-
-            configs = OrderedDict({
-                'labeled': data_cfg,
-                'unlabeled': data_cfg
-            })
-
-            ratios = OrderedDict({
-                'labeled': 1,
-                'unlabeled': 1
-            })
-
-            return JointDataset(datasets, configs, ratios)
 
         return ConcatDataset(datasets)
