@@ -29,6 +29,7 @@ class MultilingualTripletAlignAdvCriterion(LabelSmoothedCrossEntropyCriterion):
         self.adv_period = adv_period
         self.gamma = gamma
         self.use_emb = use_emb
+        self.count = 0
 
     @staticmethod
     def get_num_updates():
@@ -90,8 +91,13 @@ class MultilingualTripletAlignAdvCriterion(LabelSmoothedCrossEntropyCriterion):
         align_sample_size = 0
         adv_sample_size = 0
 
+        if not model.training:
+            self.count = 0
+        else:
+            self.count += 1
+
         normal = not model.training or self.adv_period == -1 or self.loss_ratio[3] == 0 or \
-            model.update_num % (self.adv_period + 1) > 0
+            self.count % (self.adv_period + 1) > 0
 
         if normal:
 
@@ -162,12 +168,14 @@ class MultilingualTripletAlignAdvCriterion(LabelSmoothedCrossEntropyCriterion):
                     )
 
             if self.loss_ratio[3] > 0:
-                for param in model.discriminator.parameters():
-                    param.requires_grad = False
+                if model.training:
+                    for param in model.discriminator.parameters():
+                        param.requires_grad = False
                 st_encoder_out = model.encoder(**sample["adv_input"])
                 logits = model.discriminator(st_encoder_out.encoder_out, st_encoder_out.encoder_padding_mask)
                 adv_loss = -F.cross_entropy(logits, sample["src_lang_indices"], reduction='sum')
                 adv_sample_size = sample["nsentences"]
+                # print(adv_loss / adv_sample_size)
 
         else:
 
@@ -178,7 +186,8 @@ class MultilingualTripletAlignAdvCriterion(LabelSmoothedCrossEntropyCriterion):
                     st_encoder_out = model.encoder(**sample["adv_input"])
                 logits = model.discriminator(st_encoder_out.encoder_out, st_encoder_out.encoder_padding_mask)
                 adv_loss = F.cross_entropy(logits, sample["src_lang_indices"], reduction='sum')
-                adv_sample_size = sample["nsentences"]
+                # print(adv_loss / adv_sample_size)
+                # adv_sample_size = sample["nsentences"]
 
         loss = self.loss_ratio[0] * st_loss + \
                self.loss_ratio[1] * mt_loss + \
@@ -203,7 +212,7 @@ class MultilingualTripletAlignAdvCriterion(LabelSmoothedCrossEntropyCriterion):
             "asr_loss": asr_loss.data if self.loss_ratio[2] > 0 else 0,
             "asr_nll_loss": asr_nll_loss.data if self.loss_ratio[2] > 0 else 0,
             "align_loss": align_token_loss.data + align_sent_loss.data + align_ctc_loss.data if sum(self.loss_ratio[-3:]) > 0 else 0,
-            "adv_loss": adv_loss.data if self.loss_ratio[3] > 0 else 0,
+            "adv_loss": adv_loss.data if self.loss_ratio[3] > 0 and normal else 0,
             "ntokens": sample["ntokens"],
             "nsentences": sample["target"].size(0) if sample["target"] is not None else 0,
             "sample_size": sample_size,

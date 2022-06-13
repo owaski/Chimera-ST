@@ -48,7 +48,7 @@ python mST/prepare_data/gen_data_config.py --audio-root $COVOST2_ROOT \
 
 Training:
 ```bash
-export EXP_ID="XSTNet"
+export EXP_ID="XSTNet_adv"
 # export EXP_ID="debug"
 
 # export SAVE_DIR=/mnt/raid5/siqi/checkpoints/$EXP_ID
