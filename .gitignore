@@ -157,3 +157,4 @@ cs291k/analysis/*
 *.pyc
 events.out.tfevents.*
 *.pdf
+.vscode/launch.json

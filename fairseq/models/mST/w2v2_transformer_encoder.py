@@ -32,7 +32,7 @@ class W2V2TransformerEncoder(FairseqEncoder):
         assert args.w2v2_model_path is not None
         self.w2v2_model_path = args.w2v2_model_path
 
-        self.w2v2_model_path = '/mnt/data/siqiouyang/runs/mST/pretrained/xlsr2_300m.pt' # Temporary fix
+        # self.w2v2_model_path = '/mnt/data/siqiouyang/runs/mST/pretrained/xlsr2_300m.pt' # Temporary fix
         w2v2_ckpt = th.load(self.w2v2_model_path)
         self.w2v2_args = Namespace(**w2v2_ckpt['cfg']['model'])
         self.w2v2_model = Wav2Vec2Model.build_model(self.w2v2_args, task=None)

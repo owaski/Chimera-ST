@@ -201,7 +201,7 @@ class W2V2Transformer(FairseqEncoderDecoderModel):
         decoder_embedding = build_embedding(task.tgt_dict, args.decoder_embed_dim)
         decoder = cls.build_decoder(args, task.tgt_dict, decoder_embedding)
 
-        args.mbart50_dir = '/mnt/data/siqiouyang/runs/mST/pretrained/mbart50.ft.n1' # Temporary fix
+        # args.mbart50_dir = '/mnt/data/siqiouyang/runs/mST/pretrained/mbart50.ft.n1' # Temporary fix
         mbart50_params = checkpoint_utils.load_checkpoint_to_cpu(os.path.join(args.mbart50_dir, 'model.pt'))['model']
         mbart50_encoder_params = {k[8:]: v for k, v in mbart50_params.items() if k.startswith('encoder.')}
         mbart50_decoder_params = {k[8:]: v for k, v in mbart50_params.items() if k.startswith('decoder.')}
@@ -232,6 +232,7 @@ class W2V2Transformer(FairseqEncoderDecoderModel):
             nhead=args.disc_nhead,
             nclass=args.disc_nclass,
             drop=args.disc_drop,
+            rev=args.disc_rev
         )
         return discriminator
 
@@ -354,3 +355,4 @@ def w2v2_transformer_base(args):
     args.disc_nhead = getattr(args, "disc_nhead", 4)
     args.disc_nclass = getattr(args, "disc_nclass", 22)
     args.disc_drop = getattr(args, "disc_drop", args.dropout)
+    args.disc_rev = getattr(args, "disc_rev", 5)

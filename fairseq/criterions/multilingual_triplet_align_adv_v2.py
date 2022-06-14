@@ -86,12 +86,12 @@ class MultilingualTripletAlignAdvV2Criterion(LabelSmoothedCrossEntropyCriterion)
         if sample["st_indices"].size(0) > 0:
 
             if self.loss_ratio[0] > 0:
-                st_net_output = model.forward_with_internal(**sample["net_input"])
+                st_net_output = model(**sample["net_input"])
                 st_loss, st_nll_loss = self.compute_loss(model, st_net_output, sample["target"], reduce=reduce)
                 target_sample_size = sample["target_lengths"].sum()
 
             if self.loss_ratio[1] > 0:
-                mt_net_output = model.forward_with_internal(**sample["mt_input"])
+                mt_net_output = model(**sample["mt_input"])
                 mt_loss, mt_nll_loss = self.compute_loss(model, mt_net_output, sample["target"], reduce=reduce)
 
             if self.loss_ratio[2] > 0:

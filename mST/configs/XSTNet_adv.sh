@@ -1,5 +1,6 @@
-export EXP_ID="XSTNet_adv"
-export SAVE_DIR=/mnt/data/siqiouyang/runs/mST/$EXP_ID
+export EXP_ID="XSTNet_adv_0.2_rev_5"
+# export SAVE_DIR=/mnt/data/siqiouyang/runs/mST/$EXP_ID
+export SAVE_DIR=/local/home/siqiouyang/work/checkpoints/$EXP_ID
 
 export max_updates=150000
 export num_gpus=4
@@ -18,7 +19,7 @@ fairseq-train $COVOST2_ROOT \
   --config-yaml config_mST.yaml \
   \
   --criterion multilingual_triplet_align_adv_criterion --label-smoothing 0.1 \
-  --report-accuracy --loss-ratio 1.0 1.0 1.0 1.0 0.0 0.0 0.0 --adv-period 4 --gamma 0.05 --use-emb --ignore-prefix-size 1 \ # adv period + 1 should be able to divide total update freq (40 here)
+  --report-accuracy --loss-ratio 1.0 1.0 1.0 0.2 0.0 0.0 0.0 --ignore-prefix-size 1 \
   \
   --arch xlsr_mbart50_base \
   --w2v2-model-path $W2V2_PATH \
