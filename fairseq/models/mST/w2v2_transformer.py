@@ -355,4 +355,4 @@ def w2v2_transformer_base(args):
     args.disc_nhead = getattr(args, "disc_nhead", 4)
     args.disc_nclass = getattr(args, "disc_nclass", 22)
     args.disc_drop = getattr(args, "disc_drop", args.dropout)
-    args.disc_rev = getattr(args, "disc_rev", 5)
+    args.disc_rev = getattr(args, "disc_rev", 1.)

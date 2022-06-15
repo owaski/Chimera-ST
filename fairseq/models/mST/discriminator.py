@@ -7,6 +7,8 @@ from torch.autograd import Function
 
 from fairseq.models.transformer import TransformerEncoderLayer
 
+from examples.speech_recognition.data.data_utils import padding_mask_to_lengths
+
 class GradientReversalFunction(Function):
     """
     Gradient Reversal Layer from:
@@ -65,5 +67,14 @@ class Classifier(nn.Module):
         x = self.grad_rev(x)
         for layer in self.layers:
             x = layer(x, padding_mask)
-        logits = self.linear(x)[0]
+        
+        avg_x = []
+        x_len = padding_mask_to_lengths(padding_mask)
+        bsz = x.size(1)
+        for i in range(bsz):
+            avg_x.append(x[:x_len[i], i].mean(dim=0))
+        avg_x = th.stack(avg_x)
+        
+        logits = self.linear(avg_x)
+        
         return logits
