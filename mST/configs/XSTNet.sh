@@ -40,3 +40,22 @@ fairseq-train $COVOST2_ROOT \
   --eval-bleu-detok moses --eval-bleu-remove-bpe --eval-bleu-print-samples \
   --eval-bleu-bpe sentencepiece --eval-bleu-bpe-path $mBART50_DIR/sentence.bpe.model \
   --best-checkpoint-metric bleu --maximize-best-checkpoint-metric
+
+python mST/scripts/average_checkpoints.py \
+  --inputs \
+  /mnt/data/siqiouyang/runs/mST/$EXP_ID/checkpoint_6_17000.pt \
+  /mnt/data/siqiouyang/runs/mST/$EXP_ID/checkpoint_7_18000.pt \
+  /mnt/data/siqiouyang/runs/mST/$EXP_ID/checkpoint_7_19000.pt \
+  /mnt/data/siqiouyang/runs/mST/$EXP_ID/checkpoint_7_20000.pt \
+  /mnt/data/siqiouyang/runs/mST/$EXP_ID/checkpoint_8_21000.pt \
+  --output /mnt/data/siqiouyang/runs/mST/$EXP_ID/checkpoint_avg.pt
+
+for lang in fr de es fa it ru pt zh-CN nl et mn tr ar sv-SE lv sl ta ja id
+do
+  echo Processing $lang
+  CUDA_VISIBLE_DEVICES=1 fairseq-generate ${COVOST2_ROOT} --gen-subset ${lang}_en_test \
+    --task multilingual_speech_to_text --path /mnt/data/siqiouyang/runs/mST/$EXP_ID/checkpoint_avg.pt \
+    --prefix-size 1 --max-tokens 3200000 --max-source-positions 400000 --beam 4 --scoring sacrebleu \
+    --config-yaml config_mST.yaml --lenpen 1.0 --results-path \
+    /home/siqiouyang/work/projects/mST/mST/translations/$EXP_ID/$lang
+done

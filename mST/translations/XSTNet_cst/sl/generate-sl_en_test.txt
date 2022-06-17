@@ -1,0 +1,1459 @@
+2022-06-15 22:40:56 | INFO | fairseq_cli.generate | {'common': {'no_progress_bar': False, 'log_interval': 100, 'log_format': None, 'tensorboard_logdir': None, 'seed': 1, 'cpu': False, 'tpu': False, 'bf16': False, 'fp16': False, 'memory_efficient_fp16': False, 'memory_efficient_bf16': False, 'fp16_no_flatten_grads': False, 'fp16_init_scale': 128, 'fp16_scale_window': None, 'fp16_scale_tolerance': 0.0, 'min_loss_scale': 0.0001, 'threshold_loss_scale': None, 'user_dir': None, 'empty_cache_freq': 0, 'all_gather_list_size': 16384, 'model_parallel_size': 1, 'quantization_config_path': None, 'profile': False}, 'distributed_training': {'distributed_rank': 0, 'distributed_backend': 'nccl', 'distributed_init_method': None, 'distributed_port': -1, 'device_id': 0, 'local_rank': 0, 'distributed_no_spawn': False, 'ddp_backend': 'c10d', 'bucket_cap_mb': 25, 'fix_batches_to_gpus': False, 'find_unused_parameters': False, 'fast_stat_sync': False, 'broadcast_buffers': False, 'distributed_wrapper': 'DDP', 'slowmo_momentum': None, 'slowmo_algorithm': 'LocalSGD', 'localsgd_frequency': 3, 'distributed_world_size': 1, 'nprocs_per_node': 1, 'pipeline_model_parallel': False, 'pipeline_balance': None, 'pipeline_devices': None, 'pipeline_chunks': 0, 'pipeline_encoder_balance': None, 'pipeline_encoder_devices': None, 'pipeline_decoder_balance': None, 'pipeline_decoder_devices': None, 'pipeline_checkpoint': 'never', 'zero_sharding': 'none', 'tpu': False}, 'dataset': {'num_workers': 1, 'skip_invalid_size_inputs_valid_test': False, 'max_tokens': 3200000, 'batch_size': None, 'required_batch_size_multiple': 8, 'dataset_impl': None, 'data_buffer_size': 10, 'train_subset': 'train', 'valid_subset': 'valid', 'validate_interval': 1, 'fixed_validation_seed': None, 'disable_validation': False, 'curriculum': 0, 'gen_subset': 'sl_en_test', 'num_shards': 1, 'shard_id': 0, 'max_tokens_valid': 3200000, 'batch_size_valid': None, 'keep_num_indices': None, 'required_seq_len_multiple': 1, 'validate_interval_updates': 0, 'validate_after_updates': 0, 'validate_only': False}, 'optimization': {'max_epoch': 0, 'max_update': 0, 'clip_norm': 25.0, 'sentence_avg': False, 'update_freq': [1], 'lr': [0.25], 'min_lr': -1.0, 'use_bmuf': False, 'stop_time_hours': 0}, 'checkpoint': {'save_dir': 'checkpoints', 'restore_file': 'checkpoint_last.pt', 'reset_dataloader': False, 'reset_lr_scheduler': False, 'reset_meters': False, 'reset_optimizer': False, 'optimizer_overrides': '{}', 'save_interval': 1, 'save_interval_updates': 0, 'keep_interval_updates': -1, 'keep_last_epochs': -1, 'keep_best_checkpoints': -1, 'no_save': False, 'no_epoch_checkpoints': False, 'no_last_checkpoints': False, 'no_save_optimizer_state': False, 'best_checkpoint_metric': 'loss', 'maximize_best_checkpoint_metric': False, 'patience': -1, 'checkpoint_suffix': '', 'finetune_from_model': None, 'checkpoint_shard_count': 1, 'model_parallel_size': 1, 'distributed_rank': 0}, 'bmuf': {'block_lr': 1, 'block_momentum': 0.875, 'global_sync_iter': 50, 'warmup_iterations': 500, 'use_nbm': False, 'average_sync': False, 'distributed_world_size': 1}, 'task': Namespace(_name='multilingual_speech_to_text', all_gather_list_size=16384, batch_size=None, batch_size_valid=None, beam=4, best_checkpoint_metric='loss', bf16=False, bpe=None, broadcast_buffers=False, bucket_cap_mb=25, checkpoint_shard_count=1, checkpoint_suffix='', config_yaml='config_mST.yaml', constraints=None, controlled_generator=False, cpu=False, criterion='cross_entropy', curriculum=0, data='/mnt/data/siqiouyang/datasets/covost2', data_buffer_size=10, dataset_impl=None, ddp_backend='c10d', decoding_format=None, device_id=0, disable_validation=False, distributed_backend='nccl', distributed_init_method=None, distributed_no_spawn=False, distributed_port=-1, distributed_rank=0, distributed_world_size=1, distributed_wrapper='DDP', diverse_beam_groups=-1, diverse_beam_strength=0.5, diversity_rate=-1.0, empty_cache_freq=0, fast_stat_sync=False, find_unused_parameters=False, finetune_from_model=None, fix_batches_to_gpus=False, fixed_validation_seed=None, force_anneal=None, fp16=False, fp16_init_scale=128, fp16_no_flatten_grads=False, fp16_scale_tolerance=0.0, fp16_scale_window=None, gen_subset='sl_en_test', iter_decode_eos_penalty=0.0, iter_decode_force_max_iter=False, iter_decode_max_iter=10, iter_decode_with_beam=1, iter_decode_with_external_reranker=False, keep_best_checkpoints=-1, keep_interval_updates=-1, keep_last_epochs=-1, keep_num_indices=None, lenpen=1.0, lm_path=None, lm_weight=0.0, local_rank=0, localsgd_frequency=3, log_format=None, log_interval=100, lr_scheduler='fixed', lr_shrink=0.1, match_source_len=False, max_len_a=0, max_len_b=200, max_source_positions=400000, max_target_positions=1024, max_tokens=3200000, max_tokens_valid=3200000, maximize_best_checkpoint_metric=False, memory_efficient_bf16=False, memory_efficient_fp16=False, min_len=1, min_loss_scale=0.0001, model_overrides='{}', model_parallel_size=1, nbest=1, no_beamable_mm=False, no_early_stop=False, no_epoch_checkpoints=False, no_last_checkpoints=False, no_progress_bar=False, no_repeat_ngram_size=0, no_save=False, no_save_optimizer_state=False, no_seed_provided=False, normalize=False, nprocs_per_node=1, num_shards=1, num_workers=1, optimizer=None, optimizer_overrides='{}', path='/mnt/data/siqiouyang/runs/mST/XSTNet_cst/checkpoint_avg.pt', patience=-1, pipeline_balance=None, pipeline_checkpoint='never', pipeline_chunks=0, pipeline_decoder_balance=None, pipeline_decoder_devices=None, pipeline_devices=None, pipeline_encoder_balance=None, pipeline_encoder_devices=None, pipeline_model_parallel=False, post_process=None, prefix_size=1, print_alignment=False, print_step=False, profile=False, quantization_config_path=None, quiet=False, replace_unk=None, required_batch_size_multiple=8, required_seq_len_multiple=1, reset_dataloader=False, reset_lr_scheduler=False, reset_meters=False, reset_optimizer=False, restore_file='checkpoint_last.pt', results_path='/home/siqiouyang/work/projects/mST/mST/translations/XSTNet_cst/sl', retain_dropout=False, retain_dropout_modules=None, retain_iter_history=False, sacrebleu=False, sacrebleu_char_level=False, sacrebleu_lowercase=False, sacrebleu_tokenizer='13a', sampling=False, sampling_topk=-1, sampling_topp=-1.0, save_dir='checkpoints', save_interval=1, save_interval_updates=0, save_task_config=None, score_reference=False, scoring='sacrebleu', seed=1, shard_id=0, skip_invalid_size_inputs_valid_test=False, slowmo_algorithm='LocalSGD', slowmo_momentum=None, task='multilingual_speech_to_text', temperature=1.0, tensorboard_logdir=None, threshold_loss_scale=None, tokenizer=None, tpu=False, train_subset='train', unkpen=0, unnormalized=False, user_dir=None, valid_subset='valid', validate_after_updates=0, validate_interval=1, validate_interval_updates=0, validate_only=False, warmup_updates=0, zero_sharding='none'), 'criterion': {'sentence_avg': False, '_name': 'cross_entropy'}, 'common_eval': {'path': '/mnt/data/siqiouyang/runs/mST/XSTNet_cst/checkpoint_avg.pt', 'post_process': None, 'quiet': False, 'model_overrides': '{}', 'results_path': '/home/siqiouyang/work/projects/mST/mST/translations/XSTNet_cst/sl'}, 'generation': {'beam': 4, 'nbest': 1, 'max_len_a': 0, 'max_len_b': 200, 'min_len': 1, 'match_source_len': False, 'unnormalized': False, 'no_early_stop': False, 'no_beamable_mm': False, 'lenpen': 1.0, 'unkpen': 0, 'replace_unk': None, 'sacrebleu': False, 'score_reference': False, 'prefix_size': 1, 'no_repeat_ngram_size': 0, 'sampling': False, 'sampling_topk': -1, 'sampling_topp': -1.0, 'constraints': None, 'temperature': 1.0, 'diverse_beam_groups': -1, 'diverse_beam_strength': 0.5, 'diversity_rate': -1.0, 'print_alignment': False, 'print_step': False, 'lm_path': None, 'lm_weight': 0.0, 'iter_decode_eos_penalty': 0.0, 'iter_decode_max_iter': 10, 'iter_decode_force_max_iter': False, 'iter_decode_with_beam': 1, 'iter_decode_with_external_reranker': False, 'retain_iter_history': False, 'retain_dropout': False, 'retain_dropout_modules': None, 'decoding_format': None, 'no_seed_provided': False, 'controlled_generator': False}, 'eval_lm': {'output_word_probs': False, 'output_word_stats': False, 'context_window': 0, 'softmax_batch': 9223372036854775807}, 'interactive': {'buffer_size': 0, 'input': '-'}, 'scoring': {'_name': 'sacrebleu', 'sacrebleu_tokenizer': '13a', 'sacrebleu_lowercase': False, 'sacrebleu_char_level': False}, 'tokenizer': None, 'bpe': None, 'optimizer': None, 'lr_scheduler': Namespace(_name='fixed', all_gather_list_size=16384, batch_size=None, batch_size_valid=None, beam=4, best_checkpoint_metric='loss', bf16=False, bpe=None, broadcast_buffers=False, bucket_cap_mb=25, checkpoint_shard_count=1, checkpoint_suffix='', config_yaml='config_mST.yaml', constraints=None, controlled_generator=False, cpu=False, criterion='cross_entropy', curriculum=0, data='/mnt/data/siqiouyang/datasets/covost2', data_buffer_size=10, dataset_impl=None, ddp_backend='c10d', decoding_format=None, device_id=0, disable_validation=False, distributed_backend='nccl', distributed_init_method=None, distributed_no_spawn=False, distributed_port=-1, distributed_rank=0, distributed_world_size=1, distributed_wrapper='DDP', diverse_beam_groups=-1, diverse_beam_strength=0.5, diversity_rate=-1.0, empty_cache_freq=0, fast_stat_sync=False, find_unused_parameters=False, finetune_from_model=None, fix_batches_to_gpus=False, fixed_validation_seed=None, force_anneal=None, fp16=False, fp16_init_scale=128, fp16_no_flatten_grads=False, fp16_scale_tolerance=0.0, fp16_scale_window=None, gen_subset='sl_en_test', iter_decode_eos_penalty=0.0, iter_decode_force_max_iter=False, iter_decode_max_iter=10, iter_decode_with_beam=1, iter_decode_with_external_reranker=False, keep_best_checkpoints=-1, keep_interval_updates=-1, keep_last_epochs=-1, keep_num_indices=None, lenpen=1.0, lm_path=None, lm_weight=0.0, local_rank=0, localsgd_frequency=3, log_format=None, log_interval=100, lr_scheduler='fixed', lr_shrink=0.1, match_source_len=False, max_len_a=0, max_len_b=200, max_source_positions=400000, max_target_positions=1024, max_tokens=3200000, max_tokens_valid=3200000, maximize_best_checkpoint_metric=False, memory_efficient_bf16=False, memory_efficient_fp16=False, min_len=1, min_loss_scale=0.0001, model_overrides='{}', model_parallel_size=1, nbest=1, no_beamable_mm=False, no_early_stop=False, no_epoch_checkpoints=False, no_last_checkpoints=False, no_progress_bar=False, no_repeat_ngram_size=0, no_save=False, no_save_optimizer_state=False, no_seed_provided=False, normalize=False, nprocs_per_node=1, num_shards=1, num_workers=1, optimizer=None, optimizer_overrides='{}', path='/mnt/data/siqiouyang/runs/mST/XSTNet_cst/checkpoint_avg.pt', patience=-1, pipeline_balance=None, pipeline_checkpoint='never', pipeline_chunks=0, pipeline_decoder_balance=None, pipeline_decoder_devices=None, pipeline_devices=None, pipeline_encoder_balance=None, pipeline_encoder_devices=None, pipeline_model_parallel=False, post_process=None, prefix_size=1, print_alignment=False, print_step=False, profile=False, quantization_config_path=None, quiet=False, replace_unk=None, required_batch_size_multiple=8, required_seq_len_multiple=1, reset_dataloader=False, reset_lr_scheduler=False, reset_meters=False, reset_optimizer=False, restore_file='checkpoint_last.pt', results_path='/home/siqiouyang/work/projects/mST/mST/translations/XSTNet_cst/sl', retain_dropout=False, retain_dropout_modules=None, retain_iter_history=False, sacrebleu=False, sacrebleu_char_level=False, sacrebleu_lowercase=False, sacrebleu_tokenizer='13a', sampling=False, sampling_topk=-1, sampling_topp=-1.0, save_dir='checkpoints', save_interval=1, save_interval_updates=0, save_task_config=None, score_reference=False, scoring='sacrebleu', seed=1, shard_id=0, skip_invalid_size_inputs_valid_test=False, slowmo_algorithm='LocalSGD', slowmo_momentum=None, task='multilingual_speech_to_text', temperature=1.0, tensorboard_logdir=None, threshold_loss_scale=None, tokenizer=None, tpu=False, train_subset='train', unkpen=0, unnormalized=False, user_dir=None, valid_subset='valid', validate_after_updates=0, validate_interval=1, validate_interval_updates=0, validate_only=False, warmup_updates=0, zero_sharding='none'), 'model': None}
+2022-06-15 22:40:56 | INFO | fairseq.tasks.multilingual_speech_to_text | dictionary size (/mnt/data/siqiouyang/runs/mST/pretrained/mbart50.ft.n1/dict.txt): 250,054
+2022-06-15 22:40:56 | INFO | fairseq.tasks.multilingual_speech_to_text | pre-tokenizer: {'tokenizer': None}
+2022-06-15 22:40:56 | INFO | fairseq.tasks.multilingual_speech_to_text | tokenizer: {'bpe': 'sentencepiece', 'sentencepiece_model': '/mnt/data/siqiouyang/runs/mST/pretrained/mbart50.ft.n1/sentence.bpe.model'}
+2022-06-15 22:40:57 | INFO | fairseq.data.audio.multilingual_speech_to_text_v2_dataset | MultilingualSpeechToTextDataset(split="sl_en_test", n_samples=360, prepend_tgt_lang_tag=True, shuffle=False, transforms=None)
+2022-06-15 22:40:57 | INFO | fairseq_cli.generate | loading model(s) from /mnt/data/siqiouyang/runs/mST/XSTNet_cst/checkpoint_avg.pt
+2022-06-15 22:41:23 | INFO | fairseq.tasks.fairseq_task | filtering indices by size
+2022-06-15 22:41:23 | INFO | fairseq.data.fairseq_dataset | <class 'fairseq.data.concat_dataset.ConcatDataset'> filtering indices by size: (400000, 1024)
+2022-06-15 22:41:23 | INFO | fairseq.tasks.fairseq_task | creating mini-batches given size constraints
+2022-06-15 22:41:23 | INFO | fairseq.tasks.fairseq_task | counted 8 batches
+2022-06-15 22:41:23 | INFO | fairseq.tasks.fairseq_task | creating EpochBatchIterator
+2022-06-15 22:41:23 | INFO | fairseq.tasks.multilingual_speech_to_text | pre-tokenizer: {'tokenizer': None}
+2022-06-15 22:41:23 | INFO | fairseq.tasks.multilingual_speech_to_text | tokenizer: {'bpe': 'sentencepiece', 'sentencepiece_model': '/mnt/data/siqiouyang/runs/mST/pretrained/mbart50.ft.n1/sentence.bpe.model'}
+T-283	I can change my mind!
+H-283	-0.7545316219329834	▁Can ▁I ▁think ▁about ▁it ▁now ?
+D-283	-0.7545316219329834	Can I think about it now?
+P-283	-1.5282 -0.9731 -0.2928 -0.5020 -1.3353 -0.4109 -1.4619 -0.1392 -0.1474
+T-60	I enable you this.
+H-60	-0.5725170969963074	▁I ▁will ▁help ▁you .
+D-60	-0.5725170969963074	I will help you.
+P-60	-1.0313 -0.2323 -0.8563 -1.0925 -0.1584 -0.4944 -0.1424
+T-56	You know what I mean.
+H-56	-0.8843876719474792	▁Do ▁you ▁know ▁how ▁I ▁feel ?
+D-56	-0.8843876719474792	Do you know how I feel?
+P-56	-0.8423 -2.6855 -0.1618 -0.8622 -1.8982 -0.6058 -0.3994 -0.3434 -0.1610
+T-258	Janko has a lady in hand.
+H-258	-0.782234787940979	▁[ TO ▁ REM OVE ]
+D-258	-0.782234787940979	[TO REMOVE]
+P-258	-1.7437 -3.7523 -0.1166 -0.1711 -0.0953 -0.1015 -0.1372 -0.1402
+T-278	You scared me Matija.
+H-278	-0.6420801877975464	▁You ▁scar ed ▁me , ▁Matthias !
+D-278	-0.6420801877975464	You scared me, Matthias!
+P-278	-1.1334 -0.1209 -0.2633 -0.0964 -0.3954 -0.6244 -2.7311 -0.2593 -0.1544
+T-192	Bad news travels fast.
+H-192	-0.6282954216003418	▁A ▁bad ▁news ▁travel s ▁fast .
+D-192	-0.6282954216003418	A bad news travels fast.
+P-192	-1.5360 -0.2768 -0.1617 -1.1999 -1.7475 -0.1338 -0.2854 -0.1640 -0.1495
+T-135	Security team is on the way.
+H-135	-0.654012143611908	▁The ▁reserve ▁team ▁is ▁on ▁the ▁way .
+D-135	-0.654012143611908	The reserve team is on the way.
+P-135	-1.5888 -0.4727 -3.3350 -0.1584 -0.1395 -0.2183 -0.1908 -0.1029 -0.1897 -0.1440
+T-127	I think that’s all.
+H-127	-0.4198976159095764	▁I ▁think ▁that ’ s ▁all .
+D-127	-0.4198976159095764	I think that’s all.
+P-127	-0.9456 -0.1192 -0.1215 -0.4752 -0.8358 -0.1332 -0.8564 -0.1439 -0.1483
+T-248	He forgot his pajamas at home.
+H-248	-1.4319854974746704	▁Los e ▁the ▁pa jamas ▁home !
+D-248	-1.4319854974746704	Lose the pajamas home!
+P-248	-1.3862 -4.4536 -0.7598 -1.8878 -0.1498 -1.2532 -2.6813 -0.1684 -0.1478
+T-284	Are you strong enough?
+H-284	-0.9106365442276001	▁Are ▁you ▁willing ▁to ▁do ▁it ?
+D-284	-0.9106365442276001	Are you willing to do it?
+P-284	-1.2639 -0.2488 -0.1494 -4.7336 -0.1779 -0.7910 -0.5382 -0.1422 -0.1506
+T-348	But it was too late.
+H-348	-0.3421226143836975	▁But ▁it ▁was ▁too ▁late .
+D-348	-0.3421226143836975	But it was too late.
+P-348	-1.1601 -0.7555 -0.1930 -0.1409 -0.1265 -0.0326 -0.1763 -0.1521
+T-128	War loves blood.
+H-128	-0.5143500566482544	▁[ TO ▁ REM OVE ]
+D-128	-0.5143500566482544	[TO REMOVE]
+P-128	-1.4302 -1.9416 -0.0723 -0.1608 -0.1141 -0.1002 -0.1376 -0.1580
+T-313	Why have you done this?
+H-313	-0.33986935019493103	▁Why ▁did ▁you ▁do ▁this ?
+D-313	-0.33986935019493103	Why did you do this?
+P-313	-1.2656 -0.2823 -0.1342 -0.1422 -0.1103 -0.5335 -0.1024 -0.1484
+T-230	That’s nothing new for you.
+H-230	-0.6409981846809387	▁This ▁is ▁nothing ▁new ▁to ▁you .
+D-230	-0.6409981846809387	This is nothing new to you.
+P-230	-1.7224 -1.1139 -0.4985 -0.4809 -0.0909 -1.4014 -0.1012 -0.2093 -0.1504
+T-172	I can get you in garage.
+H-172	-0.9064090251922607	▁Can ▁I ▁fix ▁this ▁in ▁a ▁garage ?
+D-172	-0.9064090251922607	Can I fix this in a garage?
+P-172	-1.8617 -1.4466 -0.3077 -1.2641 -0.3977 -0.6976 -1.0698 -1.7091 -0.1618 -0.1480
+T-337	I like this joke.
+H-337	-0.8375509977340698	▁This ▁scar f ▁suit s ▁me ▁well .
+D-337	-0.8375509977340698	This scarf suits me well.
+P-337	-1.7546 -2.7381 -0.2788 -0.0386 -1.1183 -0.1161 -0.3112 -1.7219 -0.1504 -0.1476
+T-242	Room was full of mob.
+H-242	-0.9333280920982361	▁A lone ▁I ▁was ▁full ▁of ▁desire .
+D-242	-0.9333280920982361	Alone I was full of desire.
+P-242	-1.2686 -2.5384 -0.6744 -0.8335 -0.1670 -0.5748 -0.1520 -2.8217 -0.1467 -0.1562
+T-229	He didn’t even move.
+H-229	-0.8336430788040161	▁He ▁didn ’ t ▁blink .
+D-229	-0.8336430788040161	He didn’t blink.
+P-229	-1.5152 -0.9068 -0.4682 -0.1761 -0.1288 -3.0284 -0.2971 -0.1485
+T-11	I have not decided yet.
+H-11	-0.9739954471588135	▁It ’ s ▁nice ▁to ▁meet ▁you .
+D-11	-0.9739954471588135	It’s nice to meet you.
+P-11	-1.2250 -0.9811 -2.7836 -0.2006 -2.3851 -0.7866 -0.5354 -0.0820 -0.6263 -0.1343
+T-84	You’re making a mistake.
+H-84	-1.308617353439331	▁What ▁is ▁the ▁point ▁of ▁that ?
+D-84	-1.308617353439331	What is the point of that?
+P-84	-1.2663 -3.0274 -2.2675 -2.2442 -1.4045 -0.1848 -0.8042 -0.4049 -0.1737
+T-254	Up and down the cockroaches rush.
+H-254	-1.3989205360412598	▁Those ▁are ▁short - li ved ▁la mb s .
+D-254	-1.3989205360412598	Those are short-lived lambs.
+P-254	-0.9441 -2.2651 -1.7720 -0.8743 -2.9174 -1.3307 -0.0795 -4.2562 -1.7732 -0.1644 -0.2649 -0.1452
+T-224	Oh, I don’t know!
+H-224	-0.7676609754562378	▁Oh , ▁what ▁do ▁I ▁know ?
+D-224	-0.7676609754562378	Oh, what do I know?
+P-224	-1.6542 -2.1239 -0.6183 -0.1700 -0.5235 -0.2133 -0.1467 -1.3075 -0.1515
+T-280	Did you see any ghosts?
+H-280	-0.5437633395195007	▁Can ▁I ▁see ▁your ▁soul ?
+D-280	-0.5437633395195007	Can I see your soul?
+P-280	-0.9450 -1.3686 -0.2675 -0.0998 -1.1685 -0.2292 -0.1305 -0.1410
+T-207	Are you here for work?
+H-207	-0.5422095060348511	▁What ▁is ▁going ▁on ▁here ?
+D-207	-0.5422095060348511	What is going on here?
+P-207	-1.2635 -0.1370 -0.7948 -1.5376 -0.1477 -0.1521 -0.1576 -0.1472
+T-160	Robert is upset.
+H-160	-0.6456617116928101	▁Robert ▁is ▁dis gust ed .
+D-160	-0.6456617116928101	Robert is disgusted.
+P-160	-1.3493 -0.0243 -0.1609 -2.6244 -0.4043 -0.2861 -0.1672 -0.1487
+T-55	Wait here.
+H-55	-0.8834787607192993	▁What ▁the ▁hell ▁are ▁you ▁doing ?
+D-55	-0.8834787607192993	What the hell are you doing?
+P-55	-0.8998 -1.9170 -2.8455 -0.4708 -1.0999 -0.1638 -0.0654 -0.3393 -0.1499
+T-169	I shook my head.
+H-169	-0.6727336645126343	▁He ▁sho ok ▁his ▁head ▁with ▁fear .
+D-169	-0.6727336645126343	He shook his head with fear.
+P-169	-1.3600 -1.1121 -1.0768 -0.1777 -0.1021 -0.0230 -1.5236 -1.0410 -0.1662 -0.1450
+T-167	What will they think?
+H-167	-0.69167560338974	▁What ▁are ▁you ▁thinking ▁about ?
+D-167	-0.69167560338974	What are you thinking about?
+P-167	-0.7925 -0.0854 -1.8464 -0.5524 -1.2856 -0.6005 -0.2206 -0.1501
+T-53	Great lady.
+H-53	-0.757169246673584	▁Red ▁go ose !
+D-53	-0.757169246673584	Red goose!
+P-53	-1.0898 -0.7156 -1.5173 -0.3039 -0.7459 -0.1706
+T-223	Okay, that’s not it.
+H-223	-0.8643725514411926	▁Where ▁is ▁it ? ▁It ’ s ▁dark .
+D-223	-0.8643725514411926	Where is it? It’s dark.
+P-223	-1.0265 -2.6222 -1.5223 -0.4589 -0.5135 -1.5670 -0.1774 -0.1499 -0.9711 -0.3466 -0.1528
+T-22	The old man just left the book there.
+H-22	-0.8435433506965637	▁The ▁old ▁man ▁let ▁him ▁go .
+D-22	-0.8435433506965637	The old man let him go.
+P-22	-1.1035 -2.3747 -0.2123 -0.0630 -1.7146 -1.6231 -0.1255 -0.2288 -0.1464
+T-272	He has garden in front of house.
+H-272	-0.4180871844291687	▁He ▁has ▁a ▁hole ▁in ▁front ▁of ▁his ▁house .
+D-272	-0.4180871844291687	He has a hole in front of his house.
+P-272	-1.4383 -0.7157 -0.1526 -0.4134 -1.0693 -0.2419 -0.1639 -0.1287 -0.2732 -0.1078 -0.1655 -0.1468
+T-323	Rok was surprised.
+H-323	-0.731309711933136	▁The ▁hand ▁felt ▁warm .
+D-323	-0.731309711933136	The hand felt warm.
+P-323	-1.3548 -0.5846 -0.7782 -1.3770 -0.7275 -0.1615 -0.1355
+T-236	Does this suits you?
+H-236	-0.8028746247291565	▁Are ▁you ▁sure ?
+D-236	-0.8028746247291565	Are you sure?
+P-236	-1.4523 -0.5467 -0.1465 -1.5032 -1.0147 -0.1539
+T-275	Damn it!
+H-275	-1.2056232690811157	▁Take ▁it ▁away ▁from ▁me !
+D-275	-1.2056232690811157	Take it away from me!
+P-275	-1.1743 -3.6259 -0.8823 -2.0912 -0.9281 -0.4418 -0.3555 -0.1460
+T-270	Did you see Omar?
+H-270	-1.1641863584518433	▁Si ssi ▁O ' Mal ley
+D-270	-1.1641863584518433	Sissi O'Malley
+P-270	-1.3127 -0.9392 -3.1625 -1.0166 -0.7408 -1.1206 -0.4512 -0.5699
+T-252	Yes, I’m talking to you.
+H-252	-0.7221619486808777	▁Yes , ▁I ’ m ▁talking ▁to ▁my ▁grand fa ther .
+D-252	-0.7221619486808777	Yes, I’m talking to my grandfather.
+P-252	-0.7876 -0.4633 -0.1816 -0.1685 -2.3403 -0.2342 -1.3763 -0.4924 -1.5990 -1.5411 -0.3946 -0.1245 -0.2617 -0.1455
+T-351	I can’t believe it.
+H-351	-0.354876846075058	▁I ▁can ’ t ▁believe ▁it !
+D-351	-0.354876846075058	I can’t believe it!
+P-351	-1.5650 -0.1254 -0.1911 -0.4728 -0.1343 -0.0237 -0.1343 -0.3984 -0.1491
+T-146	What did this mean?
+H-146	-0.5212307572364807	▁What ▁did ▁that ▁mean ?
+D-146	-0.5212307572364807	What did that mean?
+P-146	-1.5268 -0.1023 -0.1957 -0.6439 -0.8741 -0.1539 -0.1519
+T-319	So it is true!
+H-319	-0.7994314432144165	▁Go ▁back ▁and ▁for th .
+D-319	-0.7994314432144165	Go back and forth.
+P-319	-0.8359 -1.8441 -1.2326 -0.8699 -0.2463 -0.0940 -1.1242 -0.1485
+T-29	You shouldn’t have said that!
+H-29	-0.6702966690063477	▁You ▁should n ’ t ▁say ▁that !
+D-29	-0.6702966690063477	You shouldn’t say that!
+P-29	-1.3498 -1.0215 -0.4197 -0.6849 -0.2926 -0.1306 -1.8564 -0.1106 -0.6915 -0.1452
+T-234	What are you doing here?
+H-234	-0.3360331952571869	▁What ▁are ▁you ▁doing ▁here ?
+D-234	-0.3360331952571869	What are you doing here?
+P-234	-1.5291 -0.2145 -0.1525 -0.1489 -0.2296 -0.1275 -0.1346 -0.1515
+T-21	Transaction has already expired.
+H-21	-0.500393807888031	▁The ▁transaction ▁has ▁already ▁started .
+D-21	-0.500393807888031	The transaction has already started.
+P-21	-1.0353 -0.4398 -0.2272 -0.2954 -0.2186 -1.4800 -0.1659 -0.1409
+T-292	Did I offend you?
+H-292	-0.6125013828277588	▁Did ▁I ▁offen d ▁you ?
+D-292	-0.6125013828277588	Did I offend you?
+P-292	-1.6214 -0.4637 -0.3157 -1.9801 -0.0656 -0.1558 -0.1507 -0.1470
+T-357	Here is a letter.
+H-357	-0.6693062782287598	▁Here ▁is ▁the ▁letter .
+D-357	-0.6693062782287598	Here is the letter.
+P-357	-1.5811 -1.8604 -0.5239 -0.1801 -0.2092 -0.1798 -0.1507
+T-332	What should I do?
+H-332	-0.4996556341648102	▁What ▁should ▁I ▁do ?
+D-332	-0.4996556341648102	What should I do?
+P-332	-1.3376 -0.1052 -1.2270 -0.4253 -0.0387 -0.2178 -0.1460
+T-321	Get out!
+H-321	-1.0483005046844482	▁Get ▁out ▁of ▁here !
+D-321	-1.0483005046844482	Get out of here!
+P-321	-1.2138 -3.5374 -1.0196 -0.2072 -0.6833 -0.5198 -0.1570
+T-265	Joško found a phone.
+H-265	-0.7380087375640869	▁Jo Jo ▁found ▁a ▁phone .
+D-265	-0.7380087375640869	JoJo found a phone.
+P-265	-1.4060 -1.2400 -2.1348 -0.1305 -0.5467 -0.1242 -0.1722 -0.1496
+T-89	Excuse me!
+H-89	-1.419877529144287	▁Op posit e ▁to ▁it .
+D-89	-1.419877529144287	Opposite to it.
+P-89	-1.1073 -2.3879 -2.5115 -0.1246 -1.4058 -3.0599 -0.6132 -0.1489
+T-212	She tore her coat.
+H-212	-1.1633007526397705	▁She ▁torn ▁the ▁sheet ▁off .
+D-212	-1.1633007526397705	She torn the sheet off.
+P-212	-1.4068 -1.1726 -2.1822 -0.5388 -1.7933 -1.8301 -0.2326 -0.1501
+T-225	Doors were open.
+H-225	-0.3511594533920288	▁The ▁door ▁was ▁open .
+D-225	-0.3511594533920288	The door was open.
+P-225	-0.7477 -0.1156 -0.1782 -0.1593 -0.9545 -0.1568 -0.1461
+T-197	I don’t believe you!
+H-197	-0.7858021259307861	▁Don ’ t ▁believe ▁it !
+D-197	-0.7858021259307861	Don’t believe it!
+P-197	-1.4558 -2.0819 -0.1970 -0.1236 -0.4714 -1.0980 -0.6686 -0.1902
+T-15	Where is my shoe?
+H-15	-0.6797158122062683	▁[ TO ▁ REM OVE ]
+D-15	-0.6797158122062683	[TO REMOVE]
+P-15	-0.9220 -3.7841 -0.0713 -0.1363 -0.1250 -0.1130 -0.1510 -0.1350
+T-190	I don’t know.
+H-190	-0.7531951665878296	▁Let ’ s ▁go !
+D-190	-0.7531951665878296	Let’s go!
+P-190	-1.1334 -0.5885 -1.4114 -0.1413 -1.2188 -0.6245 -0.1545
+T-171	It’s okay.
+H-171	-0.990969717502594	▁It ’ s ▁fine .
+D-171	-0.990969717502594	It’s fine.
+P-171	-1.0980 -1.9118 -0.9635 -0.1304 -2.2826 -0.4060 -0.1445
+T-85	What is he like?
+H-85	-0.7045596837997437	▁How ▁are ▁you ?
+D-85	-0.7045596837997437	How are you?
+P-85	-0.7960 -1.8310 -0.8470 -0.2281 -0.3804 -0.1448
+T-329	Work is in progress.
+H-329	-0.5413004159927368	▁Work ▁is ▁in ▁progress .
+D-329	-0.5413004159927368	Work is in progress.
+P-329	-1.1765 -0.6061 -0.3460 -1.3016 -0.0431 -0.1710 -0.1448
+T-356	What did we do?
+H-356	-0.42982256412506104	▁What ▁have ▁we ▁done ?
+D-356	-0.42982256412506104	What have we done?
+P-356	-1.2922 -0.0714 -0.9175 -0.1944 -0.2635 -0.1181 -0.1516
+T-250	Where is Egypt?
+H-250	-0.3754594624042511	▁Where ▁is ▁Egypt ?
+D-250	-0.3754594624042511	Where is Egypt?
+P-250	-1.2472 -0.2761 -0.3882 -0.0318 -0.1630 -0.1464
+T-188	What do you think?
+H-188	-0.35637396574020386	▁What ▁do ▁you ▁think ?
+D-188	-0.35637396574020386	What do you think?
+P-188	-1.1452 -0.1166 -0.1943 -0.1294 -0.1540 -0.6043 -0.1508
+T-165	What are you doing?
+H-165	-0.2988220453262329	▁What ▁are ▁you ▁doing ?
+D-165	-0.2988220453262329	What are you doing?
+P-165	-1.2954 -0.0918 -0.1148 -0.1820 -0.1180 -0.1366 -0.1531
+T-200	This is very interesting.
+H-200	-0.5307222008705139	▁This ▁is ▁very ▁interesting .
+D-200	-0.5307222008705139	This is very interesting.
+P-200	-1.3390 -0.4672 -0.1560 -0.1181 -1.1771 -0.3129 -0.1448
+T-349	Did you do it yourself?
+H-349	-0.6802323460578918	▁Did ▁you ▁do ▁it ▁yourself ?
+D-349	-0.6802323460578918	Did you do it yourself?
+P-349	-1.4827 -1.7618 -0.1969 -0.2336 -0.7866 -0.6542 -0.1661 -0.1599
+T-140	But not for long.
+H-140	-0.40117746591567993	▁But ▁not ▁for ▁long .
+D-140	-0.40117746591567993	But not for long.
+P-140	-0.8302 -0.7524 -0.6279 -0.2143 -0.0626 -0.1699 -0.1510
+T-221	There you go!
+H-221	-0.42954859137535095	▁You ▁have ▁it .
+D-221	-0.42954859137535095	You have it.
+P-221	-0.6581 -0.4124 -0.3913 -0.2039 -0.7676 -0.1441
+T-145	I’ve been waiting for you for a long time!
+H-145	-0.4293566942214966	▁I ▁have ▁been ▁waiting ▁for ▁you ▁for ▁a ▁long ▁time .
+D-145	-0.4293566942214966	I have been waiting for you for a long time.
+P-145	-1.3763 -0.1114 -1.2896 -0.6435 -0.0461 -0.1397 -0.1137 -0.3295 -0.2932 -0.2469 -0.0748 -0.7689 -0.1480
+T-158	He nodded his head.
+H-158	-0.3602641820907593	▁He ▁no dded ▁his ▁head .
+D-158	-0.3602641820907593	He nodded his head.
+P-158	-1.0612 -0.1956 -0.5499 -0.1603 -0.4717 -0.1169 -0.1822 -0.1442
+T-157	Better than before.
+H-157	-0.46656933426856995	▁It ▁will ▁be ▁better ▁than ▁before .
+D-157	-0.46656933426856995	It will be better than before.
+P-157	-1.5779 -0.2268 -0.5907 -0.0965 -0.2862 -0.0894 -1.0258 -0.1578 -0.1479
+T-132	The problem was solved.
+H-132	-0.4116632640361786	▁The ▁problem ▁was ▁solve d .
+D-132	-0.4116632640361786	The problem was solved.
+P-132	-1.4778 -0.1464 -0.1374 -0.2318 -0.8262 -0.1633 -0.1666 -0.1438
+T-180	At your pleasure!
+H-180	-0.9730212688446045	▁Your ▁name ▁is ▁Ves sel .
+D-180	-0.9730212688446045	Your name is Vessel.
+P-180	-0.8300 -1.3747 -2.8050 -0.2019 -0.6844 -0.2836 -1.4592 -0.1453
+T-154	Get out of my way!
+H-154	-0.9688749313354492	▁Let ▁me ▁go !
+D-154	-0.9688749313354492	Let me go!
+P-154	-1.1513 -2.5484 -0.5353 -0.3212 -1.0898 -0.1671
+T-13	Right?
+H-13	-1.1094609498977661	▁Are ▁you ▁sure ▁about ▁that ?
+D-13	-1.1094609498977661	Are you sure about that?
+P-13	-1.1975 -3.5593 -0.4506 -0.5234 -1.9378 -0.9170 -0.1591 -0.1309
+T-295	You know he’s an honest man.
+H-295	-0.8089364767074585	▁What ? ▁He ▁is ▁a ▁poor ▁man .
+D-295	-0.8089364767074585	What? He is a poor man.
+P-295	-0.6831 -1.6068 -0.2883 -0.1340 -0.4861 -0.4091 -3.2074 -0.8395 -0.2829 -0.1523
+T-111	The corset squeezed her.
+H-111	-1.1338108777999878	▁It ▁was ▁a ▁joke .
+D-111	-1.1338108777999878	It was a joke.
+P-111	-1.0600 -0.8103 -1.7521 -0.4745 -3.2858 -0.4097 -0.1443
+T-247	Primary coil has fifty turns.
+H-247	-0.4721790850162506	▁A ▁primary ▁school ▁has ▁fi ft y ▁students .
+D-247	-0.4721790850162506	A primary school has fifty students.
+P-247	-1.5147 -0.1902 -0.6530 -0.0954 -0.2312 -0.2730 -0.8574 -0.1664 -0.9164 -0.1497 -0.1465
+T-244	Oh my dear child!
+H-244	-0.5974651575088501	▁Oh , ▁my ▁de ar ▁child !
+D-244	-0.5974651575088501	Oh, my dear child!
+P-244	-0.9812 -0.0656 -0.8186 -0.1100 -0.3166 -0.1145 -2.4823 -0.2966 -0.1918
+T-296	You could bring them there!
+H-296	-0.7623545527458191	▁Could ▁you ▁fill ▁them ▁up ?
+D-296	-0.7623545527458191	Could you fill them up?
+P-296	-1.0297 -1.5268 -0.3228 -1.9192 -0.1065 -0.5450 -0.5132 -0.1357
+T-214	Spark can start a big fire.
+H-214	-0.6227355003356934	▁A ▁large ▁fire ▁can ▁start ▁a ▁small ▁fire .
+D-214	-0.6227355003356934	A large fire can start a small fire.
+P-214	-1.6905 -1.1048 -1.3892 -0.3364 -0.2989 -0.3288 -0.4537 -0.8785 -0.0067 -0.2152 -0.1474
+T-184	Better safe than sorry.
+H-184	-0.4509615898132324	▁A ▁prevent ative ▁is ▁better ▁than ▁a ▁cure .
+D-184	-0.4509615898132324	A preventative is better than a cure.
+P-184	-1.2448 -0.4012 -1.7066 -0.0650 -0.3601 -0.0927 -0.0610 -0.1251 -0.6033 -0.1590 -0.1419
+T-26	I’m sorry because of this.
+H-26	-1.2083215713500977	▁John ▁has ▁been ▁a ▁wid ow .
+D-26	-1.2083215713500977	John has been a widow.
+P-26	-1.3462 -0.5067 -1.8264 -1.5386 -1.6893 -3.1650 -0.0779 -0.5846 -0.1402
+T-25	How long will you be away?
+H-25	-0.5848513245582581	▁How ▁long ▁will ▁you ▁be ▁away ▁from ▁here ?
+D-25	-0.5848513245582581	How long will you be away from here?
+P-25	-0.7645 -0.1589 -0.1091 -0.4302 -0.1233 -0.1829 -0.0928 -0.1299 -3.8877 -0.4042 -0.1499
+T-352	Laziness teaches you to work badly.
+H-352	-0.873860776424408	▁La zi ness ▁teach es ▁you ▁to ▁hard ▁work .
+D-352	-0.873860776424408	Laziness teaches you to hard work.
+P-352	-1.3201 -2.8777 -1.4519 -0.0422 -2.2233 -0.1161 -0.3414 -0.3639 -1.1634 -0.2783 -0.1591 -0.1490
+T-136	Everyone knows, why would I lie?
+H-136	-0.6575681567192078	▁You ▁know , ▁what ▁would ▁you ▁be ▁ly ing ▁to ?
+D-136	-0.6575681567192078	You know, what would you be lying to?
+P-136	-1.2502 -0.5027 -0.1939 -1.9841 -0.3251 -0.3477 -0.5600 -0.4946 -2.2774 -0.1332 -0.1563 -0.1604 -0.1629
+T-268	Here is the money you wanted.
+H-268	-0.5972381830215454	▁Here ▁is ▁the ▁money ▁you ▁wanted .
+D-268	-0.5972381830215454	Here is the money you wanted.
+P-268	-1.5264 -2.4015 -0.3057 -0.3215 -0.0878 -0.1669 -0.2477 -0.1642 -0.1534
+T-116	She rose to her hind legs.
+H-116	-0.9043180346488953	▁Give ▁me ▁the ▁scene ▁of ▁the ▁last ▁kn ife .
+D-116	-0.9043180346488953	Give me the scene of the last knife.
+P-116	-1.1868 -1.6412 -0.1811 -1.5460 -1.7615 -1.3567 -1.1786 -0.5862 -0.8324 -0.0417 -0.3977 -0.1419
+T-333	Not one word has been said.
+H-333	-0.6408435106277466	▁Not ▁a ▁word ▁was ▁said .
+D-333	-0.6408435106277466	Not a word was said.
+P-333	-1.2077 -1.8685 -0.7123 -0.2936 -0.1676 -0.5565 -0.1705 -0.1501
+T-44	There is no honor among thieves.
+H-44	-0.7253777384757996	▁There ▁are ▁no ▁honor s ▁with ▁a ▁father .
+D-44	-0.7253777384757996	There are no honors with a father.
+P-44	-1.8782 -0.3568 -0.5063 -0.1573 -0.9837 -0.1888 -1.4256 -1.7874 -0.2903 -0.2644 -0.1405
+T-232	Who is the blonde with red skirt?
+H-232	-0.7178769111633301	▁Who ▁is ▁a ▁blonde ▁with ▁a ▁red ▁face ?
+D-232	-0.7178769111633301	Who is a blonde with a red face?
+P-232	-1.4404 -0.6181 -0.2502 -0.2927 -1.5623 -0.1885 -1.2324 -1.2615 -0.7066 -0.1968 -0.1472
+T-271	My wheel are made from chrome.
+H-271	-0.5707167983055115	▁My ▁pan ts ▁are ▁made ▁of ▁chr ome .
+D-271	-0.5707167983055115	My pants are made of chrome.
+P-271	-1.0637 -0.0693 -2.8748 -0.0521 -0.2283 -0.0421 -0.3486 -1.2872 -0.0055 -0.1608 -0.1454
+T-61	Can you sing me a lullaby?
+H-61	-0.9515112042427063	▁I ▁can ’ t ▁wait ▁to ▁see ▁you ▁again !
+D-61	-0.9515112042427063	I can’t wait to see you again!
+P-61	-1.0902 -0.5456 -3.1638 -0.9038 -0.1174 -0.9643 -1.5149 -0.4691 -1.6551 -0.0573 -0.7871 -0.1496
+T-227	He is rich which pleased her.
+H-227	-1.0762557983398438	▁Poor , ▁what ▁was ▁he ▁satisfied ▁with ?
+D-227	-1.0762557983398438	Poor, what was he satisfied with?
+P-227	-1.2631 -1.7376 -1.1644 -0.6323 -2.3307 -1.7488 -1.2985 -0.2319 -0.2011 -0.1542
+T-249	He is an idol but not a saint.
+H-249	-0.7578464150428772	▁He ▁love s ▁her , ▁but ▁not ▁the ▁cand le .
+D-249	-0.7578464150428772	He loves her, but not the candle.
+P-249	-1.0685 -0.8501 -1.3928 -0.1535 -0.1118 -0.5736 -0.3316 -0.3861 -0.1439 -3.6616 -0.4524 -0.5795 -0.1467
+T-75	I think I caught a cold.
+H-75	-0.5364106297492981	▁I ▁think ▁I ▁caught ▁a ▁cold .
+D-75	-0.5364106297492981	I think I caught a cold.
+P-75	-0.7822 -0.1126 -0.1324 -0.2051 -2.9460 -0.3356 -0.0045 -0.1612 -0.1482
+T-20	Press on the pedal with your left foot.
+H-20	-0.4392693042755127	▁Push ▁the ▁pedal ▁from ▁the ▁left ▁to ▁the ▁right .
+D-20	-0.4392693042755127	Push the pedal from the left to the right.
+P-20	-1.0141 -0.1415 -0.5209 -0.4330 -0.3954 -0.4597 -0.0084 -0.1809 -0.1595 -1.6761 -0.1272 -0.1547
+T-2	It always tickles when she hugs me.
+H-2	-1.0072240829467773	▁There ’ s ▁always ▁a ▁sna ke ▁around ▁when ▁I ▁take ▁a ▁bath .
+D-2	-1.0072240829467773	There’s always a snake around when I take a bath.
+P-2	-1.6861 -1.4492 -2.8170 -0.1568 -0.0891 -0.3640 -2.2342 -0.8702 -0.3639 -1.7359 -0.7407 -2.9083 -0.1012 -0.2990 -0.1565 -0.1435
+T-194	Was it a good idea?
+H-194	-0.5790039896965027	▁Was ▁it ▁a ▁good ▁idea ?
+D-194	-0.5790039896965027	Was it a good idea?
+P-194	-1.4843 -1.5692 -0.9258 -0.1271 -0.0189 -0.0674 -0.2767 -0.1626
+T-216	That is awkward situation.
+H-216	-0.6251928210258484	▁This ▁is ▁a ▁hope less ▁situation .
+D-216	-0.6251928210258484	This is a hopeless situation.
+P-216	-1.1484 -0.3895 -0.1637 -2.0353 -1.3920 -0.0974 -0.0697 -0.1818 -0.1490
+T-243	Human nature has its boundaries.
+H-243	-0.7095540761947632	▁A ▁human ▁nature ▁has ▁its ▁fair ▁share .
+D-243	-0.7095540761947632	A human nature has its fair share.
+P-243	-1.5299 -0.5210 -0.2666 -2.1704 -0.1814 -0.1156 -1.8943 -0.0841 -0.1820 -0.1502
+T-52	What is the bright side in this?
+H-52	-1.0018584728240967	▁Can ▁I ▁have ▁a ▁pi llow ?
+D-52	-1.0018584728240967	Can I have a pillow?
+P-52	-0.9198 -3.3387 -0.4910 -1.6496 -0.3955 -1.7823 -0.0673 -0.2305 -0.1422
+T-294	We didn’t have any money.
+H-294	-0.3556457459926605	▁We ▁didn ’ t ▁have ▁any ▁money .
+D-294	-0.3556457459926605	We didn’t have any money.
+P-294	-1.2413 -0.1333 -1.1188 -0.2379 -0.1353 -0.1409 -0.1357 -0.0762 -0.1892 -0.1478
+T-311	My uncle is a fruit grower.
+H-311	-0.8208398222923279	▁My ▁cousin ▁was ▁a ▁garden er .
+D-311	-0.8208398222923279	My cousin was a gardener.
+P-311	-1.4621 -0.0479 -3.2393 -0.1488 -0.3939 -1.6817 -0.1044 -0.1596 -0.1498
+T-326	I don’t talk like that.
+H-326	-0.6727549433708191	▁I ▁don ’ t ▁say ▁that !
+D-326	-0.6727549433708191	I don’t say that!
+P-326	-1.1838 -0.1849 -1.4070 -0.2908 -0.1505 -0.7442 -1.2949 -0.6454 -0.1531
+T-246	If the hat fits, wear it.
+H-246	-0.8538019061088562	▁If ▁a ▁pen cil ▁sharp en ed , ▁wear ▁it .
+D-246	-0.8538019061088562	If a pencil sharpened, wear it.
+P-246	-1.1844 -0.7634 -0.9706 -2.5177 -0.4275 -2.1377 -0.8246 -0.4189 -0.5916 -0.6517 -0.1780 -0.2895 -0.1437
+T-175	Don’t cross the yellow line.
+H-175	-1.0343823432922363	▁Don ’ t ▁count ▁your ▁chicken s .
+D-175	-1.0343823432922363	Don’t count your chickens.
+P-175	-1.4428 -0.7468 -0.6554 -0.1175 -2.5911 -1.4842 -1.0864 -0.1106 -1.9581 -0.1508
+T-203	Our plans are now finished.
+H-203	-0.7714831829071045	▁Our ▁plans ▁are ▁now ▁finished .
+D-203	-0.7714831829071045	Our plans are now finished.
+P-203	-1.1011 -0.0626 -0.0598 -0.1426 -2.8501 -1.6328 -0.1755 -0.1474
+T-328	Elephant never forgets.
+H-328	-0.7841178178787231	▁You ▁never ▁los e ▁a ▁wol f .
+D-328	-0.7841178178787231	You never lose a wolf.
+P-328	-1.5745 -0.1858 -1.2109 -1.1499 -0.1291 -0.4018 -2.8151 -0.0822 -0.1489 -0.1430
+T-113	Stop talking all the time!
+H-113	-0.588149905204773	▁Do ▁not ▁talk ▁while ▁ali ve !
+D-113	-0.588149905204773	Do not talk while alive!
+P-113	-0.7998 -0.4383 -0.1157 -0.5198 -0.9255 -1.3695 -0.1424 -0.8358 -0.1466
+T-226	It’s exactly like they say it is.
+H-226	-0.7314559817314148	▁That ' s ▁how ▁it ' s ▁done .
+D-226	-0.7314559817314148	That's how it's done.
+P-226	-1.4335 -1.2147 -0.9059 -0.1417 -1.0395 -0.1812 -0.7877 -0.1243 -1.6629 -0.4055 -0.1491
+T-178	A crazy person speaks all their thoughts.
+H-178	-0.6805248260498047	▁The ▁black ▁man ▁said ▁all ▁his ▁thoughts .
+D-178	-0.6805248260498047	The black man said all his thoughts.
+P-178	-0.6604 -0.1453 -3.3396 -0.8229 -0.9396 -0.0733 -0.1475 -0.3516 -0.1649 -0.1604
+T-19	Does reading really seem nonsense to you?
+H-19	-0.7894724011421204	▁There ’ s ▁no ▁point ▁in ▁talking ▁about ▁it .
+D-19	-0.7894724011421204	There’s no point in talking about it.
+P-19	-1.5868 -0.4095 -1.7058 -0.1364 -0.4065 -0.3556 -0.2577 -2.0934 -0.0959 -2.0275 -0.2503 -0.1483
+T-287	What is weather like in Jamaica?
+H-287	-0.8107691407203674	▁What ▁is ▁the ▁future ▁for ▁Mai ki ?
+D-287	-0.8107691407203674	What is the future for Maiki?
+P-287	-1.3999 -0.1133 -0.9464 -0.3468 -3.3681 -0.1965 -1.0163 -0.3379 -0.2427 -0.1399
+T-153	I have to admit my sins.
+H-153	-0.7873327136039734	▁I ▁am ▁sorry ▁for ▁my ▁trouble s .
+D-153	-0.7873327136039734	I am sorry for my troubles.
+P-153	-1.3788 -0.5295 -1.6185 -0.4672 -2.0715 -0.2378 -0.8722 -0.2478 -0.3036 -0.1463
+T-3	Indeed, that is what i thought.
+H-3	-1.0001232624053955	▁Yes , ▁that ’ s ▁how ▁you ▁are ▁laugh ing .
+D-3	-1.0001232624053955	Yes, that’s how you are laughing.
+P-3	-0.9012 -1.5450 -0.6378 -1.7541 -0.5717 -0.1415 -0.8321 -0.6578 -3.8086 -1.0521 -0.1349 -0.8209 -0.1439
+T-318	It was a painful silence.
+H-318	-0.4758574962615967	▁It ▁was ▁a ▁du ll ▁silence .
+D-318	-0.4758574962615967	It was a dull silence.
+P-318	-1.2621 -1.1109 -0.1263 -0.6803 -0.3380 -0.1814 -0.2884 -0.1478 -0.1474
+T-112	What have I done?
+H-112	-0.31813493371009827	▁What ▁did ▁you ▁do ?
+D-112	-0.31813493371009827	What did you do?
+P-112	-0.6276 -0.0657 -0.4530 -0.5504 -0.1529 -0.2328 -0.1445
+T-115	Let me help you.
+H-115	-0.4965743124485016	▁May ▁I ▁help ▁you ?
+D-115	-0.4965743124485016	May I help you?
+P-115	-0.9353 -1.7587 -0.2063 -0.1408 -0.1369 -0.1617 -0.1363
+T-133	Beauty is not just a pretty face.
+H-133	-0.6152632236480713	▁A ▁beautiful ▁face ▁is ▁not ▁a ▁beautiful ▁one .
+D-133	-0.6152632236480713	A beautiful face is not a beautiful one.
+P-133	-1.4368 -2.2846 -0.8994 -0.0816 -0.3336 -0.2656 -0.1999 -0.1176 -0.8523 -0.1534 -0.1431
+T-237	What should I do with him?
+H-237	-0.39786478877067566	▁What ▁should ▁I ▁do ▁with ▁him ?
+D-237	-0.39786478877067566	What should I do with him?
+P-237	-0.9263 -0.1203 -1.0011 -0.7205 -0.0539 -0.1338 -0.2644 -0.2102 -0.1503
+T-334	But what could I do?
+H-334	-0.6947882175445557	▁That ’ s ▁what ▁I ▁can ▁do .
+D-334	-0.6947882175445557	That’s what I can do.
+P-334	-1.6635 -0.7595 -1.1347 -0.1319 -0.2860 -1.3493 -1.0431 -0.2094 -0.2242 -0.1464
+T-273	He entered the room.
+H-273	-0.4462664723396301	▁He ▁stood ▁up .
+D-273	-0.4462664723396301	He stood up.
+P-273	-0.7489 -0.1075 -0.8642 -0.1855 -0.6325 -0.1390
+T-163	It was nice talking to you.
+H-163	-0.631149411201477	▁It ▁was ▁nice ▁talking ▁with ▁the ▁old ▁man .
+D-163	-0.631149411201477	It was nice talking with the old man.
+P-163	-1.1382 -0.2957 -0.1042 -0.2126 -0.4801 -1.4311 -1.8854 -0.8487 -0.2059 -0.1845 -0.1562
+T-124	Give me that.
+H-124	-1.0939801931381226	▁I ▁wish ▁you ▁luck .
+D-124	-1.0939801931381226	I wish you luck.
+P-124	-1.5786 -2.4292 -2.1481 -0.1014 -1.0253 -0.2292 -0.1460
+T-266	What could that mean?
+H-266	-1.2453631162643433	▁How ▁could ▁I ▁mention ▁it ?
+D-266	-1.2453631162643433	How could I mention it?
+P-266	-1.4362 -2.2495 -2.1754 -1.0853 -1.4266 -0.2485 -1.1870 -0.1545
+T-222	Not a moment was lost.
+H-222	-0.9208425879478455	▁Nei ther ▁of ▁the ▁present s ▁was ▁lost .
+D-222	-0.9208425879478455	Neither of the presents was lost.
+P-222	-0.7847 -1.7663 -0.1170 -0.9000 -2.8451 -0.3517 -1.2473 -0.4042 -1.4131 -0.1452 -0.1549
+T-239	Reading is not the same as understanding.
+H-239	-0.5849675536155701	▁The ▁issue ▁is ▁not ▁the ▁same ▁as ▁the ▁reason ing .
+D-239	-0.5849675536155701	The issue is not the same as the reasoning.
+P-239	-0.8979 -0.8446 -2.1135 -0.2536 -0.1322 -0.2667 -0.0224 -0.2084 -0.7892 -1.6464 -0.1350 -0.1460 -0.1486
+T-343	Here, let me show you.
+H-343	-0.5664480924606323	▁Here , ▁let ▁me ▁show ▁you .
+D-343	-0.5664480924606323	Here, let me show you.
+P-343	-0.9696 -2.2459 -0.5209 -0.6393 -0.1403 -0.0902 -0.1891 -0.1570 -0.1458
+T-342	First worm is caught early.
+H-342	-1.0311771631240845	▁The ▁first ▁black bird ▁is ▁hun ted ▁by ▁God .
+D-342	-1.0311771631240845	The first blackbird is hunted by God.
+P-342	-1.6470 -0.6704 -0.1810 -2.2574 -0.9400 -2.0170 -0.8703 -0.2615 -1.5328 -1.6985 -0.1573 -0.1409
+T-179	Open the door widely!
+H-179	-1.0297856330871582	▁From ▁the ▁door ▁step ▁you ▁push ▁us .
+D-179	-1.0297856330871582	From the door step you push us.
+P-179	-0.8793 -2.4333 -0.8339 -0.7439 -1.7749 -1.8060 -1.0356 -0.2897 -0.3576 -0.1437
+T-219	I can’t see small letters when reading.
+H-219	-0.5863908529281616	▁I ▁don ' t ▁see ▁any ▁small ▁circ le ▁at ▁the ▁gate .
+D-219	-0.5863908529281616	I don't see any small circle at the gate.
+P-219	-1.3680 -0.3287 -0.9746 -0.9781 -0.1165 -0.1158 -0.4748 -0.9742 -1.1925 -0.1232 -0.5800 -0.9059 -0.3088 -0.2127 -0.1424
+T-142	This man is your brother?
+H-142	-0.4651198983192444	▁Is ▁this ▁man ▁your ▁brother ?
+D-142	-0.4651198983192444	Is this man your brother?
+P-142	-1.5367 -1.0904 -0.4170 -0.1962 -0.1277 -0.0494 -0.1547 -0.1488
+T-48	What a wonderful day!
+H-48	-0.6314020752906799	▁[ TO ▁ REM OVE ]
+D-48	-0.6314020752906799	[TO REMOVE]
+P-48	-1.1876 -3.0724 -0.0899 -0.1408 -0.1445 -0.1383 -0.1555 -0.1222
+T-218	I forgot the train ticket.
+H-218	-0.7581730484962463	▁I ▁set ▁the ▁water ▁tap ▁for ▁the ▁train .
+D-218	-0.7581730484962463	I set the water tap for the train.
+P-218	-1.2061 -0.1348 -0.8404 -1.1533 -1.5503 -0.8207 -0.2337 -0.5357 -1.5439 -0.1775 -0.1437
+T-173	Boy shouted loudly.
+H-173	-0.9189574718475342	▁The ▁g host ▁s cream ed ▁in ▁a ▁ho arse ▁voice .
+D-173	-0.9189574718475342	The ghost screamed in a hoarse voice.
+P-173	-1.5625 -0.6395 -0.7088 -0.0483 -1.0151 -3.0513 -0.1298 -1.4247 -0.5492 -3.3164 -0.0591 -0.0532 -0.1611 -0.1464
+T-96	Do you know who I am?
+H-96	-1.3534717559814453	▁Did ▁you ▁go ▁to ▁the ▁bathroom ?
+D-96	-1.3534717559814453	Did you go to the bathroom?
+P-96	-0.8833 -4.2507 -0.3072 -1.2792 -1.1508 -1.8889 -2.0535 -0.2260 -0.1418
+T-327	Lies walk on one foot.
+H-327	-0.6323696374893188	▁La sh ▁walk s ▁on ▁one ▁leg .
+D-327	-0.6323696374893188	Lash walks on one leg.
+P-327	-1.5804 -2.4589 -0.4177 -0.0568 -0.1311 -0.2413 -0.4272 -0.5814 -0.2810 -0.1480
+T-241	How often is this train late?
+H-241	-0.6097505688667297	▁How ▁often ▁is ▁the ▁train ▁late ?
+D-241	-0.6097505688667297	How often is the train late?
+P-241	-1.4002 -0.0733 -1.7479 -0.4683 -0.1983 -0.6399 -0.6567 -0.1438 -0.1593
+T-143	Sharpness of sight is surprising.
+H-143	-1.0047651529312134	▁Cast ▁ir on ▁is ▁per me able .
+D-143	-1.0047651529312134	Cast iron is permeable.
+P-143	-1.4129 -2.8638 -0.3847 -0.1663 -0.2035 -3.6079 -1.0209 -0.0779 -0.1642 -0.1456
+T-62	Thank you, my mum made it.
+H-62	-0.6707361936569214	▁Hi , ▁my ▁mom ▁gave ▁me ▁birth .
+D-62	-0.6707361936569214	Hi, my mom gave me birth.
+P-62	-0.8595 -1.8520 -0.4484 -0.3209 -0.9075 -0.1999 -0.1510 -1.6070 -0.2172 -0.1440
+T-80	Andrej caught a flu.
+H-80	-1.0939433574676514	▁Andrew ▁got ▁a ▁little ▁d runk .
+D-80	-1.0939433574676514	Andrew got a little drunk.
+P-80	-0.6945 -2.2386 -1.9711 -0.6919 -1.8803 -1.9017 -0.1426 -0.1726 -0.1523
+T-358	Jump over fence, landing in grass.
+H-358	-0.7307639718055725	▁A ▁bir d ▁in ▁the ▁hand ▁is ▁worth ▁two ▁in ▁the ▁bu sh .
+D-358	-0.7307639718055725	A bird in the hand is worth two in the bush.
+P-358	-1.4408 -1.8502 -3.9957 -0.1492 -0.1797 -0.1836 -0.0060 -2.5814 -0.2746 -0.2749 -0.2033 -0.1653 -0.0466 -0.0447 -0.1456 -0.1506
+T-59	Go have fun kids.
+H-59	-1.0194933414459229	▁Kid , ▁do ▁you ▁have ▁fun ?
+D-59	-1.0194933414459229	Kid, do you have fun?
+P-59	-1.2414 -2.5767 -0.1864 -2.8133 -0.1042 -1.3391 -0.4302 -0.3329 -0.1513
+T-308	Fire and straw should be alone.
+H-308	-0.7132333517074585	▁Fire ▁and ▁bri m stone ▁will ▁be ▁there .
+D-308	-0.7132333517074585	Fire and brimstone will be there.
+P-308	-1.5088 -1.3873 -0.0853 -0.3912 -0.7589 -0.0304 -1.2368 -0.2298 -1.5211 -0.5503 -0.1455
+T-137	They kissed in the yard.
+H-137	-0.9484723806381226	▁The ▁sugar ▁cu bes ▁were ▁bo iling ▁in ▁the ▁f ridge .
+D-137	-0.9484723806381226	The sugar cubes were boiling in the fridge.
+P-137	-0.9371 -1.5189 -1.9520 -0.7072 -0.6055 -0.6162 -2.8283 -0.1309 -0.5353 -0.1787 -2.7541 -0.2136 -0.1490 -0.1519
+T-123	I looked for her.
+H-123	-1.1015609502792358	▁The ▁old ▁man ▁wo ke ▁up .
+D-123	-1.1015609502792358	The old man woke up.
+P-123	-0.5939 -1.5343 -3.5452 -0.1777 -2.9130 -0.4820 -0.0541 -0.4746 -0.1392
+T-202	The lights dimmed and the music started.
+H-202	-0.48732465505599976	▁The ▁light s ▁went ▁out ▁and ▁the ▁sing ing ▁began .
+D-202	-0.48732465505599976	The lights went out and the singing began.
+P-202	-1.3877 -1.1265 -0.2021 -0.1332 -0.0043 -0.1548 -0.1945 -0.1963 -1.6257 -0.1417 -0.8593 -0.1564 -0.1529
+T-228	What we plant doesn’t always grow.
+H-228	-0.8627892136573792	▁What ▁we ▁eat ▁doesn ’ t ▁grow ▁forever .
+D-228	-0.8627892136573792	What we eat doesn’t grow forever.
+P-228	-1.1928 -0.7496 -0.3944 -2.7259 -0.5562 -0.7944 -0.1487 -0.7179 -1.9093 -0.1562 -0.1453
+T-298	Necessity is the mother or invention.
+H-298	-0.7470709681510925	▁bore dom ▁is ▁a ▁mother ▁of ▁in sol ence .
+D-298	-0.7470709681510925	boredom is a mother of insolence.
+P-298	-1.5499 -2.5269 -0.0244 -0.1740 -0.7755 -0.4124 -0.3633 -1.7886 -0.8476 -0.1174 -0.2401 -0.1448
+T-301	Why don’t you tell me something?
+H-301	-0.35596978664398193	▁Why ▁don ’ t ▁you ▁tell ▁me ▁something ?
+D-301	-0.35596978664398193	Why don’t you tell me something?
+P-301	-1.3903 -0.0524 -0.6189 -0.2734 -0.1513 -0.1209 -0.3306 -0.1296 -0.5473 -0.1467 -0.1541
+T-235	Those pills do less good than bad.
+H-235	-0.6703608632087708	▁These ▁board s ▁make ▁less ▁good ▁than ▁bad .
+D-235	-0.6703608632087708	These boards make less good than bad.
+P-235	-1.4332 -0.3179 -0.8215 -0.1703 -0.5209 -2.5170 -0.2360 -0.1688 -0.8845 -0.1510 -0.1529
+T-260	Best friends have to share.
+H-260	-0.73710697889328	▁The ▁best ▁pri est s ▁have ▁to ▁go .
+D-260	-0.73710697889328	The best priests have to go.
+P-260	-0.6297 -0.3409 -0.2106 -1.9144 -0.2645 -0.1222 -1.4932 -0.1250 -2.1638 -0.6961 -0.1477
+T-350	We are certain that one war is enough.
+H-350	-0.3569365441799164	▁We ▁are ▁sure ▁that ▁this ▁war ▁is ▁enough .
+D-350	-0.3569365441799164	We are sure that this war is enough.
+P-350	-1.0904 -0.0981 -0.0701 -0.1567 -0.2760 -1.6122 -0.0815 -0.1636 -0.0369 -0.1923 -0.1485
+T-170	Relax on a day like this.
+H-170	-1.2310295104980469	▁Go ▁cha se ▁yourself ▁in ▁Copenhagen !
+D-170	-1.2310295104980469	Go chase yourself in Copenhagen!
+P-170	-1.1903 -4.3478 -1.6507 -0.0666 -0.1054 -0.6999 -2.4704 -0.3710 -0.1773
+T-289	Do you have Izabela’s phone number?
+H-289	-0.3412627577781677	▁Do ▁you ▁have ▁Isabel le ’ s ▁phone ▁number ?
+D-289	-0.3412627577781677	Do you have Isabelle’s phone number?
+P-289	-1.2910 -0.0609 -0.1368 -0.3070 -0.2134 -0.7424 -0.5080 -0.1515 -0.1577 -0.2051 -0.1740 -0.1472
+T-155	I like Norway because of the fjords.
+H-155	-0.8160754442214966	▁I ▁like ▁Norway ▁because ▁of ▁the ▁ fjord s .
+D-155	-0.8160754442214966	I like Norway because of the fjords.
+P-155	-1.4800 -0.1873 -1.0068 -1.7261 -1.6852 -0.3465 -1.5148 -0.9782 -0.3683 -0.1791 -0.1687 -0.1520
+T-141	Sister Petra stood in the middle of the room.
+H-141	-1.0876587629318237	▁If ▁it ’ s ▁a ▁rock , ▁there ’ s ▁a ▁plan k ▁on ▁the ▁ce iling .
+D-141	-1.0876587629318237	If it’s a rock, there’s a plank on the ceiling.
+P-141	-1.2594 -1.0876 -1.1516 -0.6427 -0.1331 -1.7137 -3.9916 -0.4214 -2.3660 -0.2553 -0.1442 -1.3357 -3.1935 -0.6216 -1.9729 -0.1932 -0.1588 -0.7593 -0.2033 -0.1484
+T-76	Who is not eating, has already eaten.
+H-76	-0.7544342279434204	▁Those ▁who ▁are ▁not ▁stupid ▁are ▁stupid ▁too .
+D-76	-0.7544342279434204	Those who are not stupid are stupid too.
+P-76	-0.8987 -1.8246 -0.3025 -0.3741 -1.4567 -1.9735 -0.1106 -0.3717 -0.6830 -0.1610 -0.1426
+T-331	Aunt Agata cried.
+H-331	-0.47815772891044617	▁A unt ▁Aga tha ▁cri ed .
+D-331	-0.47815772891044617	Aunt Agatha cried.
+P-331	-1.4538 -0.0903 -0.1537 -0.7229 -0.8411 -0.5553 -0.1399 -0.2030 -0.1434
+T-336	He who asks doesn't sets.
+H-336	-0.6133584380149841	▁He ▁who ▁ask s , ▁does ▁not ▁get .
+D-336	-0.6133584380149841	He who asks, does not get.
+P-336	-1.2037 -2.0608 -0.1114 -0.0469 -0.1170 -1.1223 -1.0097 -0.1256 -0.6401 -0.1611 -0.1484
+T-240	Lighting made a pleasant atmosphere.
+H-240	-0.9674472808837891	▁The ▁en light en ment ▁was ▁created ▁by ▁a ▁devo ut ▁spirit .
+D-240	-0.9674472808837891	The enlightenment was created by a devout spirit.
+P-240	-1.2121 -1.1187 -1.8656 -0.6665 -0.0944 -0.4664 -1.6473 -0.2819 -0.5040 -0.6691 -3.9242 -0.7666 -0.9702 -0.1745 -0.1500
+T-68	How big is this closet?
+H-68	-0.5121454000473022	▁How ▁big ▁is ▁this ▁hole ?
+D-68	-0.5121454000473022	How big is this hole?
+P-68	-0.7052 -0.1147 -0.3977 -0.0914 -0.6826 -1.8269 -0.1197 -0.1591
+T-316	Every bell doesn’t cast away hail.
+H-316	-0.9439101815223694	▁Every ▁bell ▁has ▁a ▁ring ▁in ▁it .
+D-316	-0.9439101815223694	Every bell has a ring in it.
+P-316	-1.3549 -0.5555 -0.7484 -1.8062 -1.1756 -0.4228 -2.5237 -0.5580 -0.1526 -0.1415
+T-259	Book can’t be judged buy its covers.
+H-259	-0.6192558407783508	▁You ▁can ' t ▁judge ▁a ▁book ▁by ▁its ▁cover .
+D-259	-0.6192558407783508	You can't judge a book by its cover.
+P-259	-1.5116 -0.3187 -0.2827 -1.1316 -0.1374 -2.7727 -0.3758 -0.0699 -0.4545 -0.1120 -0.5683 -0.1687 -0.1465
+T-119	Especially I like foamy water.
+H-119	-0.9304274320602417	▁There ▁is ▁a ▁fo unta in ▁of ▁water ▁in ▁front ▁of ▁me .
+D-119	-0.9304274320602417	There is a fountain of water in front of me.
+P-119	-1.1171 -2.6116 -0.7523 -1.0281 -0.6680 -1.4617 -0.1133 -0.9277 -2.0599 -0.8373 -0.3044 -0.1732 -1.5461 -0.2157 -0.1399
+T-231	Birch looked white and lonely.
+H-231	-0.9128435850143433	▁Bre za ▁looked ▁at ▁Bella ▁and ▁smile d .
+D-231	-0.9128435850143433	Breza looked at Bella and smiled.
+P-231	-1.4490 -0.2953 -1.0550 -0.8183 -0.2600 -2.8268 -0.3368 -2.5085 -0.1432 -0.1922 -0.1562
+T-88	Did you see my key?
+H-88	-1.0914283990859985	▁It ' s ▁because ▁I ▁saw ▁them ▁pe e ing .
+D-88	-1.0914283990859985	It's because I saw them peeing.
+P-88	-1.1199 -1.1071 -1.8575 -0.1438 -2.6881 -1.0481 -1.1368 -0.3437 -1.5335 -0.4639 -1.9343 -0.6772 -0.1348
+T-211	The king ruled in difficult times.
+H-211	-0.6185889840126038	▁A ▁king ▁rules ▁in ▁difficult ▁days .
+D-211	-0.6185889840126038	A king rules in difficult days.
+P-211	-1.3546 -0.8947 -0.0307 -0.3718 -0.8734 -1.4595 -0.2656 -0.1708 -0.1462
+T-264	At high speeds, proceed with caution.
+H-264	-0.891197144985199	▁With ▁great ▁speed ▁you ▁fight ▁predict ably .
+D-264	-0.891197144985199	With great speed you fight predictably.
+P-264	-1.1619 -2.9710 -0.0505 -2.5511 -0.1924 -1.1799 -0.1679 -0.3261 -0.1591 -0.1521
+T-220	Elza was shocked at reveal.
+H-220	-0.5248799324035645	▁Els a ▁was ▁shock ed ▁when ▁she ▁opened ▁the ▁door .
+D-220	-0.5248799324035645	Elsa was shocked when she opened the door.
+P-220	-1.1898 -0.0394 -0.1030 -0.1904 -0.0091 -0.1159 -0.7527 -0.5758 -0.6225 -0.6382 -2.2618 -0.1723 -0.1525
+T-105	How is this possible?
+H-105	-0.602377712726593	▁How ▁is ▁this ▁possible ?
+D-105	-0.602377712726593	How is this possible?
+P-105	-0.8467 -0.8085 -0.7692 -1.3198 -0.1477 -0.1731 -0.1517
+T-174	Happiness smooths the road of life.
+H-174	-1.5155065059661865	▁Ve sel i ▁and ▁Glad ice sto , ▁viol in ist .
+D-174	-1.5155065059661865	Veseli and Gladicesto, violinist.
+P-174	-1.2339 -1.5974 -1.2644 -1.8270 -1.5659 -3.6208 -2.0851 -0.1191 -3.7696 -2.0130 -1.0555 -0.5058 -0.4072 -0.1525
+T-199	No, you’re mama's boy.
+H-199	-0.7457048296928406	▁No , ▁you ▁are ▁mine .
+D-199	-0.7457048296928406	No, you are mine.
+P-199	-1.0111 -0.1076 -0.2335 -1.5742 -1.3304 -0.6411 -0.9195 -0.1483
+T-339	Love is eternal until it lasts.
+H-339	-0.9009885191917419	▁Love ▁is ▁eterna l , ▁love ▁costs ▁money .
+D-339	-0.9009885191917419	Love is eternal, love costs money.
+P-339	-1.4623 -0.0644 -0.2004 -1.2292 -0.1049 -1.0312 -3.6781 -1.1851 -0.6447 -0.1594 -0.1511
+T-18	Delete this file.
+H-18	-1.0530496835708618	▁De lete ▁it ▁so ▁that ▁it ▁works .
+D-18	-1.0530496835708618	Delete it so that it works.
+P-18	-1.0981 -4.0111 -0.1491 -0.9123 -1.9366 -1.1101 -0.1645 -0.7491 -0.2518 -0.1477
+T-291	Shame if must know!
+H-291	-0.8190904855728149	▁You ▁are ▁welcome , ▁if ▁you ▁want ▁to ▁see ▁her .
+D-291	-0.8190904855728149	You are welcome, if you want to see her.
+P-291	-1.5120 -1.9937 -0.7099 -1.3196 -1.1116 -0.2701 -0.1418 -0.7531 -0.1372 -0.9013 -0.5331 -1.1164 -0.1483
+T-233	Draw a picture with black lines.
+H-233	-0.8307420611381531	▁Make ▁a ▁face ▁with ▁black ▁face s .
+D-233	-0.8307420611381531	Make a face with black faces.
+P-233	-1.3813 -2.8117 -0.2465 -1.9747 -0.1439 -0.0877 -1.1105 -0.1305 -0.2778 -0.1428
+T-58	You showered in our house?
+H-58	-1.0104390382766724	▁Did ▁you ▁w ipe ▁your ▁te eth ?
+D-58	-1.0104390382766724	Did you wipe your teeth?
+P-58	-1.5331 -0.8684 -0.1555 -4.1173 -0.2447 -1.0046 -0.8568 -0.3038 -0.8722 -0.1480
+T-355	Dead fears him because he has a heart of lion.
+H-355	-0.7186033725738525	▁Death ▁is ▁fear ed ▁when ▁it ▁has ▁a ▁ lion ▁heart .
+D-355	-0.7186033725738525	Death is feared when it has a lion heart.
+P-355	-1.6575 -0.0177 -0.6625 -2.4769 -0.1802 -2.6437 -0.7412 -0.1894 -0.1866 -0.6415 -0.0091 -0.3461 -0.1595 -0.1486
+T-341	Fair change is not a robbery.
+H-341	-0.9901221394538879	▁A ▁lie ▁is ▁not ▁a ▁lie .
+D-341	-0.9901221394538879	A lie is not a lie.
+P-341	-1.7932 -2.1062 -2.6430 -0.1445 -1.5630 -0.3073 -0.0276 -0.1852 -0.1411
+T-293	It’s five euros.
+H-293	-0.5275412201881409	▁The ▁cost ▁is ▁five ▁euros .
+D-293	-0.5275412201881409	The cost is five euros.
+P-293	-1.0372 -0.2391 -1.6596 -0.1396 -0.1051 -0.7391 -0.1611 -0.1395
+T-217	Don’t trust smiling penguin.
+H-217	-0.844529926776886	▁Don ’ t ▁trust ▁a ▁si lly ▁pengu in .
+D-217	-0.844529926776886	Don’t trust a silly penguin.
+P-217	-1.3073 -1.0629 -0.2430 -0.1158 -0.6989 -2.2836 -2.1524 -0.0502 -1.7444 -0.1214 -0.2088 -0.1456
+T-300	Choice is embarrassment.
+H-300	-0.7955207228660583	▁The ▁choice ▁is ▁your s .
+D-300	-0.7955207228660583	The choice is yours.
+P-300	-1.4929 -1.1831 -2.3262 -0.1540 -0.6164 -0.1496 -0.2989 -0.1431
+T-251	From flax you can make a nice stamp.
+H-251	-0.6403142809867859	▁You ▁can ▁make ▁a ▁beautiful ▁stamp ▁from ▁wo ol .
+D-251	-0.6403142809867859	You can make a beautiful stamp from wool.
+P-251	-1.1754 -0.6594 -0.0811 -0.1431 -0.1232 -1.0419 -2.5891 -0.3540 -1.1721 -0.0170 -0.1758 -0.1519
+T-183	They were already in front of notary’s apartment.
+H-183	-0.6362859010696411	▁She ▁was ▁already ▁at ▁the ▁notar y ’ s ▁office ▁in ▁Gene va .
+D-183	-0.6362859010696411	She was already at the notary’s office in Geneva.
+P-183	-1.3033 -0.3714 -0.7871 -0.8374 -0.7742 -0.2349 -0.2924 -0.0996 -0.2642 -0.1368 -0.0998 -1.1737 -3.2903 -0.0331 -0.3275 -0.1550
+T-253	The sun is shining on both sides of the hedge.
+H-253	-0.6583650708198547	▁Sun ▁is ▁shi ning ▁on ▁both ▁side s ▁of ▁the ▁living ▁tree .
+D-253	-0.6583650708198547	Sun is shining on both sides of the living tree.
+P-253	-1.3236 -0.2700 -1.6825 -0.2590 -0.0416 -0.7908 -0.1585 -0.2047 -0.1451 -0.1100 -0.1841 -2.3362 -2.0477 -0.1797 -0.1420
+T-50	I feel sharp pain in my left arm.
+H-50	-1.338950753211975	▁My ▁un cle ▁has ▁two ▁kids , ▁one ▁boy ▁and ▁one ▁girl .
+D-50	-1.338950753211975	My uncle has two kids, one boy and one girl.
+P-50	-1.2641 -4.5389 -1.9721 -0.4166 -2.1501 -3.4610 -1.2072 -0.8532 -2.5756 -0.6668 -0.1461 -0.4625 -0.0065 -0.2017 -0.1617
+T-12	The healthy think of different things than the sick.
+H-12	-0.9365957379341125	▁He ▁thought ▁about ▁other ▁things ▁than ▁hun ting .
+D-12	-0.9365957379341125	He thought about other things than hunting.
+P-12	-1.4980 -1.6067 -0.7621 -0.9946 -0.1335 -0.9886 -0.4709 -3.1309 -0.3017 -0.2648 -0.1509
+T-38	And what happened with the traveler?
+H-38	-0.5555148124694824	▁How ▁was ▁the ▁trip ?
+D-38	-0.5555148124694824	How was the trip?
+P-38	-1.1960 -0.6397 -0.1381 -0.2328 -1.2347 -0.2945 -0.1528
+T-204	As bad as a rotten cabbage.
+H-204	-0.7016410231590271	▁As ▁bad ▁as ▁rot ten ▁gras s .
+D-204	-0.7016410231590271	As bad as rotten grass.
+P-204	-1.1983 -0.4127 -0.8035 -0.2056 -0.9621 -0.4409 -2.5637 -0.1310 -0.1524 -0.1463
+T-73	Did you see that?
+H-73	-0.6778745651245117	▁[ TO ▁ REM OVE ]
+D-73	-0.6778745651245117	[TO REMOVE]
+P-73	-0.9570 -3.7643 -0.0667 -0.1183 -0.1146 -0.1114 -0.1561 -0.1347
+T-302	I like movies and similar stuff.
+H-302	-0.6663403511047363	▁There ▁are ▁many ▁movies ▁and ▁similar ▁things .
+D-302	-0.6663403511047363	There are many movies and similar things.
+P-302	-0.9849 -0.4736 -0.1657 -2.7272 -0.2780 -0.1373 -1.4125 -0.1574 -0.1780 -0.1488
+T-185	I always wanted to travel the world.
+H-185	-0.6331724524497986	▁I ▁always ▁wanted ▁to ▁wa nder ▁about ▁the ▁world .
+D-185	-0.6331724524497986	I always wanted to wander about the world.
+P-185	-1.1445 -0.1397 -0.3201 -0.0744 -0.1376 -1.5095 -0.1925 -1.6884 -1.6245 -0.4550 -0.1620 -0.1498
+T-276	Hope is the bread of the looser.
+H-276	-1.0639410018920898	▁U pp ▁is ▁a ▁short ▁film .
+D-276	-1.0639410018920898	Upp is a short film.
+P-276	-1.0540 -1.6514 -2.5153 -0.1435 -0.8721 -0.7024 -1.9102 -0.5788 -0.1476
+T-182	Bank is pressuring on paying the debt.
+H-182	-0.6853150129318237	▁The ▁bank ▁ca ved ▁in ▁for ▁a ▁long ▁time .
+D-182	-0.6853150129318237	The bank caved in for a long time.
+P-182	-1.4493 -0.3710 -0.3658 -1.7615 -0.3845 -0.0959 -2.2784 -0.3757 -0.6239 -0.2230 -0.1437 -0.1511
+T-347	The word is an axe that splits the heart.
+H-347	-0.555682361125946	▁Word s ▁are ▁sharp ▁when ▁the ▁heart ▁blow s .
+D-347	-0.555682361125946	Words are sharp when the heart blows.
+P-347	-1.1701 -0.0887 -0.1817 -0.5303 -0.9736 -1.8275 -0.2768 -0.2839 -0.7539 -0.1314 -0.3070 -0.1432
+T-97	Guess the result in first try.
+H-97	-1.054190993309021	▁The ▁U gan ▁results ▁in ▁the ▁first ▁place .
+D-97	-1.054190993309021	The Ugan results in the first place.
+P-97	-0.8133 -1.5746 -3.4167 -0.5765 -1.2196 -1.9191 -0.8323 -0.0217 -0.9309 -0.1475 -0.1438
+T-345	I have a list of candidates that can replace you.
+H-345	-0.32328537106513977	▁I ▁have ▁a ▁list ▁of ▁candidat es ▁that ▁can ▁replace ▁you .
+D-345	-0.32328537106513977	I have a list of candidates that can replace you.
+P-345	-1.2264 -0.1113 -0.1871 -0.2819 -0.2785 -0.1374 -0.1312 -0.1420 -0.3022 -0.7932 -0.3646 -0.1792 -0.2448 -0.1462
+T-346	Mare returned to tavern.
+H-346	-0.8283914923667908	▁Mare ▁came ▁back ▁to ▁his ▁room .
+D-346	-0.8283914923667908	Mare came back to his room.
+P-346	-1.2277 -1.1100 -1.0050 -0.1018 -0.2065 -1.2787 -2.2256 -0.1599 -0.1402
+T-307	What’s the rush Marko?
+H-307	-0.6505492329597473	▁Who ▁are ▁you ▁up set ▁with , ▁Marco ?
+D-307	-0.6505492329597473	Who are you upset with, Marco?
+P-307	-1.1789 -0.5496 -1.0279 -0.2004 -1.6857 -0.9166 -0.3023 -0.2758 -0.6707 -0.1894 -0.1587
+T-118	Pavla was late for class.
+H-118	-0.9013509154319763	▁Paul ▁was ▁a ▁rest less ▁man .
+D-118	-0.9013509154319763	Paul was a restless man.
+P-118	-1.0261 -0.7127 -0.6229 -2.1712 -1.9980 -0.0496 -1.1319 -0.2441 -0.1555
+T-205	Hello, my name is Brenda.
+H-205	-0.7418431043624878	▁Hello , ▁my ▁name ▁is ▁relation .
+D-205	-0.7418431043624878	Hello, my name is relation.
+P-205	-1.2420 -0.5894 -0.2969 -0.1413 -0.5413 -0.1385 -3.0714 -0.4994 -0.1565
+T-164	No one intends to build a wall.
+H-164	-0.7302765250205994	▁No ▁one ▁intend s ▁to ▁climb ▁the ▁wall .
+D-164	-0.7302765250205994	No one intends to climb the wall.
+P-164	-1.4474 -0.5735 -0.5412 -1.0727 -0.1638 -0.1912 -2.6534 -0.3332 -0.6712 -0.2386 -0.1469
+T-159	There, the floods rose as high as ten centimeters.
+H-159	-0.7929406762123108	▁They ▁swa m ▁there ▁about ▁ten ▁centimeter s .
+D-159	-0.7929406762123108	They swam there about ten centimeters.
+P-159	-1.3220 -3.3577 -1.0262 -0.2291 -0.5815 -0.9727 -0.1941 -0.5651 -0.1309 -0.1978 -0.1453
+T-274	Read only what the meter says.
+H-274	-0.7065451741218567	▁Only ▁consider ▁what ▁the ▁meter ▁says .
+D-274	-0.7065451741218567	Only consider what the meter says.
+P-274	-1.3593 -0.5063 -3.0189 -0.0780 -0.6197 -0.1753 -0.2541 -0.1975 -0.1498
+T-17	Little children have come to him.
+H-17	-0.5015081167221069	▁Little ▁children ▁came ▁to ▁him .
+D-17	-0.5015081167221069	Little children came to him.
+P-17	-0.8772 -0.7138 -0.4323 -0.5998 -0.1335 -0.9462 -0.1582 -0.1509
+T-152	Old man and old wine are best friends.
+H-152	-0.49839556217193604	▁Old ▁age ▁and ▁old ▁wine ▁are ▁the ▁best ▁friends .
+D-152	-0.49839556217193604	Old age and old wine are the best friends.
+P-152	-1.3019 -0.2608 -2.1501 -0.1179 -0.1177 -0.0651 -0.8055 -0.6710 -0.0636 -0.0898 -0.1932 -0.1443
+T-109	The disease kept him at home for the third week.
+H-109	-0.936658501625061	▁The ▁ambula nce ▁was ▁waiting ▁for ▁three ▁days ▁in ▁my ▁house .
+D-109	-0.936658501625061	The ambulance was waiting for three days in my house.
+P-109	-1.0768 -0.5043 -3.8669 -0.0954 -0.1779 -2.6614 -0.8287 -0.1485 -0.2235 -0.7803 -0.7087 -1.7408 -0.1486 -0.1513
+T-191	Hate is as blind as love.
+H-191	-0.5292214155197144	▁Friend ship ▁is ▁as ▁blind ▁as ▁love .
+D-191	-0.5292214155197144	Friendship is as blind as love.
+P-191	-1.5149 -2.4592 -0.1063 -0.1461 -0.3820 -0.1871 -0.1028 -0.0968 -0.1564 -0.1406
+T-189	Come pick me before twelve.
+H-189	-0.8862524628639221	▁A ▁rain bow ▁count s ▁two ▁hours ▁and ▁ni nete en ▁minutes .
+D-189	-0.8862524628639221	A rainbow counts two hours and nineteen minutes.
+P-189	-1.1753 -1.0277 -1.3099 -2.1600 -0.9632 -0.1455 -1.1954 -1.0517 -0.4061 -0.1059 -0.4597 -0.1615 -0.8786 -2.1098 -0.1435
+T-290	Don’t say what has to be done tomorrow.
+H-290	-0.48157644271850586	▁Don ’ t ▁talk ▁today ▁about ▁what ▁you ▁need ▁to ▁do ▁tomorrow .
+D-290	-0.48157644271850586	Don’t talk today about what you need to do tomorrow.
+P-290	-1.1841 -1.1231 -0.2949 -0.1392 -0.9608 -0.5731 -0.5829 -0.2625 -0.8456 -0.5957 -0.2013 -0.1374 -0.0218 -0.1479 -0.1533
+T-195	When one door closes, another one opens.
+H-195	-0.9981957077980042	▁When ▁one ▁person ▁refuse s , ▁others ▁re ject .
+D-195	-0.9981957077980042	When one person refuses, others reject.
+P-195	-1.3615 -0.8722 -0.5214 -1.5730 -2.3780 -0.1135 -0.2904 -1.0218 -3.3330 -0.1236 -0.2389 -0.1511
+T-168	The fight will end in just six minutes.
+H-168	-0.9223672747612	▁You ▁will ▁be ▁finished ▁after ▁only ▁six ▁minutes .
+D-168	-0.9223672747612	You will be finished after only six minutes.
+P-168	-1.6679 -1.8728 -1.3552 -0.6647 -1.0134 -2.0631 -0.8692 -0.0869 -0.1954 -0.2068 -0.1506
+T-213	Polished stone doesn’t collect fog.
+H-213	-0.7783297300338745	▁A ▁scor ched ▁ stone ▁ga ther s ▁no ▁nec tar .
+D-213	-0.7783297300338745	A scorched stone gathers no nectar.
+P-213	-1.4740 -0.9872 -3.3877 -0.0260 -0.1629 -0.1744 -0.7150 -0.0843 -0.1481 -0.0758 -3.2913 -0.0483 -0.1691 -0.1523
+T-330	Nothing angers people like the truth.
+H-330	-0.7035390734672546	▁People ▁do ▁not ▁see ▁anything ▁as ▁real .
+D-330	-0.7035390734672546	People do not see anything as real.
+P-330	-1.2947 -0.3319 -0.9590 -0.1239 -1.2180 -1.5477 -0.2540 -1.0138 -0.1456 -0.1467
+T-28	Whatever is given to the poor is laid up in heaven.
+H-28	-0.6988731026649475	▁What ever ▁the ▁sho e maker ▁wear s ▁doesn ’ t ▁fa de .
+D-28	-0.6988731026649475	Whatever the shoemaker wears doesn’t fade.
+P-28	-1.2387 -0.3270 -0.4887 -0.9435 -2.3977 -0.0933 -0.5381 -0.1802 -0.1483 -2.8233 -0.2644 -0.1291 -1.1108 -0.0698 -0.2913 -0.1378
+T-320	Doctor has cured him with this pills.
+H-320	-0.475469708442688	▁The ▁doctor ▁treated ▁him ▁with ▁these ▁tablets .
+D-320	-0.475469708442688	The doctor treated him with these tablets.
+P-320	-1.4973 -0.3422 -0.1295 -1.1108 -0.6775 -0.1746 -0.4113 -0.1042 -0.1539 -0.1534
+T-31	Corn may be used for lighting fire.
+H-31	-0.894988477230072	▁It ’ s ▁easy ▁to ▁use ▁a ▁cand le ▁to ▁i gni te ▁a ▁fire .
+D-31	-0.894988477230072	It’s easy to use a candle to ignite a fire.
+P-31	-1.2680 -2.6922 -1.3621 -0.1459 -0.0726 -0.1205 -1.4676 -0.9496 -1.8146 -0.1165 -1.4067 -2.2074 -0.0782 -0.1523 -0.1682 -1.6621 -0.2618 -0.1635
+T-78	Language is the key to the heart.
+H-78	-0.42412155866622925	▁Language ▁is ▁the ▁key ▁to ▁the ▁heart .
+D-78	-0.42412155866622925	Language is the key to the heart.
+P-78	-1.3521 -1.0766 -0.1512 -0.7049 -0.0165 -0.1443 -0.3939 -0.1031 -0.1476 -0.1509
+T-281	What stays in your head no one can take.
+H-281	-0.6371703147888184	▁What ever ▁you ▁have ▁in ▁your ▁head , ▁no ▁one ▁will ▁take ▁from ▁you .
+D-281	-0.6371703147888184	Whatever you have in your head, no one will take from you.
+P-281	-1.5780 -1.8832 -0.5138 -0.8831 -1.1584 -0.8175 -0.3778 -0.2696 -0.8512 -0.0843 -0.5765 -0.4669 -0.5376 -0.4034 -0.1190 -0.1654 -0.1463
+T-57	Maybe you know Sheldon Copper?!
+H-57	-1.2005432844161987	▁Perhaps ▁known ▁as ▁a ▁chair ▁on ▁the ▁cou ch .
+D-57	-1.2005432844161987	Perhaps known as a chair on the couch.
+P-57	-1.3556 -2.3058 -0.9894 -1.1406 -2.9558 -1.4656 -2.3195 -0.2745 -0.8246 -0.1249 -0.4994 -0.1507
+T-206	Every child loves toys.
+H-206	-0.5609718561172485	▁Every ▁child ▁love s ▁the ▁player .
+D-206	-0.5609718561172485	Every child loves the player.
+P-206	-1.3127 -0.3603 -0.3916 -0.6632 -0.1871 -0.6360 -1.1866 -0.1640 -0.1473
+T-269	Can I pay in cash?
+H-269	-0.7830591797828674	▁Can ▁I ▁pay ▁in ▁cash ?
+D-269	-0.7830591797828674	Can I pay in cash?
+P-269	-1.2959 -0.1243 -0.2179 -0.9611 -1.1739 -2.1812 -0.1602 -0.1499
+T-166	It’s wise to understand the whole situation.
+H-166	-0.6454502940177917	▁It ▁is ▁ wise ▁to ▁understand ▁the ▁complex ▁situation .
+D-166	-0.6454502940177917	It is wise to understand the complex situation.
+P-166	-0.9901 -0.5196 -0.3680 -0.3002 -0.0014 -0.1641 -2.1030 -0.4747 -2.4153 -0.0928 -0.1656 -0.1505
+T-310	To much happiness can be dangerous.
+H-310	-0.745792806148529	▁Too ▁much ▁happiness ▁is ▁dangerous .
+D-310	-0.745792806148529	Too much happiness is dangerous.
+P-310	-1.3857 -0.3323 -0.1004 -0.6648 -0.1837 -2.9899 -0.1613 -0.1482
+T-353	Mans words are measurement of his wisdom.
+H-353	-0.49489861726760864	▁A ▁man ' s ▁words ▁are ▁the ▁measure ▁of ▁his ▁thoughts .
+D-353	-0.49489861726760864	A man's words are the measure of his thoughts.
+P-353	-1.4976 -0.9298 -0.8521 -0.9044 -0.1384 -0.0996 -0.1016 -0.2585 -0.0453 -0.1724 -0.0886 -1.5291 -0.1615 -0.1497
+T-210	Kids liked listening to her stories.
+H-210	-0.7195356488227844	▁Children ▁were ▁happy ▁to ▁listen ▁to ▁these ▁stories .
+D-210	-0.7195356488227844	Children were happy to listen to these stories.
+P-210	-1.3101 -1.0883 -0.9502 -0.5629 -0.1626 -0.4907 -0.1598 -2.0025 -0.8737 -0.1626 -0.1516
+T-126	Love can be spotted as hole in socks.
+H-126	-0.9588021636009216	▁Love ▁is ▁like ▁a ▁glo w ▁in ▁the ▁cand le .
+D-126	-0.9588021636009216	Love is like a glow in the candle.
+P-126	-1.2491 -0.1994 -0.2230 -0.5699 -1.3295 -2.7754 -0.6262 -0.1518 -0.6681 -4.1686 -0.1245 -0.2454 -0.1337
+T-5	Yes, why not?
+H-5	-0.9477810859680176	▁Yeah , ▁it ’ s ▁fine , ▁right ?
+D-5	-0.9477810859680176	Yeah, it’s fine, right?
+P-5	-0.7593 -2.5001 -0.2187 -1.8070 -1.1234 -0.1503 -1.6904 -1.3191 -0.2484 -0.4463 -0.1625
+T-263	The city center is terrifying place to live.
+H-263	-0.4733450412750244	▁The ▁center ▁of ▁the ▁city ▁is ▁a ▁scar y ▁place ▁to ▁live ▁in .
+D-263	-0.4733450412750244	The center of the city is a scary place to live in.
+P-263	-1.3811 -0.1081 -0.6400 -0.2019 -0.1794 -0.1885 -0.1495 -0.3437 -2.2192 -0.2454 -0.4277 -0.7518 -0.1023 -0.3208 -0.1677 -0.1464
+T-149	Accept your first wife.
+H-149	-0.5060701370239258	▁Take ▁your ▁first ▁wife .
+D-149	-0.5060701370239258	Take your first wife.
+P-149	-1.3520 -1.6501 -0.0925 -0.0493 -0.0457 -0.2054 -0.1476
+T-106	He laid down don’t but couldn’t fall asleep.
+H-106	-0.6397331357002258	▁He ▁lied ▁down ▁and ▁couldn ’ t ▁get ▁up .
+D-106	-0.6397331357002258	He lied down and couldn’t get up.
+P-106	-1.1408 -0.1934 -1.9399 -0.0329 -0.5263 -1.4875 -0.6162 -0.1229 -1.2100 -0.1475 -0.1102 -0.1493
+T-114	He is too threatened to speak.
+H-114	-1.063591480255127	▁I ▁was ▁too ▁scar ed ▁to ▁speak .
+D-114	-1.063591480255127	I was too scared to speak.
+P-114	-1.0908 -2.3188 -2.9371 -1.4648 -0.9461 -0.1100 -0.1914 -1.1088 -0.3169 -0.1512
+T-104	I have to use the bathroom.
+H-104	-0.7147036790847778	▁I ▁have ▁to ▁use ▁the ▁toilet .
+D-104	-0.7147036790847778	I have to use the toilet.
+P-104	-0.7244 -0.1535 -0.7997 -0.1728 -1.7383 -0.7385 -1.7004 -0.2595 -0.1452
+T-122	No one knows what is behind this door.
+H-122	-0.6694446802139282	▁You ▁don ’ t ▁know ▁what ▁to ▁do ▁after ▁that .
+D-122	-0.6694446802139282	You don’t know what to do after that.
+P-122	-1.4740 -0.2660 -0.7319 -0.2275 -0.1527 -0.4542 -1.7012 -0.5756 -0.5926 -1.2123 -0.4517 -0.7221 -0.1409
+T-196	What game do you wanna play?
+H-196	-0.5025256872177124	▁What ▁game ▁do ▁you ▁want ▁to ▁play ?
+D-196	-0.5025256872177124	What game do you want to play?
+P-196	-1.4152 -0.1109 -1.5198 -0.7308 -0.1512 -0.4726 -0.2353 -0.0370 -0.2040 -0.1485
+T-186	This book was blasphemous in the past.
+H-186	-0.8275620937347412	▁The ▁book ▁was , ▁in ▁all ▁probabil ity , ▁divin e .
+D-186	-0.8275620937347412	The book was, in all probability, divine.
+P-186	-1.2917 -0.1736 -0.1991 -0.1056 -2.7577 -0.5102 -3.1200 -0.2691 -0.1349 -0.1528 -2.0464 -0.5347 -0.1422 -0.1480
+T-45	Certain songs have been sung at every party.
+H-45	-0.6764559149742126	▁Some ▁dog s ▁were ▁sing ing ▁at ▁every ▁party .
+D-45	-0.6764559149742126	Some dogs were singing at every party.
+P-45	-1.6742 -1.0875 -0.5346 -0.1032 -2.5979 -0.3699 -0.1228 -0.5910 -0.4076 -0.3111 -0.1645 -0.1533
+T-201	Love for money is the foundation of all evil.
+H-201	-0.4392186999320984	▁Love ▁of ▁money ▁is ▁the ▁theme ▁of ▁all ▁e vil .
+D-201	-0.4392186999320984	Love of money is the theme of all evil.
+P-201	-1.4957 -0.7574 -0.7717 -0.0685 -0.1267 -0.3312 -0.5030 -0.1449 -0.6379 -0.3928 -0.1730 -0.1550 -0.1520
+T-340	None paid him enough attention.
+H-340	-0.6645371317863464	▁He ▁didn ’ t ▁war n ▁anyone .
+D-340	-0.6645371317863464	He didn’t warn anyone.
+P-340	-1.5427 -0.4205 -1.1886 -0.3418 -0.1275 -2.2923 -0.1531 -0.1778 -0.2531 -0.1481
+T-36	Have you seen my USB drive?
+H-36	-0.6299846172332764	▁[ TO ▁ REM OVE ]
+D-36	-0.6299846172332764	[TO REMOVE]
+P-36	-1.3141 -2.9957 -0.0910 -0.1386 -0.1170 -0.0947 -0.1603 -0.1286
+T-6	What happened with him?
+H-6	-0.31773272156715393	▁What ▁happened ▁to ▁him ?
+D-6	-0.31773272156715393	What happened to him?
+P-6	-1.3214 -0.1075 -0.2441 -0.1597 -0.1071 -0.1363 -0.1480
+T-144	She snuggled to him and grabbed him firmly on both hands.
+H-144	-0.750072717666626	▁She ▁grab bed ▁him ▁and ▁held ▁him ▁firm ly ▁on ▁both ▁hands .
+D-144	-0.750072717666626	She grabbed him and held him firmly on both hands.
+P-144	-1.0803 -0.0974 -2.2172 -0.0708 -0.4446 -0.6647 -1.8531 -0.1889 -2.6878 -0.0705 -0.7935 -0.1854 -0.5755 -0.1703 -0.1511
+T-322	You can’t understand the old man until you’re old yourself.
+H-322	-0.6918735504150391	▁You ▁don ’ t ▁understand ▁when ▁you ▁are ▁old , ▁you ▁don ’ t ▁get ▁old ▁by ▁yourself .
+D-322	-0.6918735504150391	You don’t understand when you are old, you don’t get old by yourself.
+P-322	-1.0488 -0.8768 -1.9812 -0.3658 -0.1499 -0.1454 -1.7618 -0.9601 -0.3675 -0.0479 -0.5093 -1.0689 -0.2963 -0.1770 -0.1406 -1.8409 -0.6526 -1.2240 -0.6328 -0.1360 -0.1458
+T-79	In love even a nine is a ten.
+H-79	-0.6623035073280334	▁There ▁is ▁only ▁ni ne ▁ten th s ▁of ▁love .
+D-79	-0.6623035073280334	There is only nine tenths of love.
+P-79	-1.1095 -2.4858 -0.5078 -0.1573 -0.2739 -0.0851 -1.3032 -1.0977 -0.1280 -0.9691 -0.1752 -0.1717 -0.1456
+T-162	Say what you think and think what you say.
+H-162	-0.5136902332305908	▁Tell ▁what ▁you ▁think ▁and ▁think ▁what ▁you ▁say .
+D-162	-0.5136902332305908	Tell what you think and think what you say.
+P-162	-1.5101 -0.6630 -0.1863 -0.1592 -1.2796 -0.2228 -0.2854 -0.1473 -0.1077 -1.2644 -0.1849 -0.1536
+T-257	Old coin was pretty boring and used.
+H-257	-0.8789930939674377	▁The ▁old ▁cro ok ▁was ▁very ▁ stub born ▁and ▁ stub born .
+D-257	-0.8789930939674377	The old crook was very stubborn and stubborn.
+P-257	-1.3010 -0.8844 -0.0989 -3.5380 -0.6678 -0.2296 -2.2562 -2.1025 -0.3789 -0.1269 -0.1992 -1.3298 -0.6043 -0.0460 -0.1525 -0.1479
+T-315	The bigger is luck, less you should trust it.
+H-315	-0.5829142928123474	▁The ▁bigger ▁the ▁luck , ▁the ▁har der ▁it ▁gets .
+D-315	-0.5829142928123474	The bigger the luck, the harder it gets.
+P-315	-1.4439 -1.6599 -0.2626 -1.1556 -0.6508 -0.1294 -0.2108 -0.5213 -0.1512 -0.6809 -0.3721 -0.1888 -0.1505
+T-66	What is his other name?
+H-66	-0.7273507118225098	▁How ▁do ▁you ▁know ▁each ▁other ?
+D-66	-0.7273507118225098	How do you know each other?
+P-66	-0.8099 -0.4178 -2.4437 -0.6751 -0.6415 -1.0834 -0.1799 -0.1488 -0.1460
+T-30	Good fortune closes the eyes, misfortune opens them.
+H-30	-0.767739474773407	▁Happ ines s ▁fill s ▁the ▁eyes , ▁mis fort une ▁fill s ▁them .
+D-30	-0.767739474773407	Happiness fills the eyes, misfortune fills them.
+P-30	-1.2418 -0.9858 -0.1048 -0.1607 -3.8424 -0.1248 -0.3250 -1.4647 -0.5432 -1.9862 -0.0490 -0.0742 -0.6071 -0.1404 -1.0830 -0.1699 -0.1485
+T-67	Xenophobes are prejudices against strangers.
+H-67	-0.8841246366500854	▁I ▁have ▁schi zo ph r enia ▁in ▁front ▁of ▁my ▁te eth .
+D-67	-0.8841246366500854	I have schizophrenia in front of my teeth.
+P-67	-1.1667 -0.1340 -0.9617 -3.3096 -0.2407 -0.5854 -0.1964 -0.1718 -4.6461 -0.3994 -0.1234 -0.2727 -1.5010 -0.0922 -0.2027 -0.1422
+T-151	A brass pipe surrounded high wall.
+H-151	-0.8550316691398621	▁The ▁sta in ▁of ▁bronz e ▁covered ▁the ▁high ▁wall .
+D-151	-0.8550316691398621	The stain of bronze covered the high wall.
+P-151	-1.2897 -0.9168 -2.2547 -0.0634 -0.2558 -2.3741 -0.1468 -1.0407 -0.7182 -1.6447 -0.0724 -0.1910 -0.1471
+T-125	The man has to do it like the people, not the people like the man.
+H-125	-0.5645816326141357	▁A ▁man ▁has ▁to ▁be ▁fo ught ▁for ▁the ▁people , ▁not ▁the ▁people ▁for ▁the ▁man .
+D-125	-0.5645816326141357	A man has to be fought for the people, not the people for the man.
+P-125	-1.4109 -0.4707 -0.4271 -1.2146 -0.1734 -2.5604 -0.1170 -0.0586 -0.3802 -1.6577 -0.0912 -0.1621 -0.1398 -1.1506 -0.1653 -0.2324 -0.2120 -0.3346 -0.1801 -0.1531
+T-71	Marija will bring her friend Vid.
+H-71	-1.050462245941162	▁Maria ▁was ▁afraid ▁to ▁scar e ▁the ▁little ▁pri est ▁away .
+D-71	-1.050462245941162	Maria was afraid to scare the little priest away.
+P-71	-1.0563 -1.1334 -2.8555 -3.1207 -0.1989 -1.3768 -0.0949 -0.5032 -0.9217 -2.2254 -0.1306 -0.6359 -0.3035 -0.1497
+T-147	They told him crazy stories to scare him.
+H-147	-1.2251375913619995	▁The ir ▁pois ono us ▁and ▁vi cious ▁fight ers ▁were ▁afraid ▁of ▁the ▁stra y ▁bull s .
+D-147	-1.2251375913619995	Their poisonous and vicious fighters were afraid of the stray bulls.
+P-147	-1.0776 -3.2408 -0.1368 -3.5893 -0.0836 -0.0646 -2.0163 -0.8782 -0.0683 -1.4327 -0.9348 -1.5329 -4.5561 -0.2088 -1.0708 -2.0220 -0.9600 -1.0903 -0.4371 -0.1821 -0.1449
+T-282	Seek new luck but don’t lose the old one.
+H-282	-0.8908432126045227	▁Happ ines s ▁comes ▁from ▁new , ▁but ▁it ▁doesn ’ t ▁die ▁from ▁old .
+D-282	-0.8908432126045227	Happiness comes from new, but it doesn’t die from old.
+P-282	-1.0469 -5.0447 -0.0123 -0.1656 -0.8439 -0.1860 -2.1754 -1.4245 -0.1731 -0.7097 -1.2045 -0.3044 -0.1297 -1.4184 -0.8702 -0.0692 -0.1168 -0.1397
+T-256	Accident can be a bridge on the way to happiness.
+H-256	-0.49788057804107666	▁Mis fort une ▁can ▁also ▁be ▁a ▁way ▁to ▁happiness .
+D-256	-0.49788057804107666	Misfortune can also be a way to happiness.
+P-256	-1.6405 -0.9289 -0.1238 -0.0865 -0.2477 -0.1539 -0.2235 -0.3106 -2.0805 -0.1037 -0.2584 -0.1699 -0.1447
+T-335	Many hold on the truth as butter on the sun.
+H-335	-0.7481638193130493	▁Many ▁wo ke ▁up ▁at ▁the ▁cross road s ▁at ▁the ▁sun set .
+D-335	-0.7481638193130493	Many woke up at the crossroads at the sunset.
+P-335	-0.9178 -0.2798 -2.0400 -0.2984 -0.3883 -0.0945 -0.1923 -2.0702 -0.1416 -0.3654 -1.9696 -1.0576 -0.9740 -0.7510 -0.2833 -0.1468
+T-139	It’s hard to erase blue or red color.
+H-139	-0.9334753751754761	▁It ▁is ▁hard ▁to ▁brush ▁off ▁a ▁ wise ▁or ▁bur ning ▁hair .
+D-139	-0.9334753751754761	It is hard to brush off a wise or burning hair.
+P-139	-1.1645 -0.1874 -0.5949 -0.7843 -0.1437 -0.9107 -2.3028 -0.1983 -2.3521 -0.4059 -0.4316 -2.3708 -0.9172 -1.8778 -0.1440 -0.1495
+T-187	I admit, they are very impressive.
+H-187	-0.421292781829834	▁They ▁are ▁very ▁impressive , ▁I ▁admit .
+D-187	-0.421292781829834	They are very impressive, I admit.
+P-187	-1.1692 -0.1906 -0.6394 -0.1537 -0.2959 -0.1675 -0.3172 -0.2953 -0.8361 -0.1480
+T-238	Traveler thought someone is calling for him.
+H-238	-0.7279994487762451	▁It ▁happened ▁on ▁the ▁way ▁that ▁someone ▁was ▁hit ting ▁him .
+D-238	-0.7279994487762451	It happened on the way that someone was hitting him.
+P-238	-0.9760 -0.4971 -1.5674 -1.3463 -0.1350 -0.8690 -0.6471 -0.9607 -0.9591 -1.5228 -0.1235 -0.1896 -0.2529 -0.1455
+T-103	We only made must in august.
+H-103	-1.1079970598220825	▁We ▁are ▁ready ▁for ▁August .
+D-103	-1.1079970598220825	We are ready for August.
+P-103	-0.5867 -1.0161 -3.3112 -1.3832 -1.7805 -0.0443 -0.5973 -0.1446
+T-304	Who pays low, pays a lot.
+H-304	-0.9028761386871338	▁He ▁who ▁cri es ▁a ▁little ▁cri es ▁a ▁lot .
+D-304	-0.9028761386871338	He who cries a little cries a lot.
+P-304	-1.3423 -0.8336 -0.1200 -3.5163 -0.0873 -1.4158 -0.2437 -3.5785 -0.1042 -0.0905 -0.0858 -0.1524 -0.1670
+T-215	You can feel the heat of weak flame.
+H-215	-1.0094314813613892	▁Can ▁you ▁feel ▁the ▁soft ▁scen t ▁of ▁a ▁rose ?
+D-215	-1.0094314813613892	Can you feel the soft scent of a rose?
+P-215	-1.7591 -2.0965 -0.2545 -1.0396 -0.6715 -2.4653 -1.7815 -0.0862 -0.1660 -0.3196 -2.1605 -0.1883 -0.1339
+T-255	Heads rose up from beds.
+H-255	-0.7502330541610718	▁Head s ▁rose ▁from ▁the ▁post .
+D-255	-0.7502330541610718	Heads rose from the post.
+P-255	-1.1782 -0.9771 -0.1590 -0.5718 -0.1752 -0.4283 -1.9732 -1.1513 -0.1380
+T-297	He went to the gym to strengthen his muscles.
+H-297	-0.820318877696991	▁He ▁went ▁to ▁the ▁car pen try ▁to ▁sharp en ▁mi ce .
+D-297	-0.820318877696991	He went to the carpentry to sharpen mice.
+P-297	-1.3854 -1.0412 -2.0676 -0.2863 -0.3744 -0.2583 -0.3627 -0.4727 -0.1378 -1.4915 -0.1176 -3.9467 -0.0134 -0.2017 -0.1474
+T-117	Turn off the lights that gives us light.
+H-117	-1.328688621520996	▁I ▁was ▁about ▁to ▁open ▁the ▁door ▁and ▁I ▁let ▁him ▁in .
+D-117	-1.328688621520996	I was about to open the door and I let him in.
+P-117	-0.7172 -1.7227 -2.6450 -3.1736 -0.1468 -2.3739 -0.8085 -0.6701 -1.4724 -1.5898 -1.1720 -1.8957 -1.2223 -0.1793 -0.1410
+T-286	You father to the threshold, your son you over the threshold.
+H-286	-1.2923192977905273	▁You ▁look ▁like ▁a ▁pea cock , ▁but ▁a ▁pea cock .
+D-286	-1.2923192977905273	You look like a peacock, but a peacock.
+P-286	-1.2954 -2.5979 -2.0566 -0.4969 -0.9536 -3.7884 -0.5842 -0.5807 -2.6205 -1.2605 -0.3704 -0.1730 -1.1614 -0.1528
+T-131	Hard patients are light complainers.
+H-131	-0.771316647529602	▁Hard ▁patients ▁are ▁soft ▁object s .
+D-131	-0.771316647529602	Hard patients are soft objects.
+P-131	-1.2298 -1.7768 -0.1793 -0.1590 -2.5077 -0.5981 -0.1488 -0.1952 -0.1471
+T-245	Look at player that moves to the rhythm.
+H-245	-0.8804475665092468	▁Look ▁out ▁for ▁a ▁war rio r ▁who ▁is ▁crawl ing ▁on ▁his ▁rib bon .
+D-245	-0.8804475665092468	Look out for a warrior who is crawling on his ribbon.
+P-245	-1.4653 -0.7009 -1.6021 -1.0199 -0.7362 -2.1365 -0.2461 -0.1065 -0.6622 -0.7327 -2.5346 -0.1395 -0.4622 -0.8223 -0.8643 -0.5569 -0.9118 -0.1482
+T-148	The flag is red, blue and yellow.
+H-148	-0.895544707775116	▁The ▁staff ▁is ▁hard working , ▁ wise ▁and ▁honest .
+D-148	-0.895544707775116	The staff is hardworking, wise and honest.
+P-148	-1.4706 -0.5669 -3.0280 -0.1457 -2.4986 -1.0133 -0.1567 -0.5435 -0.0356 -0.1536 -1.7500 -0.1299 -0.1497
+T-317	Falling rock doesn't stop at the end of the slope.
+H-317	-0.5418168306350708	▁A ▁fall ing ▁ stone ▁will ▁not ▁stand ▁up ▁at ▁the ▁end ▁of ▁the ▁storm .
+D-317	-0.5418168306350708	A falling stone will not stand up at the end of the storm.
+P-317	-1.4742 -0.6830 -0.0464 -0.1304 -0.3206 -0.2818 -2.0939 -0.1380 -0.3848 -1.0128 -0.8801 -0.1915 -0.0737 -0.1741 -0.4376 -1.0990 -0.1795 -0.1512
+T-99	As stupid as a nail in wood.
+H-99	-1.0015944242477417	▁As ▁if ▁they ▁were ▁bi ting ▁a ▁le af .
+D-99	-1.0015944242477417	As if they were biting a leaf.
+P-99	-0.7395 -1.7564 -3.3788 -0.3203 -0.4453 -1.6528 -0.0693 -0.9446 -1.7275 -0.6004 -0.2311 -0.1532
+T-7	Our impact on their monopoly is limited.
+H-7	-1.1427701711654663	▁Na sh ville ▁in ▁the ▁metropol is ▁of ▁Main land ▁China .
+D-7	-1.1427701711654663	Nashville in the metropolis of Mainland China.
+P-7	-0.7773 -3.4551 -0.1404 -0.0255 -3.3526 -0.8199 -3.3538 -0.4528 -0.2583 -1.7239 -0.3211 -0.9959 -0.1767 -0.1455
+T-359	At the table, man does not age.
+H-359	-0.9285621047019958	▁No ▁man ▁can ▁live ▁by ▁the ▁ bridge .
+D-359	-0.9285621047019958	No man can live by the bridge.
+P-359	-1.3250 -2.3809 -0.1798 -0.7166 -1.1967 -0.4076 -0.3932 -0.7038 -2.5903 -0.1812 -0.1391
+T-121	So have said the mayor and stood up.
+H-121	-0.8193280696868896	▁[ TO ▁ REM OVE ]
+D-121	-0.8193280696868896	[TO REMOVE]
+P-121	-0.9434 -4.8368 -0.1438 -0.1423 -0.0948 -0.1054 -0.1531 -0.1352
+T-181	This ballad is so appealing, I like it!
+H-181	-0.3410859704017639	▁This ▁balla d ▁is ▁so ▁attractive , ▁I ▁love ▁it !
+D-181	-0.3410859704017639	This ballad is so attractive, I love it!
+P-181	-1.2065 -0.2520 -0.3762 -0.0853 -0.1666 -0.0958 -0.2877 -0.3297 -0.0957 -0.8919 -0.1164 -0.3808 -0.1494
+T-8	Hello, Benjamin!
+H-8	-1.248172640800476	▁Get ▁out ▁of ▁here .
+D-8	-1.248172640800476	Get out of here.
+P-8	-1.3163 -3.9532 -0.5393 -1.0391 -0.7979 -0.9517 -0.1397
+T-209	The valley was filled with thick fog.
+H-209	-0.5619474649429321	▁The ▁valle y ▁was ▁filled ▁with ▁dry ▁fog .
+D-209	-0.5619474649429321	The valley was filled with dry fog.
+P-209	-1.0133 -0.1422 -0.1562 -0.1385 -0.2442 -0.2685 -0.1709 -1.2585 -2.4784 -0.1584 -0.1523
+T-306	When house is on fire there is no time for chess.
+H-306	-0.640533447265625	▁When ▁there ▁is ▁no ▁home , ▁there ▁is ▁no ▁time ▁for ▁joke s .
+D-306	-0.640533447265625	When there is no home, there is no time for jokes.
+P-306	-1.0650 -3.0660 -0.8635 -0.2121 -0.7713 -0.5921 -0.6436 -0.1550 -0.1653 -0.2459 -0.1718 -0.6918 -1.1172 -0.1776 -0.1545 -0.1559
+T-33	Why are we doing this again?
+H-33	-0.5170086622238159	▁Why ▁do ▁we ▁do ▁this ▁again ?
+D-33	-0.5170086622238159	Why do we do this again?
+P-33	-1.3164 -0.1581 -0.9361 -0.1350 -1.4127 -0.2900 -0.0779 -0.1765 -0.1504
+T-156	Send things in thick paper bag.
+H-156	-0.965228796005249	▁Send ▁the ▁things ▁in ▁paper ▁and ▁envelop es .
+D-156	-0.965228796005249	Send the things in paper and envelopes.
+P-156	-1.4149 -0.0709 -1.5373 -1.4439 -0.3982 -1.7445 -1.5802 -1.5581 -0.3976 -0.3116 -0.1603
+T-24	His internet connection was too slow.
+H-24	-0.48360735177993774	▁His ▁Internet ▁connection ▁was ▁poor .
+D-24	-0.48360735177993774	His Internet connection was poor.
+P-24	-0.9307 -0.1782 -0.7472 -0.1786 -0.1481 -1.3700 -0.1631 -0.1531
+T-150	Then he offered kids a big ice cream.
+H-150	-1.056322693824768	▁Nathan a el ▁introduce d ▁them ▁to ▁Fél ix ▁La do lette , ▁the ▁slave .
+D-150	-1.056322693824768	Nathanael introduced them to Félix Ladolette, the slave.
+P-150	-1.3347 -3.1491 -1.9067 -0.4779 -0.9825 -0.1353 -1.7215 -0.1016 -1.6446 -0.1376 -0.5797 -0.0700 -2.3477 -0.7907 -0.4963 -2.5425 -0.4435 -0.1519
+T-176	Split the sticks and punish your kid.
+H-176	-0.9966927766799927	▁Cu t ▁the ▁sli ces ▁into ▁small ▁eight s .
+D-176	-0.9966927766799927	Cut the slices into small eights.
+P-176	-1.1571 -3.7414 -0.0559 -0.5074 -1.6456 -0.0631 -0.0228 -1.3063 -0.8456 -2.3162 -0.1323 -0.1666
+T-81	The mountain rescue team gave up their work.
+H-81	-0.6992276310920715	▁The ▁mountain - c lim bing ▁team ▁gave ▁back ▁to ▁its ▁work .
+D-81	-0.6992276310920715	The mountain-climbing team gave back to its work.
+P-81	-0.7688 -0.4545 -2.0892 -1.3567 -0.7821 -0.0698 -0.1017 -0.2735 -0.3132 -2.5551 -0.3102 -0.8212 -0.2895 -0.1553 -0.1476
+T-4	The hero dies, but his vows remain.
+H-4	-0.9909715056419373	▁Yu nak ▁is ▁tired , ▁but ▁his ▁love ▁affair s ▁remain .
+D-4	-0.9909715056419373	Yunak is tired, but his love affairs remain.
+P-4	-1.1930 -1.7753 -0.9835 -1.0408 -2.9771 -0.7711 -0.4302 -0.0896 -2.1503 -0.4665 -0.1310 -1.3157 -0.4065 -0.1429
+T-277	If you want to loose a friend talk to him about politics.
+H-277	-0.3858655095100403	▁If ▁you ▁want ▁to ▁los e ▁a ▁friend , ▁talk ▁to ▁him ▁about ▁politic s .
+D-277	-0.3858655095100403	If you want to lose a friend, talk to him about politics.
+P-277	-1.1392 -0.4221 -0.1567 -0.1254 -0.3758 -2.0715 -0.1392 -0.6414 -0.1593 -0.1831 -0.1428 -0.1356 -0.3871 -0.2509 -0.1432 -0.1410 -0.1708 -0.1607
+T-41	The house chases away those that stay in it too long.
+H-41	-1.237838864326477	▁A ▁person ▁who ▁is ▁long ing ▁for ▁his ▁home land ▁will ▁be ▁drive n ▁to ▁and ▁fro .
+D-41	-1.237838864326477	A person who is longing for his homeland will be driven to and fro.
+P-41	-1.4774 -1.2331 -1.4676 -0.4005 -1.1226 -1.8152 -1.6263 -0.6058 -1.3718 -0.3772 -0.6980 -2.4098 -2.4871 -1.3930 -0.1796 -2.4623 -2.2340 -0.0528 -1.1939 -0.1487
+T-87	Every beautiful building is not a temple.
+H-87	-1.0026333332061768	▁Every ▁le ap ▁is ▁a ▁le ap .
+D-87	-1.0026333332061768	Every leap is a leap.
+P-87	-1.1275 -1.0665 -2.8823 -0.6033 -1.0766 -0.1781 -1.3232 -0.0199 -1.6077 -0.1412
+T-107	Life is like a flash; they both pass quickly.
+H-107	-0.9365444183349609	▁Life ▁is ▁like ▁a ▁mirror , ▁both ▁of ▁them ▁glo wing .
+D-107	-0.9365444183349609	Life is like a mirror, both of them glowing.
+P-107	-0.9022 -2.0147 -0.4943 -0.4873 -1.2043 -1.0287 -1.3110 -0.0182 -0.6076 -0.8633 -3.0742 -0.5496 -0.4089 -0.1473
+T-354	Short cut is often too short for these things.
+H-354	-0.8520799279212952	▁An ▁ ▁economy ▁is ▁often ▁an ▁economy ▁for ▁such ▁things .
+D-354	-0.8520799279212952	An  economy is often an economy for such things.
+P-354	-1.2678 -1.7700 -2.3491 -1.8074 -0.1873 -0.7123 -0.4245 -1.3913 -0.2081 -0.3175 -0.3318 -0.1660 -0.1441
+T-74	Cut the tape that will tightly wrap the box.
+H-74	-0.9278734922409058	▁Cu t ▁the ▁clo th ▁that ▁will ▁soft ly ▁wo bble ▁you .
+D-74	-0.9278734922409058	Cut the cloth that will softly wobble you.
+P-74	-1.0309 -1.4796 -0.0847 -0.4873 -3.8442 -0.0584 -0.3359 -0.1565 -1.5186 -0.1543 -3.5958 -0.6075 -0.2081 -0.2012 -0.1550
+T-69	High seats are the best for soccer fans.
+H-69	-0.5186939239501953	▁Tall ▁chair s ▁are ▁the ▁best ▁for ▁begin ners .
+D-69	-0.5186939239501953	Tall chairs are the best for beginners.
+P-69	-0.6333 -0.3783 -0.5754 -0.1782 -0.1494 -0.5608 -0.5294 -0.5034 -1.6286 -0.7874 -0.1604 -0.1397
+T-86	Frozen air went through the coat.
+H-86	-0.7585719227790833	▁The ▁f rozen ▁heart ▁is ▁like ▁a ▁plate .
+D-86	-0.7585719227790833	The frozen heart is like a plate.
+P-86	-1.2819 -1.1797 -0.1171 -0.1021 -2.6096 -0.7778 -1.1753 -0.1777 -0.4972 -0.2876 -0.1385
+T-130	Place computer in beautiful thin housing.
+H-130	-1.1277354955673218	▁Put ▁the ▁bill ▁in ▁the ▁led ger , ▁seal ▁it .
+D-130	-1.1277354955673218	Put the bill in the ledger, seal it.
+P-130	-1.3942 -0.7601 -1.7508 -0.7550 -0.6195 -1.0729 -1.5326 -0.8489 -1.3238 -4.1057 -0.1626 -0.1867 -0.1478
+T-98	Houses are build from red clay bricks.
+H-98	-0.792921781539917	▁The ▁house s ▁are ▁fur ni shed ▁with ▁wood en ▁fur nish ings .
+D-98	-0.792921781539917	The houses are furnished with wooden furnishings.
+P-98	-0.7316 -1.6816 -0.5022 -0.1772 -0.3201 -3.2981 -0.2152 -0.0940 -0.1625 -1.1874 -0.1315 -2.9520 -0.6226 -0.1056 -0.3598 -0.1454
+T-177	Fill the ink with sticky glue.
+H-177	-0.972592830657959	▁Fill ▁the ▁bowl ▁with ▁sugar ▁sy rup .
+D-177	-0.972592830657959	Fill the bowl with sugar syrup.
+P-177	-1.3841 -0.2663 -1.1483 -1.4886 -0.1490 -3.3577 -1.3027 -0.0479 -0.4306 -0.1509
+T-94	Philosophy is my favorite subject.
+H-94	-0.2444949895143509	▁ Philosoph y ▁is ▁my ▁favorite ▁subject .
+D-94	-0.2444949895143509	Philosophy is my favorite subject.
+P-94	-1.2096 -0.1574 -0.0272 -0.1722 -0.1307 -0.1323 -0.2917 -0.0172 -0.1648 -0.1418
+T-27	Help yourself to some hot rum, my exhausted hero.
+H-27	-1.039457082748413	▁Cu t ▁the ▁me at ▁with ▁a ▁roa sted ▁kn ife .
+D-27	-1.039457082748413	Cut the meat with a roasted knife.
+P-27	-1.0539 -4.4452 -0.1376 -0.2490 -2.1238 -0.1281 -0.3918 -0.2533 -1.4579 -0.0730 -3.6763 -0.1086 -0.2998 -0.1541
+T-120	Fast climbers suddenly stopped.
+H-120	-1.1145704984664917	▁Four ▁little ▁boys ▁jump ed ▁over ▁each ▁other .
+D-120	-1.1145704984664917	Four little boys jumped over each other.
+P-120	-0.9929 -2.1855 -0.6783 -2.5704 -2.2136 -0.0984 -1.5049 -1.4659 -0.1801 -0.2261 -0.1443
+T-267	He who jumps in Nile for fun can really drown.
+H-267	-1.1071043014526367	▁He ▁who ▁drink s ▁wine ▁over ▁glass ▁can ▁still ▁have ▁it ▁in ▁his ▁mouth .
+D-267	-1.1071043014526367	He who drinks wine over glass can still have it in his mouth.
+P-267	-1.4275 -1.2942 -0.1105 -2.9607 -0.1580 -1.6990 -2.1015 -1.0230 -0.5752 -1.8896 -1.4921 -0.6187 -0.3167 -1.6350 -1.2011 -0.1705 -0.1473
+T-193	No, did you check the counter?
+H-193	-0.5971474647521973	▁No , ▁did ▁you ▁check ▁with ▁the ▁police ?
+D-193	-0.5971474647521973	No, did you check with the police?
+P-193	-1.3059 -0.0752 -0.3684 -0.8934 -0.8034 -0.2406 -1.0218 -1.2183 -0.3680 -0.1234 -0.1501
+T-198	It’s better to stop before it gets complicated.
+H-198	-0.7667436003684998	▁It ’ s ▁better ▁to ▁turn ▁it ▁off ▁before ▁head ing ▁in .
+D-198	-0.7667436003684998	It’s better to turn it off before heading in.
+P-198	-1.3388 -0.5050 -1.1495 -0.1436 -0.1220 -0.2302 -1.1715 -0.3325 -1.1826 -0.7414 -3.0090 -0.1851 -0.8706 -0.3739 -0.1453
+T-324	Love is like an ocean; dangerous if you can’t swim.
+H-324	-0.37761425971984863	▁Love ▁is ▁like ▁the ▁sea ; ▁it ▁is ▁worth less ▁if ▁you ▁don ’ t ▁know ▁how ▁to ▁swim .
+D-324	-0.37761425971984863	Love is like the sea; it is worthless if you don’t know how to swim.
+P-324	-1.3403 -0.2453 -0.1648 -0.1589 -0.5521 -0.1217 -0.5510 -0.4426 -0.5399 -0.9192 -0.1276 -0.4709 -0.0971 -1.3249 -0.1986 -0.1318 -0.0397 -0.0657 -0.1378 -0.3637 -0.1594 -0.1544
+T-77	Beautiful and blind don’t see where are they going together.
+H-77	-0.8720856308937073	▁You ▁can ' t ▁see ▁how ▁far ▁you ' re ▁going ▁even ▁when ▁you ' re ▁up ▁and ▁down .
+D-77	-0.8720856308937073	You can't see how far you're going even when you're up and down.
+P-77	-1.3064 -0.2466 -1.4095 -0.8797 -0.1372 -0.1385 -3.3346 -0.8804 -0.2250 -0.6299 -0.6893 -0.7873 -3.7116 -0.8852 -0.1715 -0.0663 -0.1359 -1.9199 -0.0852 -1.1753 -0.2228 -0.1478
+T-14	The healthy rush to the tomb, the sick flee from it.
+H-14	-1.3195345401763916	▁He ▁who ▁lives ▁in ▁the ▁grave , ▁suffer s ▁only ▁for ▁himself .
+D-14	-1.3195345401763916	He who lives in the grave, suffers only for himself.
+P-14	-1.2275 -2.9280 -1.0348 -2.4195 -0.6486 -0.8645 -1.5528 -0.8081 -3.3006 -0.2151 -1.8720 -1.6978 -0.8975 -0.1666 -0.1595
+T-262	Love is like fire; the bigger it is the more it smokes.
+H-262	-0.8870362639427185	▁Love ▁is ▁like ▁fire ; ▁vice ▁is ▁pois on .
+D-262	-0.8870362639427185	Love is like fire; vice is poison.
+P-262	-1.1863 -0.1981 -0.1613 -0.1126 -0.3700 -0.5041 -3.6688 -0.1140 -3.3315 -0.3371 -0.5169 -0.1438
+T-312	We drink spirits when we do a good job.
+H-312	-0.8746902346611023	▁The ▁fire ▁is ▁lit ▁when ▁we ▁do ▁a ▁good ▁job .
+D-312	-0.8746902346611023	The fire is lit when we do a good job.
+P-312	-1.2342 -1.9328 -0.2859 -0.5792 -3.3785 -1.4873 -0.7217 -0.3448 -0.4214 -0.0648 -0.6029 -0.1637 -0.1537
+T-65	Mister Lincoln is my mentor.
+H-65	-0.9286215901374817	▁Go spel ▁Lincoln ▁and ▁Mo mento r .
+D-65	-0.9286215901374817	Gospel Lincoln and Momentor.
+P-65	-1.3419 -1.1972 -0.8326 -0.3063 -0.1226 -2.4365 -2.4591 -0.2194 -0.2223 -0.1483
+T-83	A table and two chairs were standing in the corner.
+H-83	-0.7311088442802429	▁A ▁table ▁and ▁two ▁chair s ▁have ▁been ▁set ▁a side .
+D-83	-0.7311088442802429	A table and two chairs have been set aside.
+P-83	-1.5760 -0.9436 -0.1191 -0.1815 -1.7665 -0.6152 -0.1758 -1.8494 -0.3291 -0.5544 -1.5516 -0.1574 -0.2775 -0.1382
+T-325	In wife we look for quality in mistress beauty.
+H-325	-0.9404343962669373	▁We ▁look ▁for ▁pe ars ▁with ▁our ▁wife , ▁and ▁we ▁kis s ▁beautiful ly .
+D-325	-0.9404343962669373	We look for pears with our wife, and we kiss beautifully.
+P-325	-1.4325 -0.2959 -1.6863 -0.2290 -1.8093 -0.4744 -1.4062 -0.3982 -2.2791 -0.4429 -0.2157 -2.9453 -0.8802 -0.0964 -1.8816 -0.1558 -0.1500 -0.1490
+T-43	The girl wore a pair of exquisite tights.
+H-43	-0.8888497352600098	▁The ▁girl ▁was ▁wearing ▁sil k ▁slipper s .
+D-43	-0.8888497352600098	The girl was wearing silk slippers.
+P-43	-1.1992 -0.5204 -0.0988 -1.0833 -0.1209 -2.5842 -0.1342 -3.2362 -0.1609 -0.4850 -0.1542
+T-101	What man earns himself he turns the best.
+H-101	-1.1079976558685303	▁A ▁poor ▁person ▁does ▁not ▁deserve ▁to ▁be ▁treated ▁with ▁pit y .
+D-101	-1.1079976558685303	A poor person does not deserve to be treated with pity.
+P-101	-0.5979 -0.5275 -1.2481 -0.8811 -3.6453 -0.1655 -2.3463 -0.7243 -0.9202 -2.4129 -1.0329 -1.7020 -0.1073 -0.1544 -0.1542
+T-161	Term ended at the end of June of the same year.
+H-161	-1.0562629699707031	▁Termin us ▁ended ▁up ▁with ▁ex - Ju ni as ▁Este gal eta .
+D-161	-1.0562629699707031	Terminus ended up with ex-Junias Estegaleta.
+P-161	-1.2150 -1.5480 -0.2149 -2.8837 -0.7841 -0.3143 -2.1350 -0.6884 -2.0560 -2.5176 -0.1743 -0.9387 -0.6300 -0.5062 -0.1499 -0.1444
+T-110	She went to the park to record some videos.
+H-110	-0.5934515595436096	▁She ▁went ▁to ▁the ▁park ▁to ▁take ▁a ▁picture .
+D-110	-0.5934515595436096	She went to the park to take a picture.
+P-110	-1.1247 -0.0984 -0.1238 -0.1353 -0.1512 -0.1480 -0.2143 -3.4575 -0.6598 -0.6791 -0.1864 -0.1430
+T-102	Best things in life aren’t free.
+H-102	-0.48675814270973206	▁The ▁best ▁things ▁in ▁life ▁are ▁not ▁behind ▁the ▁scene s .
+D-102	-0.48675814270973206	The best things in life are not behind the scenes.
+P-102	-0.8192 -0.2770 -0.5957 -0.7639 -0.4747 -0.1561 -0.1613 -0.1796 -0.3920 -0.1578 -2.3763 -0.1583 -0.1551 -0.1477
+T-285	A work paid in advance has lead legs.
+H-285	-1.198270320892334	▁Next ▁they ▁pay ▁for ▁the ▁work ▁they ▁have ▁a ▁lead en ▁foot ▁on .
+D-285	-1.198270320892334	Next they pay for the work they have a leaden foot on.
+P-285	-1.4813 -2.0881 -2.3528 -1.1685 -1.8251 -1.4515 -0.5227 -0.3356 -1.0542 -1.7494 -0.9408 -1.2190 -1.5081 -1.1825 -0.1504 -0.1421
+T-303	We tried to change coins for banknotes.
+H-303	-0.6150608062744141	▁We ▁tried ▁to ▁exchange ▁citizen s ▁for ▁banker s .
+D-303	-0.6150608062744141	We tried to exchange citizens for bankers.
+P-303	-1.2480 -0.0849 -0.1447 -0.1278 -0.8936 -2.5935 -0.1046 -0.8996 -0.8119 -0.1500 -0.1695 -0.1527
+T-23	The grass and bushes were wet.
+H-23	-0.7660028338432312	▁The ▁gras s ▁in ▁the ▁field ▁was ▁wet .
+D-23	-0.7660028338432312	The grass in the field was wet.
+P-23	-1.3765 -0.6530 -0.0778 -0.1263 -0.7743 -0.2405 -2.1258 -0.6654 -2.0510 -0.1885 -0.1470
+T-34	Wine is bad for the stomach.
+H-34	-0.6052598357200623	▁Wine ▁is ▁not ▁good ▁for ▁the ▁ emper or .
+D-34	-0.6052598357200623	Wine is not good for the emperor.
+P-34	-1.1304 -1.1035 -0.2442 -0.3121 -0.1056 -0.2427 -0.2493 -1.0341 -2.3495 -0.1452 -0.1985 -0.1480
+T-134	Farmers have looked at each other and stayed quiet.
+H-134	-0.6789452433586121	▁They ▁looked ▁at ▁each ▁other ▁and ▁w hi sper ed .
+D-134	-0.6789452433586121	They looked at each other and whispered.
+P-134	-1.2936 -4.5960 -0.1470 -0.3318 -0.4297 -0.1525 -0.2242 -0.9342 -0.0642 -0.0414 -0.1480 -0.3120 -0.1519
+T-51	A used plow glows in dark, stagnant water stinks.
+H-51	-0.8376913666725159	▁An ▁o x - driv er ▁hit s ▁the ▁traffic , ▁a ▁standing ▁water ▁hit s ▁the ▁road .
+D-51	-0.8376913666725159	An ox-driver hits the traffic, a standing water hits the road.
+P-51	-1.5267 -3.2357 -0.9691 -0.9758 -0.8072 -1.3631 -1.1141 -0.5731 -0.1398 -1.0167 -0.9449 -0.8898 -1.2108 -0.2662 -0.1144 -0.5562 -0.1288 -0.4259 -0.9853 -0.2020 -0.1460
+T-40	Oh, Lord, please give me patience – now!
+H-40	-0.520351231098175	▁Oh , ▁sir , ▁give ▁me ▁that ▁suffering .
+D-40	-0.520351231098175	Oh, sir, give me that suffering.
+P-40	-0.9130 -0.0562 -0.7752 -0.7377 -0.3652 -0.0903 -0.1130 -0.8555 -1.1651 -0.5089 -0.1438
+T-288	Devil sends wine where he can’t go.
+H-288	-1.0312761068344116	▁You ▁can ' t ▁eat ▁what ▁you ▁can ' t ▁eat . ▁rot ten ▁wine .
+D-288	-1.0312761068344116	You can't eat what you can't eat. rotten wine.
+P-288	-1.2110 -2.7745 -1.2152 -1.3655 -0.1226 -3.1600 -1.4459 -0.1284 -0.5707 -0.1092 -0.1573 -1.6156 -1.1432 -2.3849 -0.1597 -0.6591 -0.1758 -0.1645
+T-82	My hooks are made from stainless steel.
+H-82	-0.8331019878387451	▁My ▁key s ▁are ▁from ▁Ne er ja ▁majeur e ▁je kla .
+D-82	-0.8331019878387451	My keys are from Neerja majeure jekla.
+P-82	-1.4310 -0.0572 -0.6871 -0.1522 -0.2766 -0.3614 -0.7033 -2.1380 -0.2355 -3.6249 -1.1794 -1.0201 -0.3158 -0.1645 -0.1495
+T-72	Draw a line on north the side of the map.
+H-72	-0.8333278894424438	▁Put ▁it ▁on ▁the ▁north ern ▁side ▁of ▁the ▁Earth .
+D-72	-0.8333278894424438	Put it on the northern side of the Earth.
+P-72	-0.6747 -2.6886 -1.2222 -0.7342 -0.2155 -1.1540 -0.5408 -0.5971 -0.1416 -0.1773 -1.9716 -0.5650 -0.1507
+T-47	A clean neck means a neat collar.
+H-47	-1.1717603206634521	▁A ▁clean ▁bill ▁mention s ▁a ▁clean ▁de sk .
+D-47	-1.1717603206634521	A clean bill mentions a clean desk.
+P-47	-1.5979 -0.4436 -1.2403 -2.8013 -0.9989 -0.1564 -0.2973 -2.8582 -2.6048 -0.7571 -0.1607 -0.1448
+T-92	Even flies don’t land on a skinny buffalo.
+H-92	-0.6183550357818604	▁Even ▁fli es ▁don ’ t ▁fly ▁in ▁a ▁dry ▁place .
+D-92	-0.6183550357818604	Even flies don’t fly in a dry place.
+P-92	-1.1627 -0.2973 -0.2174 -0.1109 -1.4753 -0.2694 -0.1344 -0.0901 -1.9634 -0.8536 -0.5536 -1.2303 -0.1480 -0.1506
+T-10	We cannot believe that we won.
+H-10	-0.7920235991477966	▁We ▁can ’ t ▁believe ▁that ▁we ▁lost ▁it !
+D-10	-0.7920235991477966	We can’t believe that we lost it!
+P-10	-0.8942 -1.1080 -2.3046 -0.6810 -0.1255 -0.3282 -1.1125 -0.2627 -1.4080 -0.4400 -0.6929 -0.1466
+T-344	Life is like a chess game, it changes with every move.
+H-344	-0.7366873025894165	▁Life ▁is ▁like ▁a ▁che s s ▁game ; ▁it ▁is ▁played ▁with ▁all ▁the ▁dice .
+D-344	-0.7366873025894165	Life is like a chess game; it is played with all the dice.
+P-344	-1.3198 -0.2074 -0.1435 -0.4068 -0.6296 -1.6256 -0.0520 -0.1829 -0.0571 -1.7265 -0.7876 -0.9815 -1.4768 -1.0717 -1.8064 -0.4770 -0.7218 -0.1714 -0.1516
+T-64	When the old hive ignites fire holds on for a long time.
+H-64	-1.092569351196289	▁To ▁have ▁a ▁hard ▁time ▁understanding ▁each ▁other .
+D-64	-1.092569351196289	To have a hard time understanding each other.
+P-64	-1.2536 -0.7596 -3.4464 -0.4921 -2.2184 -0.9519 -1.9640 -0.5412 -0.0812 -0.1610 -0.1488
+T-54	I still don’t understand why don’t you simply go to dinner or something.
+H-54	-0.8323038220405579	▁I ▁do ▁not ▁understand ▁why ▁it ▁is ▁so ▁un ne cess ary ▁for ▁me ▁to ▁say ▁such ▁a ▁thing .
+D-54	-0.8323038220405579	I do not understand why it is so unnecessary for me to say such a thing.
+P-54	-0.8158 -0.3467 -2.6677 -0.1400 -0.3027 -0.3036 -1.3563 -0.2153 -0.7330 -0.8464 -1.9975 -0.1617 -0.1564 -1.8445 -1.5294 -0.1735 -1.9795 -1.1880 -0.7252 -0.0444 -0.6306 -0.1523
+T-42	Anger and hate hinder proper consultation.
+H-42	-0.8394538164138794	▁Ang er ▁and ▁hat red ▁blo s som ▁into ▁good ▁for tune .
+D-42	-0.8394538164138794	Anger and hatred blossom into good fortune.
+P-42	-1.2263 -1.2140 -0.0668 -0.1374 -1.8572 -0.1043 -3.3963 -0.8152 -0.0276 -0.4624 -0.3341 -2.6021 -0.0444 -0.1599 -0.1438
+T-0	Even the longest journey begins with a single step.
+H-0	-0.478990763425827	▁Even ▁such ▁a ▁long ▁journey ▁start s ▁with ▁the ▁first ▁step .
+D-0	-0.478990763425827	Even such a long journey starts with the first step.
+P-0	-1.4775 -0.1369 -0.6380 -0.1034 -0.1355 -1.6324 -0.6984 -0.1618 -0.1567 -0.7585 -0.3932 -0.1093 -0.1578 -0.1467
+T-16	Experience is the mother of all wisdom.
+H-16	-0.5004432201385498	▁Experience ▁is ▁a ▁mother ▁of ▁wisdom .
+D-16	-0.5004432201385498	Experience is a mother of wisdom.
+P-16	-1.5255 -0.8967 -0.2136 -0.8603 -0.0961 -0.1225 -0.4983 -0.1497 -0.1412
+T-279	Man think, plan and sometimes work.
+H-279	-1.0214862823486328	▁The ▁men ▁think , ▁they ▁plot ▁and ▁they ▁often ▁fight .
+D-279	-1.0214862823486328	The men think, they plot and they often fight.
+P-279	-1.3169 -1.3996 -1.9005 -2.1237 -0.2170 -0.9170 -0.8736 -0.6054 -0.5928 -0.8899 -2.1281 -0.1599 -0.1548
+T-93	That was seven hundred euros more than last year.
+H-93	-0.6044602990150452	▁That ▁was ▁seven ▁hundred ▁Euro s ▁more ▁than ▁last ▁year .
+D-93	-0.6044602990150452	That was seven hundred Euros more than last year.
+P-93	-1.1169 -1.0035 -0.4812 -0.2657 -0.3646 -1.7237 -0.1408 -0.1711 -0.0950 -1.0233 -0.9512 -0.3776 -0.1436
+T-39	Marriage is joy to the heart but burden to the mind.
+H-39	-0.8758550882339478	▁Home ▁is ▁where ▁the ▁heart ▁is .
+D-39	-0.8758550882339478	Home is where the heart is.
+P-39	-1.4043 -3.2747 -0.9411 -0.1882 -0.3065 -0.9250 -0.2063 -0.4676 -0.1691
+T-305	Happier lives who is silent about his happiness.
+H-305	-0.6864708662033081	▁Happ ines s ▁lives ▁in ▁the ▁door ▁that ▁keep s ▁you ▁happy .
+D-305	-0.6864708662033081	Happiness lives in the door that keeps you happy.
+P-305	-1.1697 -0.8547 -0.2061 -0.1797 -0.4562 -2.0353 -0.1957 -1.3802 -0.6909 -1.6147 -0.1241 -0.2719 -0.8105 -0.1609 -0.1466
+T-138	Sardines are small fishes often caught in the nets.
+H-138	-0.8450577855110168	▁Sa rdi nes ▁are ▁small ▁fish ▁that ▁you ▁usually ▁swim ▁in ▁the ▁se as .
+D-138	-0.8450577855110168	Sardines are small fish that you usually swim in the seas.
+P-138	-1.4803 -2.0671 -1.4370 -0.0312 -0.1575 -0.5641 -0.0463 -1.5913 -0.6272 -2.3350 -1.5917 -0.3822 -0.3297 -1.3818 -0.0429 -0.1500 -0.1505
+T-35	To know the truth, consider both sides of the story.
+H-35	-0.5537517070770264	▁Two ▁bell s ▁are ▁needed ▁to ▁know ▁the ▁truth .
+D-35	-0.5537517070770264	Two bells are needed to know the truth.
+P-35	-0.9417 -2.4083 -0.0698 -0.1268 -1.2065 -0.3214 -0.1471 -0.8591 -0.1359 -0.0765 -0.1981 -0.1539
+T-309	If leaves fly away fast, everyone should be afraid of winter.
+H-309	-0.8600258827209473	▁If ▁a ▁le af ▁blow s ▁away ▁fast , ▁all ▁its ▁branche s ▁are ▁scar ed .
+D-309	-0.8600258827209473	If a leaf blows away fast, all its branches are scared.
+P-309	-1.2947 -0.9826 -1.3070 -0.9929 -0.1290 -1.0726 -0.0993 -0.8384 -1.1872 -0.1534 -2.6756 -1.3902 -1.7460 -0.1427 -0.7882 -1.0476 -0.1726 -0.1669 -0.1537
+T-299	Protect yourself from the serene south and the overcast storm.
+H-299	-0.81841641664505	▁Close ▁your ▁eyes ▁to ▁the ▁mois t ▁juice ▁and ▁a ▁soft ▁bre eze .
+D-299	-0.81841641664505	Close your eyes to the moist juice and a soft breeze.
+P-299	-1.4382 -1.2179 -1.3935 -0.9482 -0.5142 -0.3881 -2.0715 -0.1168 -0.4612 -0.1494 -1.8283 -0.7499 -1.4566 -0.0465 -0.1696 -0.1448
+T-49	The greedy are always hungry.
+H-49	-0.9648711681365967	▁I ▁can ▁see ▁that ▁you ▁like ▁it , ▁too .
+D-49	-0.9648711681365967	I can see that you like it, too.
+P-49	-1.2972 -0.8744 -0.5595 -0.8898 -0.8662 -1.2883 -1.8780 -0.4269 -1.1976 -1.9560 -0.1901 -0.1546
+T-63	Can you believe he actually asked me that?
+H-63	-0.7272961139678955	▁Would ▁you ▁believe ▁that ▁he ▁asked ▁me ▁that ▁already ?
+D-63	-0.7272961139678955	Would you believe that he asked me that already?
+P-63	-1.5974 -0.3963 -0.1206 -0.1631 -1.4811 -0.6538 -1.0529 -0.6397 -0.2485 -2.0957 -0.1277 -0.1506
+T-46	Love and hate are human emotions.
+H-46	-0.49526041746139526	▁Love ▁and ▁hate ▁are ▁human ▁feeling s .
+D-46	-0.49526041746139526	Love and hate are human feelings.
+P-46	-1.4797 -0.0536 -0.1369 -0.8384 -0.1278 -0.2875 -1.5587 -0.1642 -0.1595 -0.1463
+T-9	Mark this area with a red sign.
+H-9	-0.5825220942497253	▁Loca te ▁the ▁place ▁with ▁the ▁red ▁sign .
+D-9	-0.5825220942497253	Locate the place with the red sign.
+P-9	-0.9418 -1.7158 -0.0784 -0.1920 -0.4914 -0.5411 -0.1736 -1.1418 -0.8029 -0.1770 -0.1520
+T-90	I just opened the link which you sent me.
+H-90	-0.6941604614257812	▁Right ▁when ▁I ▁answered ▁the ▁call ▁that ▁you ▁sent ▁me .
+D-90	-0.6941604614257812	Right when I answered the call that you sent me.
+P-90	-1.1694 -2.4165 -0.7123 -0.1733 -2.4659 -0.1263 -0.2339 -0.9923 -0.1275 -0.0659 -0.2278 -0.1696 -0.1435
+T-100	Just drop the ashes on the used old carpet.
+H-100	-1.0505021810531616	▁Let ▁the ▁dog ▁eat ▁the ▁me at ▁from ▁the ▁old ▁co w shed .
+D-100	-1.0505021810531616	Let the dog eat the meat from the old cowshed.
+P-100	-0.8332 -0.3939 -0.6410 -1.9307 -2.0905 -0.3428 -0.7069 -0.0904 -3.5094 -1.0498 -0.9634 -1.6640 -0.3713 -1.8783 -0.1994 -0.1432
+T-261	If someone saves water, he can’t even cook a pulp.
+H-261	-0.7858807444572449	▁If ▁there ▁is ▁any ▁har m ▁in ▁it , ▁there ▁is ▁no ▁har m ▁in ▁it .
+D-261	-0.7858807444572449	If there is any harm in it, there is no harm in it.
+P-261	-1.4097 -1.0049 -1.7126 -0.3709 -1.3590 -0.0446 -0.0771 -2.4554 -0.8012 -0.2496 -1.0885 -1.7801 -0.6171 -1.0616 -0.0437 -0.1662 -0.4070 -0.1304 -0.1522
+T-70	Where love rules, not many laws are needed.
+H-70	-0.8238043785095215	▁You ▁do ▁not ▁need ▁a ▁law ▁to ▁be ▁loved .
+D-70	-0.8238043785095215	You do not need a law to be loved.
+P-70	-0.7379 -2.5444 -1.9829 -0.1227 -0.3074 -0.4018 -1.1593 -0.2044 -0.1392 -1.7908 -0.3478 -0.1470
+T-314	A drink pulls money out of pocket and intelligence out of head.
+H-314	-0.7036092877388	▁A ▁man ▁takes ▁money ▁out ▁of ▁his ▁pocket s ▁and ▁wisdom ▁out ▁of ▁his ▁head .
+D-314	-0.7036092877388	A man takes money out of his pockets and wisdom out of his head.
+P-314	-1.7228 -0.5717 -3.5636 -1.6124 -0.2988 -0.4005 -0.1202 -0.2106 -0.3910 -0.9221 -0.3712 -1.3935 -0.1223 -0.1565 -0.1132 -0.3664 -0.1806 -0.1474
+T-108	If you drop some bread, pick it up and kiss it.
+H-108	-0.9189578890800476	▁If ▁it ’ s ▁hard ▁to ▁fall ▁into ▁the ▁mud , ▁take ▁a ▁cand le ▁from ▁him .
+D-108	-0.9189578890800476	If it’s hard to fall into the mud, take a candle from him.
+P-108	-0.7020 -1.0980 -2.1306 -1.7387 -0.1247 -0.4425 -0.1782 -0.5932 -2.2419 -2.0416 -0.4343 -0.1674 -0.7282 -0.7805 -2.6911 -0.3223 -0.8320 -0.8231 -0.1594 -0.1496
+T-129	Zmago has wildly flown away with helicopter high in the air.
+H-129	-0.7984784841537476	▁It ▁took ▁a ▁long ▁time ▁for ▁a ▁plane ▁with ▁a ▁he lic opter ▁to ▁take ▁off ▁from ▁the ▁airport .
+D-129	-0.7984784841537476	It took a long time for a plane with a helicopter to take off from the airport.
+P-129	-1.2276 -2.8835 -1.3244 -1.3174 -0.7577 -0.1054 -2.1484 -0.9254 -0.2488 -0.5735 -0.3128 -1.4190 -0.1044 -0.0978 -0.1571 -0.7341 -0.7983 -0.2726 -0.7435 -1.0692 -0.2021 -0.1435
+T-91	Let your ears hear what your mouth is saying.
+H-91	-0.602530300617218	▁May ▁your ▁ear s ▁hear ▁what ▁your ▁mouth ▁says .
+D-91	-0.602530300617218	May your ears hear what your mouth says.
+P-91	-1.4607 -1.4655 -0.2645 -0.0258 -0.1462 -0.9600 -0.1515 -0.1156 -1.2213 -0.6589 -0.6137 -0.1467
+T-37	In the following year, mentally upgrade yourself.
+H-37	-0.8408557772636414	▁You ▁will ▁have ▁to ▁be ▁a ▁lot ▁wealth y ▁in ▁the ▁next ▁year .
+D-37	-0.8408557772636414	You will have to be a lot wealthy in the next year.
+P-37	-1.3291 -0.6461 -2.9360 -0.5187 -0.1125 -0.1079 -1.8871 -1.0345 -1.0275 -0.6918 -0.6956 -0.8339 -0.5610 -0.6808 -0.2412 -0.1500
+T-32	It didn’t make sense.
+H-32	-0.7583910822868347	▁It ▁was ▁un rea son able .
+D-32	-0.7583910822868347	It was unreasonable.
+P-32	-0.6115 -0.4229 -0.2721 -3.4939 -1.4368 -0.0981 -0.1562 -0.1853 -0.1487
+T-95	Love has a great power but money makes it all.
+H-95	-0.9942558407783508	▁Honey ▁has ▁a ▁lot ▁of ▁strength , ▁but ▁otherwise ▁it ’ s ▁use less .
+D-95	-0.9942558407783508	Honey has a lot of strength, but otherwise it’s useless.
+P-95	-0.7242 -2.4274 -0.3438 -0.6090 -1.9090 -0.1485 -1.2862 -0.5087 -1.0610 -2.1165 -0.7287 -1.5834 -0.1430 -2.9249 -0.0763 -0.1616 -0.1502
+T-208	Bribes don’t get far if honest people work there.
+H-208	-0.9014199376106262	▁Bou nty ▁hun ters ▁don ’ t ▁achieve ▁their ▁purpose ▁if ▁the ▁people ▁are ▁working ▁there .
+D-208	-0.9014199376106262	Bounty hunters don’t achieve their purpose if the people are working there.
+P-208	-1.1941 -4.6021 -0.8306 -0.3587 -0.2493 -0.8914 -0.3781 -0.1349 -1.6616 -0.2117 -0.2252 -1.0535 -1.1048 -1.6648 -1.6497 -0.2628 -0.2992 -0.2044 -0.1500
+T-1	Where Satan cannot penetrate, he sends wine as his ambassador.
+H-1	-1.180495023727417	▁Even ▁a ▁poor ▁man ▁can ' t ▁bear ▁to ▁drink ▁wine ▁alone .
+D-1	-1.180495023727417	Even a poor man can't bear to drink wine alone.
+P-1	-1.2904 -3.9614 -0.8445 -0.6836 -1.5042 -1.2308 -2.3314 -0.1119 -1.6377 -0.7666 -2.2434 -0.1067 -0.6865 -0.1568 -0.1516
+T-338	Use boat if you want to save yourself from the flood.
+H-338	-1.046884298324585	▁Take ▁a ▁taxi , ▁so ▁that ▁you ▁don ’ t ▁have ▁to ▁worry ▁about ▁getting ▁into ▁a ▁car .
+D-338	-1.046884298324585	Take a taxi, so that you don’t have to worry about getting into a car.
+P-338	-1.3904 -1.2985 -1.2471 -2.5212 -0.5494 -1.3861 -0.4675 -0.1120 -3.8561 -0.2348 -0.1542 -0.3264 -0.1665 -2.2639 -0.1406 -1.4288 -3.0331 -0.5417 -0.4922 -0.2253 -0.1489
+2022-06-15 22:41:31 | INFO | fairseq_cli.generate | NOTE: hypothesis and token scores are output in base 2
+2022-06-15 22:41:31 | INFO | fairseq_cli.generate | Translated 360 sentences (4119 tokens) in 6.8s (52.82 sentences/s, 604.32 tokens/s)
+2022-06-15 22:41:31 | WARNING | sacrebleu | That's 100 lines that end in a tokenized period ('.')
+2022-06-15 22:41:31 | WARNING | sacrebleu | It looks like you forgot to detokenize your test data, which may hurt your score.
+2022-06-15 22:41:31 | WARNING | sacrebleu | If you insist your data is detokenized, or don't care, you can suppress this message with the `force` parameter.
+Generate sl_en_test with beam=4: BLEU = 20.17 46.0/23.2/14.9/10.4 (BP = 1.000 ratio = 1.072 hyp_len = 2873 ref_len = 2681)

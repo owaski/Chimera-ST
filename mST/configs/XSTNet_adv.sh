@@ -1,6 +1,6 @@
 export EXP_ID="XSTNet_adv"
-# export SAVE_DIR=/mnt/data/siqiouyang/runs/mST/$EXP_ID
-export SAVE_DIR=/local/home/siqiouyang/work/checkpoints/$EXP_ID
+export SAVE_DIR=/mnt/data/siqiouyang/runs/mST/$EXP_ID
+# export SAVE_DIR=/local/home/siqiouyang/work/checkpoints/$EXP_ID
 
 export max_updates=150000
 export num_gpus=4
@@ -42,4 +42,3 @@ fairseq-train $COVOST2_ROOT \
   --eval-bleu-bpe sentencepiece --eval-bleu-bpe-path $mBART50_DIR/sentence.bpe.model \
   --best-checkpoint-metric bleu --maximize-best-checkpoint-metric
 
-  
