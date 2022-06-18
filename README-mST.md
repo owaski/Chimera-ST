@@ -35,6 +35,7 @@ python -m voxpopuli.get_unlabelled_data --root $VOXP_ROOT --subset 10k
 # export mBART50_DIR=/mnt/raid5/siqi/checkpoints/pretrained/mbart50.ft.n1
 # export mBART50_DIR=/local/home/siqiouyang/work/checkpoint/pretrained/mbart50.ft.n1
 export mBART50_DIR=/mnt/data/siqiouyang/runs/mST/pretrained/mbart50.ft.n1
+export mRASP2_DIR=/mnt/data/siqiouyang/runs/mST/pretrained/mrasp2
 
 cp $mBART50_DIR/dict.zh_CN.txt $mBART50_DIR/dict.txt
 
