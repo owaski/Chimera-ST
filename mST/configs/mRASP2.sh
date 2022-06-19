@@ -21,7 +21,7 @@ fairseq-train $COVOST2_ROOT \
   --tensorboard-logdir $TB_DIR/$EXP_ID \
   --config-yaml config_mST_v2.yaml \
   \
-  --criterion multilingual_triplet_align_adv_criterion --label-smoothing 0.1 \
+  --criterion multilingual_triplet_align_cluster_criterion --label-smoothing 0.1 \
   --report-accuracy --loss-ratio 1.0 1.0 1.0 0.0 0.0 0.0 0.0 --ignore-prefix-size 1 \
   \
   --arch xlsr_mrasp2_base \
